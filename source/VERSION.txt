@@ -1,0 +1,5 @@
+Yen Center LMS FE Prototype
+Version: 2.0.0-minimal
+Release: International Minimal UI refresh
+Business flows and mock data: unchanged from v1.1
+RBAC accents: Student / Teacher / TA / Admin

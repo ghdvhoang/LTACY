@@ -1,0 +1,14 @@
+{
+  "public_routes": 14,
+  "authenticated_routes": 31,
+  "data_invariants": true,
+  "rbac": true,
+  "forms": true,
+  "guardian_profile_chooser": true,
+  "link_lifecycle": true,
+  "core_e2e": true,
+  "download": true,
+  "standalone": true,
+  "role_visual_tokens": true,
+  "errors": []
+}

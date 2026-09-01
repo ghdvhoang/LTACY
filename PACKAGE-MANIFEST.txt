@@ -1,0 +1,37 @@
+Yen Center LMS Demo v2.0 — Package Manifest
+Generated: 2026-09-01
+
+MESSAGE-TO-SEND.txt
+OPEN-DEMO.html
+README.md
+START-HERE.md
+VERSION.txt
+docs/CHANGELOG.md
+docs/DEMO-SCRIPT.md
+docs/DESIGN-SYSTEM-RBAC-v2.0.md
+docs/FRONTEND-DEMO-BOUNDARY.md
+docs/KNOWN-LIMITATIONS.md
+docs/PO-REVIEW.md
+docs/PRODUCT-SPEC.md
+docs/SCOPE-MINDMAP.png
+docs/VERIFICATION.md
+previews/01-homepage-minimal.png
+previews/02-teacher-attendance-minimal.png
+previews/03-student-dashboard-minimal.png
+previews/04-admin-dashboard-minimal.png
+previews/05-ta-content-minimal.png
+previews/06-student-completed-minimal.png
+previews/07-mobile-homepage-minimal.png
+previews/08-mobile-homepage-top.png
+previews/09-mobile-attendance-minimal.png
+previews/10-mobile-attendance-top.png
+source/README.md
+source/VERSION.txt
+source/app.js
+source/index.html
+source/start-demo.bat
+source/start-demo.sh
+source/styles.css
+source/validation/verification-result.json
+source/validation/verify_prototype.py
+source/yen-center-lms-demo.html
