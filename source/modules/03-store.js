@@ -63,6 +63,7 @@
       },
       transact(mutator) {
         const draft = clone(current);
+        draft.currentAt = new Date(clock()).toISOString();
         const result = mutator(draft);
         current = draft;
         persist();

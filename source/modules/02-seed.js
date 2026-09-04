@@ -40,6 +40,7 @@
     return {
       schemaVersion: 3,
       seededAt: new Date(clock()).toISOString(),
+      currentAt: new Date(clock()).toISOString(),
       migrationNotice: null,
       demo: { canonicalLearnerId: 'student-canonical', currentCheckpoint: 'RESET', mode: 'FRONTEND_ONLY' },
       settings: {

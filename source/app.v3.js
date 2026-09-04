@@ -124,6 +124,7 @@
     return {
       schemaVersion: 3,
       seededAt: new Date(clock()).toISOString(),
+      currentAt: new Date(clock()).toISOString(),
       migrationNotice: null,
       demo: { canonicalLearnerId: 'student-canonical', currentCheckpoint: 'RESET', mode: 'FRONTEND_ONLY' },
       settings: {
@@ -369,6 +370,7 @@
       },
       transact(mutator) {
         const draft = clone(current);
+        draft.currentAt = new Date(clock()).toISOString();
         const result = mutator(draft);
         current = draft;
         persist();
@@ -402,7 +404,7 @@
   function assignmentAllows(actor, resource, state) {
     const profile = state.teacherProfiles.find((item) => item.userId === actor.id);
     if (!profile || !resource.classId) return false;
-    const moment = new Date(state.seededAt).getTime();
+    const moment = new Date(state.currentAt || state.seededAt).getTime();
     return state.teacherAssignments.some((item) => item.teacherProfileId === profile.id
       && item.classId === resource.classId
       && ['ACCEPTED', 'ACTIVE'].includes(item.status)
@@ -2309,10 +2311,29 @@
       <div class="notification-drawer" data-notification-drawer hidden><div class="role-switcher-backdrop" data-action="close-notifications"></div><section><div class="panel-heading"><div><h2>Thông báo</h2><p>${unread} chưa đọc</p></div><button class="icon-btn" data-action="close-notifications">×</button></div>${ctx.state.notifications.filter((item) => item.userId === actor.id).slice(0, 8).map((item) => `<a href="#${escapeHtml(item.link || path)}" class="notification-item ${item.read ? '' : 'unread'}"><span>${icon('spark')}</span><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.body)}</p><small>${escapeHtml(item.createdAt)}</small></div></a>`).join('') || '<p class="muted">Chưa có thông báo.</p>'}</section></div></div>`;
   }
 
+  function allowedWorkspaceRoles(path) {
+    const rules = [
+      ['/app/admissions/', ['ADMISSIONS']], ['/app/finance/', ['FINANCE']], ['/app/academic/', ['ACADEMIC_MANAGER']],
+      ['/app/service/', ['STUDENT_SERVICE']], ['/app/teacher/', ['TEACHER', 'TA']], ['/app/student/', ['STUDENT']],
+      ['/app/parent/', ['PARENT']], ['/app/manager/', ['CENTER_MANAGER']], ['/app/admin/', ['ADMIN']],
+    ];
+    return rules.find(([prefix]) => path.startsWith(prefix))?.[1] || [];
+  }
+
+  function accessDenied(path, actor) {
+    const expected = allowedWorkspaceRoles(path).map((role) => ROLE_LABELS[role] || role).join(' / ');
+    return `<section class="auth-required"><div class="empty-icon">${icon('shield')}</div><p class="eyebrow">Scope guard</p><h1>Không có quyền vào workspace này</h1><p>Bạn đang ở vai trò <strong>${escapeHtml(ROLE_LABELS[actor.role] || actor.role)}</strong>; trang này thuộc <strong>${escapeHtml(expected)}</strong>.</p><a class="btn btn-primary" href="#/login">Chọn vai trò phù hợp</a></section>`;
+  }
+
   function frame(path, ctx) {
     const clean = normalize(path);
+    if (clean.startsWith('/app/')) {
+      if (!ctx.actor) return appShell('', clean, ctx);
+      const allowed = allowedWorkspaceRoles(clean);
+      if (allowed.length && !allowed.includes(ctx.actor.role)) return appShell(accessDenied(clean, ctx.actor), clean, ctx);
+      return appShell(render(clean, ctx), clean, ctx);
+    }
     const content = render(clean, ctx);
-    if (clean.startsWith('/app/')) return appShell(content, clean, ctx);
     if (clean === '/login') return content;
     return `<div class="public-page">${publicHeader(ctx)}${content}${publicFooter()}</div>`;
   }
@@ -2499,7 +2520,7 @@
 
     function hide(selector) {
       const element = document.querySelector(selector);
-      if (element) element.hidden = true;
+      if (element) element.setAttribute('hidden', '');
     }
 
     document.addEventListener('click', (event) => {
@@ -2509,9 +2530,9 @@
       if (action === 'dismiss-toast') { toastRoot.innerHTML = ''; return; }
       if (action === 'toggle-sidebar') { document.body.classList.toggle('sidebar-collapsed'); return; }
       if (action === 'toggle-mobile-nav') { document.body.classList.toggle('mobile-nav-open'); return; }
-      if (action === 'open-role-switcher') { const element = document.querySelector('[data-role-switcher]'); if (element) element.hidden = false; return; }
+      if (action === 'open-role-switcher') { const element = document.querySelector('[data-role-switcher]'); if (element) element.removeAttribute('hidden'); return; }
       if (action === 'close-role-switcher') { hide('[data-role-switcher]'); return; }
-      if (action === 'show-notifications') { const element = document.querySelector('[data-notification-drawer]'); if (element) element.hidden = false; return; }
+      if (action === 'show-notifications') { const element = document.querySelector('[data-notification-drawer]'); if (element) element.removeAttribute('hidden'); return; }
       if (action === 'close-notifications') { hide('[data-notification-drawer]'); return; }
       const data = { ...payloadFrom(trigger), actorId: trigger.dataset.actorId, learnerId: trigger.dataset.learnerId };
       trigger.disabled = true;

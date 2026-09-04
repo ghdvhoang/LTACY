@@ -17,8 +17,8 @@ class StandaloneBuildTests(unittest.TestCase):
         (modules / "00-first.js").write_text("window.order = ['first'];\n", encoding="utf-8")
         (directory / "source" / "styles.css").write_text("body { color: #111; }\n", encoding="utf-8")
         (directory / "source" / "index.html").write_text(
-            '<!doctype html><html><head><link rel="stylesheet" href="styles.css"></head>'
-            '<body><div id="app"></div><script src="app.js"></script></body></html>\n',
+            '<!doctype html><html><head><link rel="stylesheet" href="./styles.css" /></head>'
+            '<body><div id="app"></div><script src="./app.js"></script></body></html>\n',
             encoding="utf-8",
         )
 
@@ -66,8 +66,8 @@ class StandaloneBuildTests(unittest.TestCase):
             standalone = (fixture / "OPEN-DEMO.html").read_text(encoding="utf-8")
             self.assertIn("<style>body { color: #111; }", standalone)
             self.assertIn("window.order.push('second')", standalone)
-            self.assertNotIn('href="styles.css"', standalone)
-            self.assertNotIn('src="app.js"', standalone)
+            self.assertNotIn('styles.css', standalone)
+            self.assertNotIn('app.js', standalone)
 
 
 if __name__ == "__main__":

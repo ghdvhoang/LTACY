@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -31,8 +32,18 @@ def render_standalone(root: Path, bundle: str) -> str:
     html = (source_dir / "index.html").read_text(encoding="utf-8")
     css = (source_dir / "styles.css").read_text(encoding="utf-8").rstrip()
     safe_bundle = bundle.replace("</script", "<\\/script")
-    html = html.replace('<link rel="stylesheet" href="styles.css">', f"<style>{css}</style>")
-    html = html.replace('<script src="app.js"></script>', f"<script>{safe_bundle}</script>")
+    html = re.sub(
+        r'<link\s+rel=["\']stylesheet["\']\s+href=["\'](?:\./)?styles\.css["\']\s*/?>',
+        f"<style>{css}</style>",
+        html,
+        count=1,
+    )
+    html = re.sub(
+        r'<script\s+src=["\'](?:\./)?app\.js["\']\s*></script>',
+        lambda _match: f"<script>{safe_bundle}</script>",
+        html,
+        count=1,
+    )
     return html
 
 

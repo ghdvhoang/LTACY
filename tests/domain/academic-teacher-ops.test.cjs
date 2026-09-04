@@ -64,6 +64,20 @@ test('accepted assignment grants class access and contributes to total workload'
   assert.equal(runtime.YC.policy.can(runtime.state().users.find((item) => item.id === 'teacher-1'), 'CLASS_VIEW', { classId: 'class-6a' }, runtime.state()), true);
 });
 
+test('assignment access uses transaction time rather than the original seed instant', () => {
+  let now = FIXED_NOW;
+  const YC = loadYC(['seed', 'store', 'commands', 'selectors']);
+  const store = YC.store.create({ storage: memoryStorage(), clock: () => now });
+  const bus = YC.commands.create(store);
+  const runtime = { YC, store, state: () => store.getState(), dispatch: bus.dispatch };
+  activateCanonicalClass(runtime);
+  now = '2026-09-04T02:01:00.000Z';
+  assignCanonicalTeacher(runtime);
+
+  const teacher = runtime.state().users.find((item) => item.id === 'teacher-1');
+  assert.equal(runtime.YC.policy.can(teacher, 'ATTENDANCE_EDIT', { classId: 'class-6a' }, runtime.state()), true);
+});
+
 test('completed session stores planned-versus-taught evidence and a coverage gap', () => {
   const runtime = createRuntime();
   activateCanonicalClass(runtime);

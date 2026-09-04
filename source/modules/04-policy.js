@@ -17,7 +17,7 @@
   function assignmentAllows(actor, resource, state) {
     const profile = state.teacherProfiles.find((item) => item.userId === actor.id);
     if (!profile || !resource.classId) return false;
-    const moment = new Date(state.seededAt).getTime();
+    const moment = new Date(state.currentAt || state.seededAt).getTime();
     return state.teacherAssignments.some((item) => item.teacherProfileId === profile.id
       && item.classId === resource.classId
       && ['ACCEPTED', 'ACTIVE'].includes(item.status)

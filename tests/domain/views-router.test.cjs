@@ -57,3 +57,13 @@ test('unknown routes return a recoverable not-found view', () => {
   assert.match(html, /Không tìm thấy trang/);
   assert.match(html, /#\//);
 });
+
+test('app frame blocks a mismatched workspace role without invoking the view', () => {
+  const YC = loadYC(['seed', 'router']);
+  const ctx = context(YC, 'ADMISSIONS', '/app/parent/progress');
+
+  const html = YC.router.frame('/app/parent/progress', ctx);
+
+  assert.match(html, /Không có quyền vào workspace này/);
+  assert.match(html, /Chọn vai trò phù hợp/);
+});

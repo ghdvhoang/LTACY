@@ -56,7 +56,7 @@
 
     function hide(selector) {
       const element = document.querySelector(selector);
-      if (element) element.hidden = true;
+      if (element) element.setAttribute('hidden', '');
     }
 
     document.addEventListener('click', (event) => {
@@ -66,9 +66,9 @@
       if (action === 'dismiss-toast') { toastRoot.innerHTML = ''; return; }
       if (action === 'toggle-sidebar') { document.body.classList.toggle('sidebar-collapsed'); return; }
       if (action === 'toggle-mobile-nav') { document.body.classList.toggle('mobile-nav-open'); return; }
-      if (action === 'open-role-switcher') { const element = document.querySelector('[data-role-switcher]'); if (element) element.hidden = false; return; }
+      if (action === 'open-role-switcher') { const element = document.querySelector('[data-role-switcher]'); if (element) element.removeAttribute('hidden'); return; }
       if (action === 'close-role-switcher') { hide('[data-role-switcher]'); return; }
-      if (action === 'show-notifications') { const element = document.querySelector('[data-notification-drawer]'); if (element) element.hidden = false; return; }
+      if (action === 'show-notifications') { const element = document.querySelector('[data-notification-drawer]'); if (element) element.removeAttribute('hidden'); return; }
       if (action === 'close-notifications') { hide('[data-notification-drawer]'); return; }
       const data = { ...payloadFrom(trigger), actorId: trigger.dataset.actorId, learnerId: trigger.dataset.learnerId };
       trigger.disabled = true;
