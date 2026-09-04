@@ -526,6 +526,8 @@
               assessmentId: 'assessment-remedial', status: 'ASSIGNED', assignedAt: nowIso(),
               dueAt: new Date(new Date(nowIso()).getTime() + draft.settings.remedialDeadlineDays * 86400000).toISOString(),
               videoProgress: 0, highestScore: null, completionMode: null, completedAt: null,
+              accessToken: uid('access'), accessStatus: 'ACTIVE', linkVersion: 1,
+              accessExpiresAt: new Date(new Date(nowIso()).getTime() + draft.settings.remedialDeadlineDays * 86400000).toISOString(),
             };
             draft.remedialAssignments.push(assignment);
             createdAssignments += 1;
@@ -547,6 +549,46 @@
         if (assignment.status === 'ASSIGNED') assignment.status = 'IN_PROGRESS';
         appendEvent(draft, context, 'REMEDIAL_STARTED', 'REMEDIAL_ASSIGNMENT', assignment.id, 'Học viên bắt đầu bài học bù.', { learnerId: assignment.learnerId });
         return { message: 'Đã bắt đầu bài học bù.' };
+      },
+
+      REGENERATE_REMEDIAL_LINK(draft, payload, context) {
+        requireRole(context.actor, ['TEACHER', 'TA']);
+        const assignment = required(draft.remedialAssignments.find((item) => item.id === payload.assignmentId), 'REMEDIAL_NOT_FOUND', 'Không tìm thấy bài học bù.');
+        assignment.accessToken = uid('access');
+        assignment.accessStatus = 'ACTIVE';
+        assignment.linkVersion = Number(assignment.linkVersion || 1) + 1;
+        assignment.accessExpiresAt = assignment.dueAt;
+        appendEvent(draft, context, 'REMEDIAL_LINK_REGENERATED', 'REMEDIAL_ASSIGNMENT', assignment.id, `Đã tạo link phiên bản ${assignment.linkVersion}.`, { learnerId: assignment.learnerId });
+        appendAudit(draft, context, 'REMEDIAL_LINK_REGENERATED', 'REMEDIAL_ASSIGNMENT', assignment.id, `Phiên bản ${assignment.linkVersion}.`);
+        return { message: 'Đã tạo lại link bài học bù.', linkVersion: assignment.linkVersion };
+      },
+
+      REVOKE_REMEDIAL_LINK(draft, payload, context) {
+        requireRole(context.actor, ['TEACHER', 'TA']);
+        const assignment = required(draft.remedialAssignments.find((item) => item.id === payload.assignmentId), 'REMEDIAL_NOT_FOUND', 'Không tìm thấy bài học bù.');
+        const reason = String(payload.reason || '').trim();
+        if (!reason) throw new CommandError('REASON_REQUIRED', 'Thu hồi link cần có lý do.');
+        assignment.accessStatus = 'REVOKED';
+        assignment.revokedAt = nowIso();
+        assignment.revokedBy = context.actor.id;
+        assignment.revocationReason = reason;
+        appendEvent(draft, context, 'REMEDIAL_LINK_REVOKED', 'REMEDIAL_ASSIGNMENT', assignment.id, reason, { learnerId: assignment.learnerId });
+        appendAudit(draft, context, 'REMEDIAL_LINK_REVOKED', 'REMEDIAL_ASSIGNMENT', assignment.id, reason);
+        return { message: 'Đã thu hồi link bài học bù.' };
+      },
+
+      EXTEND_REMEDIAL_DEADLINE(draft, payload, context) {
+        requireRole(context.actor, ['TEACHER', 'TA']);
+        const assignment = required(draft.remedialAssignments.find((item) => item.id === payload.assignmentId), 'REMEDIAL_NOT_FOUND', 'Không tìm thấy bài học bù.');
+        const reason = String(payload.reason || '').trim();
+        const days = Number(payload.days || 0);
+        if (!reason) throw new CommandError('REASON_REQUIRED', 'Gia hạn cần có lý do.');
+        if (!Number.isInteger(days) || days < 1 || days > 30) throw new CommandError('INVALID_EXTENSION', 'Số ngày gia hạn phải từ 1 đến 30.');
+        assignment.dueAt = new Date(new Date(assignment.dueAt).getTime() + days * 86400000).toISOString();
+        if (assignment.accessStatus === 'ACTIVE') assignment.accessExpiresAt = assignment.dueAt;
+        appendEvent(draft, context, 'REMEDIAL_DEADLINE_EXTENDED', 'REMEDIAL_ASSIGNMENT', assignment.id, `Gia hạn ${days} ngày.`, { learnerId: assignment.learnerId });
+        appendAudit(draft, context, 'REMEDIAL_DEADLINE_EXTENDED', 'REMEDIAL_ASSIGNMENT', assignment.id, `${days} ngày · ${reason}`);
+        return { message: `Đã gia hạn ${days} ngày.`, dueAt: assignment.dueAt };
       },
 
       UPDATE_VIDEO_PROGRESS(draft, payload, context) {

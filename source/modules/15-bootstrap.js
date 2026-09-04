@@ -10,6 +10,8 @@
     const bus = root.YC.commands.create(store);
     const toastRoot = document.getElementById('toast-root');
     let toastTimer = null;
+    let quizTimer = null;
+    let videoTimer = null;
 
     function toast(message, kind = 'info') {
       if (!toastRoot) return;
@@ -48,6 +50,18 @@
       app.innerHTML = root.YC.router.frame(currentPath, context());
       document.title = currentPath.startsWith('/app/') ? 'Yen Center · Workspace Demo' : 'Yen Center · Learning Journey Demo';
       document.body.classList.toggle('is-app', currentPath.startsWith('/app/'));
+      root.clearInterval(quizTimer);
+      const timer = document.querySelector('[data-quiz-timer]');
+      if (timer) {
+        let remaining = Number(timer.dataset.seconds || 900);
+        quizTimer = root.setInterval(() => {
+          remaining = Math.max(0, remaining - 1);
+          const minutes = String(Math.floor(remaining / 60)).padStart(2, '0');
+          const seconds = String(remaining % 60).padStart(2, '0');
+          if (timer.isConnected) timer.textContent = `${minutes}:${seconds}`;
+          if (!remaining) root.clearInterval(quizTimer);
+        }, 1000);
+      }
     }
 
     function download(name, content) {
@@ -62,7 +76,9 @@
       URL.revokeObjectURL(url);
     }
 
-    const controller = root.YC.actions.create({ store, bus, storage, location: root.location, onChange: render, onToast: toast, onDownload: download, onPrint: () => root.print() });
+    const controller = root.YC.actions.create({ store, bus, storage, location: root.location, onChange: render, onToast: toast, onDownload: download, onPrint: () => root.print(), onCopy: (value) => {
+      if (root.navigator?.clipboard?.writeText) root.navigator.clipboard.writeText(value).catch(() => {});
+    } });
 
     function payloadFrom(element) {
       if (!element.dataset.payload) return {};
@@ -85,7 +101,18 @@
       if (action === 'close-role-switcher') { hide('[data-role-switcher]'); return; }
       if (action === 'show-notifications') { const element = document.querySelector('[data-notification-drawer]'); if (element) element.removeAttribute('hidden'); return; }
       if (action === 'close-notifications') { hide('[data-notification-drawer]'); return; }
-      const data = { ...payloadFrom(trigger), actorId: trigger.dataset.actorId, learnerId: trigger.dataset.learnerId, sessionId: trigger.dataset.sessionId, status: trigger.dataset.status };
+      if (action === 'fill-demo-quiz') { document.querySelectorAll('[data-demo-answer]').forEach((input) => { input.checked = true; }); toast('Đã điền bộ đáp án demo 8/10.', 'info'); return; }
+      if (action === 'toggle-video') {
+        if (videoTimer) { root.clearInterval(videoTimer); videoTimer = null; return; }
+        const assignmentId = trigger.dataset.assignmentId;
+        videoTimer = root.setInterval(() => {
+          const assignment = store.getState().remedialAssignments.find((item) => item.id === assignmentId);
+          if (!assignment || assignment.videoProgress >= 100) { root.clearInterval(videoTimer); videoTimer = null; return; }
+          controller.execute('video-progress', { assignmentId, progress: Math.min(100, Number(assignment.videoProgress || 0) + 5), silent: true });
+        }, 500);
+        return;
+      }
+      const data = { ...payloadFrom(trigger), actorId: trigger.dataset.actorId, learnerId: trigger.dataset.learnerId, sessionId: trigger.dataset.sessionId, assignmentId: trigger.dataset.assignmentId, status: trigger.dataset.status, progress: trigger.dataset.progress };
       trigger.disabled = true;
       const result = controller.execute(action, data);
       if (result?.ok === false) toast(result.message, 'error');
@@ -103,6 +130,7 @@
       if (form.dataset.form === 'login') { action = 'credential-login'; data = { identifier: values.get('identifier'), secret: values.get('secret') }; }
       if (form.dataset.form === 'forgot') { action = 'request-otp'; data = { identifier: values.get('identifier') }; }
       if (form.dataset.form === 'otp') { action = 'verify-otp'; data = { otp: values.get('otp') }; }
+      if (form.dataset.form === 'quiz') { action = 'submit-quiz'; data = { assignmentId: form.dataset.assignmentId, answers: Array.from(form.querySelectorAll('.question-card'), (_card, index) => { const selected = form.querySelector(`input[name="answer-${index}"]:checked`); return selected ? Number(selected.value) : null; }) }; }
       if (!action) return;
       const result = controller.execute(action, data);
       if (result?.ok === false) toast(result.message, 'error');

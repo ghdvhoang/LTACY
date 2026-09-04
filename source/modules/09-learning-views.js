@@ -62,8 +62,40 @@
   function studentRemedial(ctx) {
     const learner = learnerFor(ctx);
     const assignments = ctx.state.remedialAssignments.filter((item) => item.learnerId === learner.id);
-    const body = assignments.length ? `<div class="learning-list">${assignments.map((item) => { const lesson = ctx.state.lessonTemplates.find((entry) => entry.id === item.lessonTemplateId); const completion = root.YC.selectors.completionStatus(ctx.state, item.id); return `<article><div class="learning-item-icon">${icon('spark')}</div><div><p class="eyebrow">Học bù tự động</p><h3>${escapeHtml(lesson?.title || 'Lesson recovery')}</h3><p>Được tạo từ attendance vắng. Hoàn thành video và quiz để đóng assignment.</p>${progress(item.videoProgress || 0, 'Video evidence')}<div class="inline">${badge(item.status)}${link('Mở nội dung', '/app/student/course', { small: true })}${link('Làm quiz', '/app/student/assessments', { small: true, kind: 'primary' })}</div></div><aside><small>Quiz tốt nhất</small><strong>${completion.highestScore}/100</strong><span>Cần ≥ 80</span></aside></article>`; }).join('')}</div>` : empty('Chưa có bài học bù', 'Khi một attendance vắng được finalize, hệ thống sẽ tạo đúng một assignment tại đây.', link('Chạy hành trình demo', '/demo-guide', { kind: 'primary' }));
+    const body = assignments.length ? `<div class="learning-list">${assignments.map((item) => { const lesson = ctx.state.lessonTemplates.find((entry) => entry.id === item.lessonTemplateId); const completion = root.YC.selectors.completionStatus(ctx.state, item.id); return `<article><div class="learning-item-icon">${icon('spark')}</div><div><p class="eyebrow">Học bù tự động</p><h3>${escapeHtml(lesson?.title || 'Bài học cần ôn')}</h3><p>Được tạo từ buổi điểm danh vắng. Hoàn thành video và bài kiểm tra để đóng nhiệm vụ.</p>${progress(item.videoProgress || 0, 'Tiến độ video')}<div class="inline">${badge(item.status)}${link('Mở bài học', `/app/student/remedial/${item.id}`, { small: true, kind: 'primary' })}${link('Làm bài kiểm tra', `/app/student/quiz/${item.id}`, { small: true })}</div></div><aside><small>Điểm cao nhất</small><strong>${completion.highestScore}/100</strong><span>Cần ≥ 80</span></aside></article>`; }).join('')}</div>` : empty('Chưa có bài học bù', 'Khi một buổi điểm danh vắng được lưu, hệ thống sẽ tạo đúng một nhiệm vụ tại đây.', link('Mở hướng dẫn demo', '/demo-guide', { kind: 'primary' }));
     return `<div class="workspace-page">${pageHeader('Learning recovery', 'Bài học bù', 'Nội dung được nối trực tiếp từ buổi học đã vắng; completion cần đủ cả video và quiz.')}${body}</div>`;
+  }
+
+  function studentRemedialDetail(ctx, assignmentId) {
+    const learner = learnerFor(ctx);
+    const assignment = ctx.state.remedialAssignments.find((item) => item.id === assignmentId && item.learnerId === learner.id);
+    if (!assignment) return empty('Không tìm thấy bài học bù', 'Nhiệm vụ không tồn tại hoặc không thuộc tài khoản học viên này.', link('Về danh sách học bù', '/app/student/remedial'));
+    const lesson = ctx.state.lessonTemplates.find((item) => item.id === assignment.lessonTemplateId);
+    const assessment = ctx.state.assessments.find((item) => item.id === assignment.assessmentId);
+    return `<div class="workspace-page">${pageHeader('Học viên · Học bù', 'Chi tiết bài học bù', `${lesson?.title || ''} · Hạn ${formatDate(assignment.dueAt)}`, link('Về danh sách', '/app/student/remedial'))}
+      <div class="content-grid main-aside"><section class="panel remedial-player"><div class="video-stage"><div class="video-illustration"><button class="play-button" type="button" data-action="toggle-video" data-assignment-id="${escapeHtml(assignment.id)}" aria-label="Phát video">▶</button><div><small>VIDEO BÀI HỌC</small><strong>Past Simple in context</strong></div></div><div class="video-controls"><span>${assignment.videoProgress >= 100 ? '✓' : '▶'}</span><div><i style="width:${assignment.videoProgress || 0}%"></i></div><strong>${assignment.videoProgress || 0}%</strong></div></div>
+      <div class="panel-body"><p>${escapeHtml(lesson?.objectives?.join(' · ') || '')}</p><div class="progress-presets">${[25, 50, 75, 100].map((value) => `<button class="btn btn-secondary btn-sm" type="button" data-action="video-progress" data-assignment-id="${escapeHtml(assignment.id)}" data-progress="${value}">Lưu ${value}%</button>`).join('')}</div></div></section>
+      ${section('Điều kiện hoàn thành', `<dl class="detail-list"><div><dt>Video tối thiểu</dt><dd>${ctx.state.settings.minimumVideoProgress}%</dd></div><div><dt>Điểm đạt</dt><dd>${assessment?.passingScore || 80}%</dd></div><div><dt>Số lượt làm</dt><dd>${ctx.state.attempts.filter((item) => item.assignmentId === assignment.id).length}/${assessment?.maxAttempts || 3}</dd></div><div><dt>Trạng thái</dt><dd>${badge(assignment.status)}</dd></div></dl>${link('Làm bài kiểm tra', `/app/student/quiz/${assignment.id}`, { kind: 'primary' })}`)}</div></div>`;
+  }
+
+  function studentQuiz(ctx, assignmentId) {
+    const learner = learnerFor(ctx);
+    const assignment = ctx.state.remedialAssignments.find((item) => item.id === assignmentId && item.learnerId === learner.id);
+    if (!assignment) return empty('Không tìm thấy bài kiểm tra', 'Hãy mở bài học bù trước khi làm bài.', link('Về học bù', '/app/student/remedial'));
+    const assessment = ctx.state.assessments.find((item) => item.id === assignment.assessmentId);
+    const questions = assessment.questionIds.map((id) => ctx.state.questions.find((item) => item.id === id)).filter(Boolean);
+    const attempts = ctx.state.attempts.filter((item) => item.assignmentId === assignment.id);
+    const exhausted = attempts.length >= assessment.maxAttempts || assignment.status === 'COMPLETED';
+    return `<div class="workspace-page quiz-page">${pageHeader('Học viên · Kiểm tra', assessment.title, `${questions.length} câu · Cần đạt ${assessment.passingScore}% · Còn ${Math.max(0, assessment.maxAttempts - attempts.length)} lượt`, `<time class="quiz-timer" data-quiz-timer data-seconds="900">15:00</time>`)}
+      <form data-form="quiz" data-assignment-id="${escapeHtml(assignment.id)}"><div class="quiz-toolbar"><span>Trả lời tất cả câu hỏi trước khi nộp.</span><button class="btn btn-secondary btn-sm" type="button" data-action="fill-demo-quiz">Điền đáp án demo 8/10</button></div>
+      ${questions.map((question, index) => `<fieldset class="question-card"><legend><span>Câu ${index + 1}</span>${escapeHtml(question.prompt)}</legend><div class="answer-list">${question.options.map((option, optionIndex) => { const demoAnswer = index < 8 ? question.correctIndex : (question.correctIndex + 1) % question.options.length; return `<label><input type="radio" name="answer-${index}" value="${optionIndex}" ${optionIndex === demoAnswer ? 'data-demo-answer' : ''}><span><b>${String.fromCharCode(65 + optionIndex)}</b>${escapeHtml(option)}</span></label>`; }).join('')}</div></fieldset>`).join('')}
+      <div class="quiz-submit"><a class="btn btn-secondary" href="#/app/student/remedial/${assignment.id}">Quay lại bài học</a><button class="btn btn-primary" type="submit" ${exhausted ? 'disabled' : ''}>${assignment.status === 'COMPLETED' ? 'Đã hoàn thành' : 'Nộp bài'}</button></div></form></div>`;
+  }
+
+  function studentResults(ctx) {
+    const learner = learnerFor(ctx);
+    const attempts = ctx.state.attempts.filter((item) => item.learnerId === learner.id).slice().reverse();
+    return `<div class="workspace-page">${pageHeader('Học viên · Kết quả', 'Kết quả học tập', 'Xem điểm, số câu đúng, trạng thái và lịch sử từng lượt làm.')}${section('Lịch sử bài kiểm tra', attempts.length ? attempts.map((attempt) => `<article class="attempt-row"><span>Lượt ${attempt.attemptNumber}</span><strong>${attempt.score}/100</strong><span>${attempt.correct}/10 câu đúng</span>${badge(attempt.status)}<small>${formatDate(attempt.submittedAt)}</small></article>`).join('') : '<p class="muted">Chưa có kết quả. Hãy hoàn thành một bài kiểm tra.</p>')}</div>`;
   }
 
   function studentAssessments(ctx) {
@@ -158,6 +190,9 @@
       '/app/parent/tuition': parentTuition,
     };
     if (path.startsWith('/app/student/course/')) return studentActivity(ctx, path.split('/').at(-1));
+    if (path.startsWith('/app/student/remedial/')) return studentRemedialDetail(ctx, path.split('/').at(-1));
+    if (path.startsWith('/app/student/quiz/')) return studentQuiz(ctx, path.split('/').at(-1));
+    if (path === '/app/student/results') return studentResults(ctx);
     return routes[path] ? routes[path](ctx) : '';
   }
 

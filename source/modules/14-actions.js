@@ -15,7 +15,7 @@
     return `\uFEFF${headers.map(csvCell).join(',')}\r\n${state.auditLogs.map((row) => headers.map((key) => csvCell(row[key])).join(',')).join('\r\n')}`;
   }
 
-  function create({ store, bus, storage, location, onChange = () => {}, onToast = () => {}, onDownload = () => {}, onPrint = () => {} }) {
+  function create({ store, bus, storage, location, onChange = () => {}, onToast = () => {}, onDownload = () => {}, onPrint = () => {}, onCopy = () => {} }) {
     const checkpointCache = new Map();
     const attendanceDrafts = new Map();
 
@@ -180,6 +180,12 @@
         onChange();
         return result;
       }
+      if (action === 'video-progress') {
+        const result = bus.dispatch('UPDATE_VIDEO_PROGRESS', { assignmentId: data.assignmentId, progress: data.progress }, 'student-login-1');
+        if (!data.silent) onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
       if (action === 'create-content-draft') {
         const actorId = storage?.getItem(ACTOR_KEY) || 'teacher-1';
         const result = bus.dispatch('CREATE_CONTENT_DRAFT', data, actorId);
@@ -223,6 +229,44 @@
       }
       if (action === 'submit-demo-quiz') {
         const result = bus.dispatch('SUBMIT_AUTO_ASSESSMENT', { assignmentId: data.assignmentId, answers: [1, 1, 0, 1, 1, 1, 1, 1, 0, 2] }, 'student-login-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'submit-quiz') {
+        if (!Array.isArray(data.answers) || data.answers.some((answer) => answer === null || answer === undefined || answer === '')) return { ok: false, code: 'INCOMPLETE_ATTEMPT', message: 'Cần trả lời đầy đủ trước khi nộp bài.' };
+        const result = bus.dispatch('SUBMIT_AUTO_ASSESSMENT', { assignmentId: data.assignmentId, answers: data.answers }, 'student-login-1');
+        if (result.ok && location) location.hash = '#/app/student/results';
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'copy-remedial-link') {
+        const assignment = state().remedialAssignments.find((item) => item.id === data.assignmentId);
+        if (!assignment) return { ok: false, code: 'REMEDIAL_NOT_FOUND', message: 'Không tìm thấy bài học bù.' };
+        if (assignment.accessStatus === 'REVOKED') return { ok: false, code: 'LINK_REVOKED', message: 'Link đã bị thu hồi. Hãy tạo lại trước khi sao chép.' };
+        const href = `${location?.origin || ''}${location?.pathname || ''}#/app/student/remedial/${assignment.id}?token=${assignment.accessToken}`;
+        onCopy(href);
+        onToast('Đã sao chép link bài học bù.', 'success');
+        return { ok: true, href };
+      }
+      if (action === 'regenerate-remedial-link') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'teacher-1';
+        const result = bus.dispatch('REGENERATE_REMEDIAL_LINK', { assignmentId: data.assignmentId }, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'revoke-remedial-link') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'teacher-1';
+        const result = bus.dispatch('REVOKE_REMEDIAL_LINK', { assignmentId: data.assignmentId, reason: data.reason || 'Giáo viên thu hồi link từ màn quản lý.' }, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'extend-remedial-deadline') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'teacher-1';
+        const result = bus.dispatch('EXTEND_REMEDIAL_DEADLINE', { assignmentId: data.assignmentId, days: Number(data.days || 3), reason: data.reason || 'Giáo viên gia hạn từ màn quản lý.' }, actorId);
         onToast(result.message, result.ok ? 'success' : 'error');
         onChange();
         return result;

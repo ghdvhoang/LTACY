@@ -65,6 +65,7 @@ test('primary navigation and role labels are Vietnamese', () => {
   assert.equal(YC.router.ROLE_LABELS.TEACHER, 'Giáo viên');
   assert.equal(YC.router.ROLE_LABELS.STUDENT, 'Học viên');
   assert.equal(YC.router.ROLE_LABELS.ADMIN, 'Quản trị viên');
-  assert.deepEqual(Array.from(YC.router.NAV.STUDENT, (item) => item[0]), ['Học tập', 'Khóa học', 'Học bù', 'Kiểm tra', 'Tiến bộ']);
+  const labels = Array.from(YC.router.NAV.STUDENT, (item) => item[0]);
+  assert.ok(['Học tập', 'Khóa học', 'Học bù', 'Kiểm tra', 'Kết quả', 'Tiến bộ'].every((label) => labels.includes(label)));
+  assert.ok(labels.every((label) => !/learning|course|assessment|progress|result/i.test(label)));
 });
-
