@@ -117,13 +117,53 @@
     return `<div class="workspace-page">${pageHeader('Teacher · Delivery', 'Sessions', 'Từ readiness đến delivery evidence và finalized attendance.', canonicalAction('Cập nhật session canonical'))}${section('Session list', table([{ label: 'Buổi học', render: (row) => `<a class="table-link" href="#/app/teacher/sessions/${row.id}"><strong>${escapeHtml(row.cohort?.name || '')}</strong><small>${escapeHtml(row.id)}</small></a>` }, { label: 'Lịch', render: (row) => formatDate(row.startsAt) }, { label: 'Phòng', key: 'room' }, { label: 'Readiness', render: (row) => badge(row.plan?.readiness || 'DRAFT') }, { label: 'Delivery', render: (row) => badge(row.status) }, { label: 'Attendance', render: (row) => row.attendanceFinalized ? badge('COMPLETED', 'Đã finalize') : badge('DRAFT', 'Chưa finalize') }], rows))}</div>`;
   }
 
+  function teacherClasses(ctx) {
+    const profile = ctx.state.teacherProfiles.find((item) => item.userId === ctx.actor?.id) || ctx.state.teacherProfiles[0];
+    const classIds = ctx.state.teacherAssignments.filter((item) => item.teacherProfileId === profile.id && ['PROPOSED', 'ACTIVE'].includes(item.status)).map((item) => item.classId);
+    const cohorts = ctx.state.classes.filter((item) => classIds.includes(item.id));
+    return `<div class="workspace-page">${pageHeader('Giáo viên · Lớp học', 'Lớp của tôi', 'Danh sách học viên, lịch học, nội dung và điểm danh dùng cùng dữ liệu phân công.')}${section('Danh sách lớp', table([{ label: 'Lớp', render: (row) => `<a class="table-link" href="#/app/teacher/classes/${row.id}"><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.code)}</small></a>` }, { label: 'Lịch học', key: 'scheduleLabel' }, { label: 'Phòng', key: 'room' }, { label: 'Học viên', render: (row) => ctx.state.enrollments.filter((item) => item.classId === row.id && item.status === 'ACTIVE').length }, { label: 'Trạng thái', render: (row) => badge(row.status) }], cohorts, { emptyTitle: 'Chưa có lớp được phân công', emptyBody: 'Mở Hướng dẫn demo để chuẩn bị ca học mẫu cho giáo viên.' }))}</div>`;
+  }
+
+  function teacherClassDetail(ctx, classId) {
+    const cohort = ctx.state.classes.find((item) => item.id === classId) || ctx.state.classes[0];
+    const learnerIds = ctx.state.enrollments.filter((item) => item.classId === cohort.id && item.status === 'ACTIVE').map((item) => item.learnerId);
+    const learners = ctx.state.learners.filter((item) => learnerIds.includes(item.id));
+    const sessions = ctx.state.sessions.filter((item) => item.classId === cohort.id);
+    return `<div class="workspace-page">${pageHeader('Giáo viên · Lớp học', cohort.name, `${cohort.scheduleLabel} · ${cohort.room}`, link('Về danh sách lớp', '/app/teacher/classes'))}
+      <div class="metric-grid three">${metric('Học viên', learners.length, `${cohort.capacity - learners.length} chỗ còn lại`, 'people')}${metric('Buổi học', sessions.length, 'Theo lịch đang hiệu lực', 'calendar')}${metric('Phiên bản khóa học', ctx.state.courseVersions.find((item) => item.id === cohort.courseVersionId)?.version || '—', 'Snapshot không đổi', 'book')}</div>
+      <div class="content-grid two">${section('Danh sách học viên', table([{ label: 'Mã', key: 'code' }, { label: 'Họ và tên', key: 'name' }, { label: 'Mục tiêu', key: 'goal' }, { label: 'Trạng thái', render: (row) => badge(row.status) }], learners))}${section('Các buổi học', sessions.map((session) => `<div class="queue-card"><div><strong>${formatDate(session.startsAt)}</strong><small>${escapeHtml(ctx.state.lessonTemplates.find((item) => item.id === session.lessonTemplateId)?.title || '')}</small></div>${link(session.attendanceFinalized ? 'Xem điểm danh' : 'Điểm danh', `/app/teacher/sessions/${session.id}/attendance`, { small: true, kind: session.attendanceFinalized ? 'secondary' : 'primary' })}</div>`).join('') || '<p class="muted">Chưa có buổi học.</p>')}</div></div>`;
+  }
+
+  function attendanceEditor(ctx, sessionId) {
+    const workbench = root.YC.selectors.sessionWorkbench(ctx.state, sessionId) || root.YC.selectors.sessionWorkbench(ctx.state, 'session-canonical');
+    const { session, roster } = workbench;
+    const cohort = ctx.state.classes.find((item) => item.id === session.classId);
+    const draft = ctx.attendanceDraft || {};
+    const statuses = [['PRESENT', 'Có mặt'], ['ABSENT', 'Vắng'], ['LATE', 'Đi muộn']];
+    return `<div class="workspace-page attendance-page">${pageHeader('Giáo viên · Buổi học', 'Điểm danh lớp học', `${cohort.name} · ${formatDate(session.startsAt)} · ${session.room}`, `<button class="btn btn-secondary" type="button" data-action="attendance-all-present" data-session-id="${escapeHtml(session.id)}">Tất cả có mặt</button><button class="btn btn-secondary" type="button" data-action="reset-attendance-draft" data-session-id="${escapeHtml(session.id)}">Hoàn tác</button>`)}
+      <div class="notice-panel panel"><b>Dùng chung dữ liệu với tài khoản Học viên</b><p>Đánh dấu Nguyễn Minh Anh vắng rồi lưu. Tài khoản HS6A001 sẽ thấy bài học bù được tạo ngay.</p></div>
+      <section class="panel attendance-editor"><div class="panel-heading"><div><h2>Danh sách học viên</h2><p>${roster.length} học viên · Trạng thái chỉ được ghi khi bấm Lưu điểm danh</p></div>${badge(session.attendanceFinalized ? 'COMPLETED' : 'DRAFT', session.attendanceFinalized ? 'Đã lưu' : 'Chưa lưu')}</div>
+      <div class="attendance-list">${roster.map((learner) => { const stored = ctx.state.attendanceRecords.find((item) => item.sessionId === session.id && item.learnerId === learner.id)?.status; const selected = draft[learner.id] || stored || 'PRESENT'; return `<article class="attendance-row"><div>${person({ name: learner.name }, learner.code)}${learner.id === 'student-canonical' ? '<small class="canonical-label">Học viên demo chính</small>' : ''}</div><div class="attendance-options" role="group" aria-label="Điểm danh ${escapeHtml(learner.name)}">${statuses.map(([status, label]) => `<button type="button" data-action="set-attendance" data-session-id="${escapeHtml(session.id)}" data-learner-id="${escapeHtml(learner.id)}" data-status="${status}" aria-pressed="${selected === status}">${label}</button>`).join('')}</div></article>`; }).join('')}</div>
+      <div class="attendance-save"><span>Vắng sẽ tự động tạo đúng một bài học bù.</span><button class="btn btn-primary" type="button" data-action="save-attendance" data-session-id="${escapeHtml(session.id)}">Lưu điểm danh</button></div></section></div>`;
+  }
+
+  function teacherRemedial(ctx) {
+    const rows = ctx.state.remedialAssignments.map((item) => ({ ...item, learner: ctx.state.learners.find((learner) => learner.id === item.learnerId), lesson: ctx.state.lessonTemplates.find((lesson) => lesson.id === item.lessonTemplateId) }));
+    return `<div class="workspace-page">${pageHeader('Giáo viên · Học bù', 'Theo dõi bài học bù', 'Assignment được tạo trực tiếp từ attendance vắng và hiển thị trong tài khoản Học viên.')}${section('Danh sách bài học bù', table([{ label: 'Học viên', render: (row) => `<strong>${escapeHtml(row.learner?.name || '')}</strong><small>${escapeHtml(row.learner?.code || '')}</small>` }, { label: 'Bài học', render: (row) => escapeHtml(row.lesson?.title || '') }, { label: 'Hạn hoàn thành', render: (row) => formatDate(row.dueAt) }, { label: 'Video', render: (row) => `${row.videoProgress || 0}%` }, { label: 'Điểm cao nhất', render: (row) => row.highestScore ?? '—' }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows, { emptyTitle: 'Chưa có bài học bù', emptyBody: 'Điểm danh một học viên vắng để tạo assignment.' }))}</div>`;
+  }
+
+  function teacherReports(ctx) {
+    const rows = ctx.state.sessions.map((session) => { const cohort = ctx.state.classes.find((item) => item.id === session.classId); const attendance = ctx.state.attendanceRecords.filter((item) => item.sessionId === session.id); const remedial = ctx.state.remedialAssignments.filter((item) => item.sessionId === session.id); return { session, cohort, attendance, remedial }; });
+    return `<div class="workspace-page">${pageHeader('Giáo viên · Báo cáo', 'Báo cáo lớp học', 'Đối chiếu attendance, học bù và kết quả theo từng buổi.', `${button('Xuất CSV', 'export-csv', { kind: 'secondary', payload: { type: 'sessions' } })}${button('In báo cáo', 'print-view', { kind: 'secondary' })}`)}${section('Theo từng buổi học', table([{ label: 'Buổi học', render: (row) => `<strong>${escapeHtml(row.cohort?.name || '')}</strong><small>${formatDate(row.session.startsAt)}</small>` }, { label: 'Có mặt', render: (row) => row.attendance.filter((item) => item.status === 'PRESENT').length }, { label: 'Vắng', render: (row) => row.attendance.filter((item) => item.status === 'ABSENT').length }, { label: 'Đã giao bù', render: (row) => row.remedial.length }, { label: 'Đã hoàn thành', render: (row) => row.remedial.filter((item) => item.status === 'COMPLETED').length }], rows))}</div>`;
+  }
+
   function sessionDetail(ctx, sessionId) {
     const workbench = root.YC.selectors.sessionWorkbench(ctx.state, sessionId) || root.YC.selectors.sessionWorkbench(ctx.state, 'session-canonical');
     const { session, plan, roster, risks, openHomework, delivery } = workbench;
     const cohort = ctx.state.classes.find((item) => item.id === session.classId);
     const lesson = ctx.state.lessonTemplates.find((item) => item.id === session.lessonTemplateId);
     return `<div class="workspace-page session-workbench">${pageHeader('Session workbench', cohort.name, `${formatDate(session.startsAt)} · ${session.room} · ${session.mode}`, canonicalAction('Chạy session step'))}
-      <div class="session-tabs"><a class="active" href="#/app/teacher/sessions/${session.id}">Overview</a><a href="#/app/teacher/sessions/${session.id}">Attendance</a><a href="#/app/teacher/grading">Homework</a><a href="#/app/teacher/quality">Evidence</a></div>
+      <div class="session-tabs"><a class="active" href="#/app/teacher/sessions/${session.id}">Tổng quan</a><a href="#/app/teacher/sessions/${session.id}/attendance">Điểm danh</a><a href="#/app/teacher/grading">Bài tập</a><a href="#/app/teacher/quality">Bằng chứng</a></div>
       <div class="content-grid main-aside"><div class="stack-lg">${section('Lesson plan', `<div class="lesson-plan"><div><p class="eyebrow">${escapeHtml(lesson.title)}</p><h3>${escapeHtml(lesson.objectives.join(' · '))}</h3></div>${badge(plan?.readiness || 'DRAFT')}</div><dl class="detail-list"><div><dt>Adaptations</dt><dd>${escapeHtml((plan?.adaptations || []).join(', ') || 'Chưa có')}</dd></div><div><dt>Planned items</dt><dd>${ctx.state.learningItems.filter((item) => item.lessonTemplateId === lesson.id).length} activities</dd></div><div><dt>Delivery evidence</dt><dd>${delivery ? `${delivery.taughtItemIds.length} taught · ${delivery.deferredItemIds.length} deferred` : 'Chưa ghi'}</dd></div></dl>`)}
       ${section('Roster & attendance', table([{ label: 'Học viên', render: (row) => `<strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.code)}</small>` }, { label: 'Risk', render: (row) => risks.some((risk) => risk.learnerId === row.id) ? badge('REQUESTED', 'Cần lưu ý') : '—' }, { label: 'Attendance', render: (row) => { const record = ctx.state.attendanceRecords.find((item) => item.sessionId === session.id && item.learnerId === row.id); return record ? badge(record.status) : badge('DRAFT', 'Chưa ghi'); } }], roster))}</div>
       <div class="stack-lg">${section('Session controls', `<div class="state-machine"><span class="done">Confirmed</span><span class="${['READY', 'IN_PROGRESS', 'COMPLETED'].includes(session.status) ? 'done' : ''}">Ready</span><span class="${['IN_PROGRESS', 'COMPLETED'].includes(session.status) ? 'done' : ''}">Live</span><span class="${session.status === 'COMPLETED' ? 'done' : ''}">Completed</span></div><p>Trạng thái hiện tại: ${badge(session.status)}</p>${canonicalAction('Thực hiện bước hợp lệ tiếp theo')}`)}${section('Open homework', openHomework.length ? openHomework.map((item) => `<div class="queue-card"><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(ctx.state.learners.find((learner) => learner.id === item.learnerId)?.name || '')}</small></div>${badge(item.status)}</div>`).join('') : '<p class="muted">Không có homework mở cho lớp này.</p>')}</div></div>`;
@@ -183,8 +223,13 @@
     if (path === '/app/service/transfers') return transfers(ctx);
     if (path === '/app/service/substitutions') return substitutions(ctx);
     if (path === '/app/teacher/dashboard') return teacherDashboard(ctx);
+    if (path === '/app/teacher/classes') return teacherClasses(ctx);
+    if (path.startsWith('/app/teacher/classes/')) return teacherClassDetail(ctx, path.split('/').at(-1));
     if (path === '/app/teacher/sessions') return teacherSessions(ctx);
+    if (/^\/app\/teacher\/sessions\/[^/]+\/attendance$/.test(path)) return attendanceEditor(ctx, path.split('/')[4]);
     if (path.startsWith('/app/teacher/sessions/')) return sessionDetail(ctx, path.split('/').at(-1));
+    if (path === '/app/teacher/remedial') return teacherRemedial(ctx);
+    if (path === '/app/teacher/reports') return teacherReports(ctx);
     if (path === '/app/teacher/grading') return grading(ctx);
     if (path === '/app/teacher/workload') return workload(ctx);
     if (path === '/app/teacher/quality') return quality(ctx);

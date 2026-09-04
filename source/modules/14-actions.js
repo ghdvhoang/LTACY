@@ -17,6 +17,7 @@
 
   function create({ store, bus, storage, location, onChange = () => {}, onToast = () => {}, onDownload = () => {}, onPrint = () => {} }) {
     const checkpointCache = new Map();
+    const attendanceDrafts = new Map();
 
     function state() {
       return store.getState();
@@ -47,6 +48,10 @@
         completed.push({ name: item.name, result });
       }
       return { ok: true, completed };
+    }
+
+    function getAttendanceDraft(sessionId) {
+      return { ...(attendanceDrafts.get(sessionId) || {}) };
     }
 
     function runCanonicalNext({ navigate = true } = {}) {
@@ -182,6 +187,40 @@
         onChange();
         return result;
       }
+      if (action === 'set-attendance') {
+        if (!['PRESENT', 'ABSENT', 'LATE'].includes(data.status)) return { ok: false, code: 'INVALID_ATTENDANCE_STATUS', message: 'Trạng thái điểm danh không hợp lệ.' };
+        const draft = getAttendanceDraft(data.sessionId);
+        draft[data.learnerId] = data.status;
+        attendanceDrafts.set(data.sessionId, draft);
+        onChange();
+        return { ok: true };
+      }
+      if (action === 'attendance-all-present') {
+        const session = state().sessions.find((item) => item.id === data.sessionId);
+        if (!session) return { ok: false, code: 'SESSION_NOT_FOUND', message: 'Không tìm thấy buổi học.' };
+        const learnerIds = state().enrollments.filter((item) => item.classId === session.classId && item.status === 'ACTIVE').map((item) => item.learnerId);
+        attendanceDrafts.set(session.id, Object.fromEntries(learnerIds.map((learnerId) => [learnerId, 'PRESENT'])));
+        onChange();
+        return { ok: true };
+      }
+      if (action === 'reset-attendance-draft') {
+        attendanceDrafts.delete(data.sessionId);
+        onChange();
+        return { ok: true };
+      }
+      if (action === 'save-attendance') {
+        const session = state().sessions.find((item) => item.id === data.sessionId);
+        if (!session) return { ok: false, code: 'SESSION_NOT_FOUND', message: 'Không tìm thấy buổi học.' };
+        const learnerIds = state().enrollments.filter((item) => item.classId === session.classId && item.status === 'ACTIVE').map((item) => item.learnerId);
+        const draft = getAttendanceDraft(session.id);
+        const records = learnerIds.map((learnerId) => ({ learnerId, status: draft[learnerId] || state().attendanceRecords.find((item) => item.sessionId === session.id && item.learnerId === learnerId)?.status || 'PRESENT' }));
+        const actorId = storage?.getItem(ACTOR_KEY) || 'teacher-1';
+        const result = bus.dispatch('FINALIZE_ATTENDANCE', { sessionId: session.id, records }, actorId);
+        if (result.ok) attendanceDrafts.delete(session.id);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
       if (action === 'submit-demo-quiz') {
         const result = bus.dispatch('SUBMIT_AUTO_ASSESSMENT', { assignmentId: data.assignmentId, answers: [1, 1, 0, 1, 1, 1, 1, 1, 0, 2] }, 'student-login-1');
         onToast(result.message, result.ok ? 'success' : 'error');
@@ -211,7 +250,7 @@
       return { ok: false, code: 'UNKNOWN_UI_ACTION', message: `UI action không tồn tại: ${action}` };
     }
 
-    return Object.freeze({ execute, loadCheckpoint, runCanonicalAll, runCanonicalNext });
+    return Object.freeze({ execute, getAttendanceDraft, loadCheckpoint, runCanonicalAll, runCanonicalNext });
   }
 
   root.YC.define('actions', Object.freeze({ ACTOR_KEY, LEARNER_KEY, auditCsv, create }));

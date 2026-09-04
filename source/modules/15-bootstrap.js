@@ -32,11 +32,14 @@
       const state = store.getState();
       const currentActor = actor();
       const selectedLearner = storage.getItem(root.YC.actions.LEARNER_KEY);
+      const currentPath = path();
+      const attendanceSessionId = /^\/app\/teacher\/sessions\/([^/]+)\/attendance$/.exec(currentPath)?.[1];
       return {
         state,
         actor: currentActor,
         learnerId: selectedLearner || currentActor?.linkedLearnerIds?.[0] || state.demo.canonicalLearnerId,
-        path: path(),
+        attendanceDraft: attendanceSessionId ? controller.getAttendanceDraft(attendanceSessionId) : {},
+        path: currentPath,
       };
     }
 
@@ -82,7 +85,7 @@
       if (action === 'close-role-switcher') { hide('[data-role-switcher]'); return; }
       if (action === 'show-notifications') { const element = document.querySelector('[data-notification-drawer]'); if (element) element.removeAttribute('hidden'); return; }
       if (action === 'close-notifications') { hide('[data-notification-drawer]'); return; }
-      const data = { ...payloadFrom(trigger), actorId: trigger.dataset.actorId, learnerId: trigger.dataset.learnerId };
+      const data = { ...payloadFrom(trigger), actorId: trigger.dataset.actorId, learnerId: trigger.dataset.learnerId, sessionId: trigger.dataset.sessionId, status: trigger.dataset.status };
       trigger.disabled = true;
       const result = controller.execute(action, data);
       if (result?.ok === false) toast(result.message, 'error');
