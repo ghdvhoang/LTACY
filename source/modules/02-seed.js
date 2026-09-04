@@ -175,7 +175,10 @@
       gradingRecords: [],
       moderationCases: [],
       skillResults: [],
-      packages: [{ id: 'package-a2-1', courseVersionId: 'course-v6', name: 'English Foundation A2.1 · Trọn khóa', price: 6800000, currency: 'VND', validityDays: 120, status: 'ACTIVE' }],
+      packages: [
+        { id: 'package-a2-1', courseVersionId: 'course-v6', name: 'English Foundation A2.1 · Trọn khóa', price: 6800000, currency: 'VND', validityDays: 120, status: 'ACTIVE' },
+        { id: 'package-a2-2', courseVersionId: 'course-v7', name: 'English Foundation A2.2 · Trọn khóa', price: 7200000, currency: 'VND', validityDays: 120, status: 'ACTIVE' },
+      ],
       offers: [],
       invoices: [],
       payments: [],

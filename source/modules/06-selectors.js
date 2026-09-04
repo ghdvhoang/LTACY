@@ -143,5 +143,53 @@
     };
   }
 
-  root.YC.define('selectors', Object.freeze({ byId, journey, metrics, roleHome, scheduleConflicts, sessionWorkbench, teacherEligibility, teacherWorkload }));
+  function completionStatus(state, assignmentId) {
+    const assignment = state.remedialAssignments.find((item) => item.id === assignmentId);
+    if (!assignment) return null;
+    const assessment = state.assessments.find((item) => item.id === assignment.assessmentId);
+    const attempts = state.attempts.filter((item) => item.assignmentId === assignment.id && item.status === 'RELEASED');
+    const highestScore = attempts.reduce((highest, item) => Math.max(highest, Number(item.score || 0)), 0);
+    const videoPassed = Number(assignment.videoProgress || 0) >= Number(state.settings.minimumVideoProgress || 0);
+    const scorePassed = highestScore >= Number(assessment?.passingScore || state.settings.defaultPassingScore);
+    return { assignmentId, videoPassed, scorePassed, highestScore, completed: videoPassed && scorePassed };
+  }
+
+  function skillProfile(state, learnerId) {
+    const labels = ['LISTENING', 'READING', 'SPOKEN_INTERACTION', 'SPOKEN_PRODUCTION', 'WRITING', 'LANGUAGE'];
+    return labels.map((skill) => {
+      const result = state.skillResults.filter((item) => item.learnerId === learnerId && item.skill === skill && item.status === 'RELEASED').at(-1);
+      return { skill, score: result?.score ?? null, evidenceId: result?.id || null };
+    });
+  }
+
+  function progressReportEvidence(state, learnerId) {
+    const enrollment = state.enrollments.find((item) => item.learnerId === learnerId && item.status === 'ACTIVE');
+    const classSessions = state.sessions.filter((item) => item.classId === enrollment?.classId);
+    const attendance = state.attendanceRecords.filter((item) => item.learnerId === learnerId && classSessions.some((session) => session.id === item.sessionId));
+    const present = attendance.filter((item) => ['PRESENT', 'LATE', 'ONLINE', 'MAKE_UP'].includes(item.status)).length;
+    const homework = state.homeworkAssignments.filter((item) => item.learnerId === learnerId);
+    const acceptedHomework = homework.filter((item) => item.status === 'ACCEPTED').length;
+    return {
+      enrollmentId: enrollment?.id || null,
+      attendanceRate: attendance.length ? Math.round((present / attendance.length) * 100) : 100,
+      homeworkCompletion: homework.length ? Math.round((acceptedHomework / homework.length) * 100) : 100,
+      skillProfile: skillProfile(state, learnerId),
+      interventionIds: state.interventionCases.filter((item) => item.learnerId === learnerId).map((item) => item.id),
+      remedialIds: state.remedialAssignments.filter((item) => item.learnerId === learnerId).map((item) => item.id),
+    };
+  }
+
+  function riskSignals(state) {
+    return state.learners.flatMap((learner) => {
+      const records = state.attendanceRecords.filter((item) => item.learnerId === learner.id);
+      const recentAbsences = records.filter((item) => item.status === 'ABSENT').length;
+      const overdueHomework = state.homeworkAssignments.filter((item) => item.learnerId === learner.id && !['ACCEPTED', 'CLOSED'].includes(item.status) && item.dueAt && new Date(item.dueAt) < new Date(state.seededAt)).length;
+      const signals = [];
+      if (recentAbsences >= 2) signals.push({ learnerId: learner.id, type: 'ABSENT_TWO_SESSIONS', severity: 'HIGH', ownerRole: 'STUDENT_SERVICE' });
+      if (overdueHomework > 0) signals.push({ learnerId: learner.id, type: 'HOMEWORK_OVERDUE', severity: 'MEDIUM', ownerRole: 'TEACHER' });
+      return signals;
+    });
+  }
+
+  root.YC.define('selectors', Object.freeze({ byId, completionStatus, journey, metrics, progressReportEvidence, riskSignals, roleHome, scheduleConflicts, sessionWorkbench, skillProfile, teacherEligibility, teacherWorkload }));
 })(globalThis);
