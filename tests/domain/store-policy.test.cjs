@@ -90,7 +90,7 @@ test('journey selector reports the earliest unfinished canonical milestone', () 
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(YC.selectors.journey(state))),
-    { status: 'LEAD', index: 0, total: 12, ownerRole: 'ADMISSIONS' }
+    { status: 'LEAD', index: 0, total: 12, ownerRole: 'ADMISSIONS', complete: false }
   );
   assert.equal(YC.selectors.roleHome('PARENT'), '/app/parent/dashboard');
   assert.equal(YC.selectors.roleHome('ACADEMIC_MANAGER'), '/app/academic/dashboard');

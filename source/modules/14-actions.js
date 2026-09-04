@@ -4,7 +4,20 @@
   const ACTOR_KEY = 'yc.demo.actorId';
   const LEARNER_KEY = 'yc.demo.learnerId';
 
-  function create({ store, bus, storage, location, onChange = () => {}, onToast = () => {} }) {
+  function csvCell(value) {
+    let text = String(value ?? '');
+    if (/^[=+\-@]/.test(text)) text = `'${text}`;
+    return `"${text.replaceAll('"', '""')}"`;
+  }
+
+  function auditCsv(state) {
+    const headers = ['occurredAt', 'actorId', 'action', 'resourceType', 'resourceId', 'detail'];
+    return `\uFEFF${headers.map(csvCell).join(',')}\r\n${state.auditLogs.map((row) => headers.map((key) => csvCell(row[key])).join(',')).join('\r\n')}`;
+  }
+
+  function create({ store, bus, storage, location, onChange = () => {}, onToast = () => {}, onDownload = () => {}, onPrint = () => {} }) {
+    const checkpointCache = new Map();
+
     function state() {
       return store.getState();
     }
@@ -62,9 +75,37 @@
       return result;
     }
 
+    function loadCheckpoint(checkpoint) {
+      const allowed = new Set(['LEAD', 'PLACEMENT', 'PAID', 'ENROLLED', 'TEACHER_ASSIGNED', 'SESSION_DELIVERED', 'REMEDIAL_ASSIGNED', 'REMEDIAL_COMPLETED', 'MODERATED', 'PROGRESS_PUBLISHED', 'PARENT_REVIEWED', 'RENEWED']);
+      if (!allowed.has(checkpoint)) return { ok: false, code: 'CHECKPOINT_NOT_FOUND', message: 'Checkpoint demo không hợp lệ.' };
+      if (checkpointCache.has(checkpoint)) {
+        store.replace(checkpointCache.get(checkpoint));
+        const cachedNext = root.YC.demoGuide.nextStep(state());
+        persistActor(cachedNext.actorId);
+        onToast(`Đã tải checkpoint ${checkpoint}.`, 'success');
+        onChange();
+        return { ok: true, checkpoint, cached: true };
+      }
+      store.reset();
+      for (let index = 0; index < 32 && root.YC.selectors.journey(state()).status !== checkpoint; index += 1) {
+        const step = root.YC.demoGuide.nextStep(state());
+        if (!step.commands.length) break;
+        const result = runCommands(step.commands);
+        if (!result.ok) return result;
+      }
+      if (root.YC.selectors.journey(state()).status !== checkpoint) return { ok: false, code: 'CHECKPOINT_UNREACHABLE', message: 'Không thể tạo checkpoint từ seed hiện tại.' };
+      checkpointCache.set(checkpoint, root.YC.utils.clone(state()));
+      const next = root.YC.demoGuide.nextStep(state());
+      persistActor(next.actorId);
+      onToast(`Đã tải checkpoint ${checkpoint}.`, 'success');
+      onChange();
+      return { ok: true, checkpoint };
+    }
+
     function execute(action, data = {}) {
       if (action === 'canonical-next') return runCanonicalNext({ navigate: true });
       if (action === 'canonical-run-all') return runCanonicalAll();
+      if (action === 'load-checkpoint') return loadCheckpoint(data.checkpoint);
       if (action === 'login') {
         const actor = state().users.find((item) => item.id === data.actorId);
         if (!actor) return { ok: false, code: 'ACTOR_NOT_FOUND', message: 'Không tìm thấy vai trò demo.' };
@@ -108,11 +149,21 @@
         onToast('Đã mô phỏng gửi yêu cầu. Không có dữ liệu nào rời trình duyệt.', 'success');
         return { ok: true, mocked: true };
       }
+      if (action === 'export-csv') {
+        if (data.type !== 'audit') return { ok: false, code: 'EXPORT_NOT_FOUND', message: 'Chưa có export phù hợp.' };
+        onDownload('yen-center-audit.csv', auditCsv(state()));
+        onToast('Đã tạo CSV audit theo scope demo.', 'success');
+        return { ok: true };
+      }
+      if (action === 'print-view') {
+        onPrint();
+        return { ok: true };
+      }
       return { ok: false, code: 'UNKNOWN_UI_ACTION', message: `UI action không tồn tại: ${action}` };
     }
 
-    return Object.freeze({ execute, runCanonicalAll, runCanonicalNext });
+    return Object.freeze({ execute, loadCheckpoint, runCanonicalAll, runCanonicalNext });
   }
 
-  root.YC.define('actions', Object.freeze({ ACTOR_KEY, LEARNER_KEY, create }));
+  root.YC.define('actions', Object.freeze({ ACTOR_KEY, LEARNER_KEY, auditCsv, create }));
 })(globalThis);

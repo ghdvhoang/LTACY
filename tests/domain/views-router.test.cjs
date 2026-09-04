@@ -67,3 +67,11 @@ test('app frame blocks a mismatched workspace role without invoking the view', (
   assert.match(html, /Không có quyền vào workspace này/);
   assert.match(html, /Chọn vai trò phù hợp/);
 });
+
+test('admin data health renders the real schema version without undefined values', () => {
+  const YC = loadYC(['seed', 'router']);
+  const html = YC.router.render('/app/admin/dashboard', context(YC, 'ADMIN', '/app/admin/dashboard'));
+
+  assert.match(html, /<dt>State version<\/dt><dd>3<\/dd>/);
+  assert.doesNotMatch(html, /undefined/);
+});

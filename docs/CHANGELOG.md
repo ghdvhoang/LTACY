@@ -1,4 +1,16 @@
-# Changelog — v2.0 Minimal
+# Changelog
+
+## v3.0.0 — Full Journey Frontend Demo (2026-09-05)
+
+- Rebuilt the frontend around a normalized Language Center domain state.
+- Added a 12-milestone canonical journey from lead to next-level renewal.
+- Added Admissions, Finance, Student Service, Academic, Teacher, Learner, Parent, Manager and Admin workspaces.
+- Added command validation, atomic transactions, domain events, audit records and notifications.
+- Added placement/allocation rules, teacher eligibility/workload, planned-vs-taught delivery, remedial learning, homework revision, moderation, promotion and renewal.
+- Added deterministic demo checkpoints, audit CSV export and browser print.
+- Added handbook v1.1 coverage matrix and explicit frontend/production boundary.
+
+## v2.0 — International Minimal
 
 ## Changed
 

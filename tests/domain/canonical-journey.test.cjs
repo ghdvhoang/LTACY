@@ -52,6 +52,16 @@ test('canonical journey reaches renewal through evidence-backed commands', () =>
   const remedial = runtime.state().remedialAssignments.find((item) => item.learnerId === 'student-canonical');
   mustDispatch(runtime, 'UPDATE_VIDEO_PROGRESS', { assignmentId: remedial.id, progress: 100 }, 'student-login-1');
   mustDispatch(runtime, 'SUBMIT_AUTO_ASSESSMENT', { assignmentId: remedial.id, answers: [1, 1, 0, 1, 1, 1, 1, 1, 0, 2] }, 'student-login-1');
+  mustDispatch(runtime, 'ASSIGN_HOMEWORK', { classId: 'class-6a', learnerId: 'student-canonical', title: 'Audio story: last weekend' }, 'teacher-1');
+  const homework = runtime.state().homeworkAssignments.find((item) => item.learnerId === 'student-canonical');
+  mustDispatch(runtime, 'SUBMIT_HOMEWORK', { homeworkId: homework.id, evidence: 'audio-demo.webm' }, 'student-login-1');
+  mustDispatch(runtime, 'GRADE_HOMEWORK', { homeworkId: homework.id, score: 58, feedback: 'Cần dùng past tense nhất quán.' }, 'teacher-1');
+  mustDispatch(runtime, 'RELEASE_HOMEWORK_FEEDBACK', { homeworkId: homework.id }, 'teacher-1');
+  mustDispatch(runtime, 'REQUEST_REVISION', { homeworkId: homework.id, nextAction: 'Thu lại đoạn 2' }, 'teacher-1');
+  mustDispatch(runtime, 'RESUBMIT_HOMEWORK', { homeworkId: homework.id, evidence: 'audio-demo-v2.webm' }, 'student-login-1');
+  mustDispatch(runtime, 'GRADE_HOMEWORK', { homeworkId: homework.id, score: 86, feedback: 'Past tense rõ và chính xác.' }, 'teacher-1');
+  mustDispatch(runtime, 'RELEASE_HOMEWORK_FEEDBACK', { homeworkId: homework.id }, 'teacher-1');
+  mustDispatch(runtime, 'ACCEPT_HOMEWORK', { homeworkId: homework.id }, 'teacher-1');
   const grade = mustDispatch(runtime, 'SUBMIT_MANUAL_GRADE', {
     assessmentId: 'assessment-final-canonical', learnerId: 'student-canonical',
     skills: { listening: 76, reading: 78, spokenInteraction: 62, spokenProduction: 61, writing: 72, language: 74 },
@@ -74,6 +84,7 @@ test('canonical journey reaches renewal through evidence-backed commands', () =>
 
   assert.equal(runtime.YC.selectors.journey(runtime.state()).status, 'RENEWED');
   assert.equal(runtime.state().renewals[0].nextCourseVersionId, 'course-v7');
+  assert.equal(runtime.state().homeworkAssignments[0].status, 'ACCEPTED');
   assert.ok(runtime.state().domainEvents.length >= 20);
   assert.ok(runtime.state().auditLogs.length > initialAuditCount);
   assert.equal(runtime.state().promotionDecisions[0].overrideEvidence[0], remedial.id);

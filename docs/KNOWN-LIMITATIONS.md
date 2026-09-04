@@ -1,45 +1,36 @@
-# Known Limitations — đọc trước khi demo hoặc handoff
+# Known Limitations — Full Journey Frontend Demo v3.0
 
-## 1. Security và persistence
+## Security và dữ liệu
 
-- Dữ liệu nằm trong `localStorage` của trình duyệt.
-- Login/RBAC chỉ là mô phỏng frontend; người có DevTools có thể sửa state.
-- Không có backend API, database, password hashing, session server hoặc authorization server-side.
-- Không dùng prototype cho dữ liệu thật hoặc môi trường production.
+- State, actor và role scope nằm trong trình duyệt; người dùng DevTools có thể sửa chúng.
+- Không có backend, server-side authorization, password hashing, session server, encryption at rest, immutable audit hoặc tenant isolation.
+- Dữ liệu chỉ là seed giả lập; không dùng thông tin cá nhân thật.
 
-## 2. Integrations
+## Tích hợp
 
-- Bunny Stream, Google Sheets, Email, SMS và Zalo đều là mock/sandbox representation.
-- Không có provider credential hoặc outbound delivery thật.
-- Watermark là lớp răn đe trên UI, không phải DRM.
-- Link học bù được quản lý theo state demo; không phải signed URL production.
+- Payment, email/SMS/Zalo, media và identity provider đều là mock; không có credential hoặc outbound transaction.
+- CSV được tạo thật trong browser. PDF dùng Print/Save as PDF của trình duyệt.
+- Không có accounting/ERP, HRM/payroll, SSO, virtual classroom hoặc external test provider.
 
-## 3. Assessment
+## Academic engine
 
-- E2E quiz player hoàn thiện cho single-choice.
-- Các loại multiple-answer, fill blank, audio, ordering, matching, essay và file upload mới được mô tả/đại diện ở Content Studio; chưa phải engine hoàn chỉnh.
-- Manual grading production chưa được xây dựng.
+- Canonical homework, remedial quiz, six-skill final, moderation và promotion chạy đầy đủ; đây chưa phải question bank/authoring/proctoring engine tổng quát.
+- File/audio evidence là metadata demo, không upload vào object storage.
+- Timetable có model và conflict evidence đại diện nhưng chưa có solver recurrence/room/holiday đầy đủ.
+- Excused absence, reservation, withdrawal, class-wide reschedule và refund mới ở mức boundary/backlog, không phải full interactive workflow.
 
-## 4. Reporting và file
+## Reporting và vận hành
 
-- CSV export hoạt động bằng browser download.
-- PDF sử dụng chức năng Print/Save as PDF của trình duyệt.
-- Google Sheets sync chỉ tạo mock job/status.
-- KPI giờ công tiết kiệm là ước tính theo số assignment × phút thao tác cấu hình.
+- Dashboard tính trực tiếp từ in-memory/localStorage state, không phải analytics snapshot/warehouse.
+- Không kiểm thử concurrent edit, offline merge, queue retry, migration production, backup/restore, disaster recovery hoặc large-scale performance.
+- Notifications chỉ là record trong ứng dụng; không có delivery worker hay SLA.
 
-## 5. Public website
+## Browser
 
-- Content, địa chỉ, email và chương trình là mock data để minh họa.
-- Không có analytics, SEO pipeline, CMS backend hoặc form anti-spam production.
-- Terms/Privacy là nội dung minh họa, cần legal review trước khi dùng thật.
+- Nên chạy qua local HTTP server để download và browser tooling ổn định nhất.
+- `OPEN-DEMO.html` không cần dependency, nhưng chính sách bảo mật của một số browser hoặc embedded preview có thể chặn `file://`, download hoặc print.
 
-## 6. Scope và performance
+## Product scope
 
-- Prototype tập trung vào happy path và các exception quan trọng nhất.
-- Chưa kiểm thử scale, concurrency, data migration, backup/restore hoặc disaster recovery.
-- Không có multi-tenant, parent portal riêng, payment, CRM đầy đủ, live class hoặc native mobile app.
-
-## 7. Browser
-
-- Nên chạy qua local HTTP server để clipboard và download ổn định hơn.
-- Mở standalone bằng `file://` vẫn dùng được luồng chính, nhưng một số browser có thể hạn chế clipboard/download.
+- Release 3+ của handbook—AI, adaptive learning, standards, credentials, external certification và predictive optimization—không thuộc bản demo.
+- Visual direction lấy cảm hứng từ pattern học tập rõ ràng của Coursera, không sao chép thương hiệu, nội dung hoặc asset.

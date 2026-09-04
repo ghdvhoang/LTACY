@@ -1,75 +1,46 @@
-# Demo Script — 10 đến 15 phút
+# Demo Script — Full Journey trong 12–15 phút
 
 ## Chuẩn bị
 
-1. Mở `OPEN-DEMO.html` hoặc chạy local server.
-2. Vào **Hướng dẫn demo**.
-3. Chọn **Reset về điểm bắt đầu**.
-4. Không dùng dữ liệu cá nhân thật khi demo.
+Mở `#/demo-guide`, bấm **Reset demo**, không dùng dữ liệu thật. Giới thiệu Nguyễn Minh Anh là canonical learner duy nhất được theo xuyên hành trình.
 
-## 1. Mở bài — 1 phút
+## 1. Demand đến active enrollment — 3 phút
 
-Thông điệp:
+1. Chạy lần lượt Lead, Placement, Paid và Enrolled.
+2. Chỉ rõ Admissions ghi nhu cầu; Academic release placement 6 skill; Finance ghi payment mock; Student Service xếp lớp.
+3. Mở case no-seat để giải thích allocation là decision engine khác placement.
 
-> Yen Center kết nối vận hành lớp, nội dung học và học bù trong một luồng dữ liệu. Điểm khác biệt chính là khi học sinh vắng, hệ thống tự giao đúng bài và theo dõi tới khi hoàn thành.
+Proof: learner không bị nhập lại; offer/invoice/payment/enrollment là object riêng; capacity và fit là rule explicit.
 
-Trên Homepage, chỉ nhanh hai journey:
+## 2. Teacher operation đến learning evidence — 4 phút
 
-- Phụ huynh/học sinh: tìm chương trình, gửi tư vấn.
-- Trung tâm/trường học: xem giải pháp, đặt lịch demo.
+1. Chạy Teacher Assigned và Session Delivered.
+2. Mở candidate ranking: hard gate loại teacher không hợp lệ, workload chỉ là một phần quyết định.
+3. Mở Teacher Session: readiness, adaptation, planned/taught/deferred evidence.
+4. Chạy Attendance & Remedial rồi Learning & Homework loop.
+5. Mở Learner Course/Remedial và Teacher Grading.
 
-## 2. Teacher flow — 3 phút
+Proof: vắng tạo đúng một remedial; completion cần video + quiz; homework có feedback và resubmission; curriculum không bị sửa bởi delivery.
 
-1. Đăng nhập nhanh tài khoản Giáo viên.
-2. Mở **Lịch & điểm danh**.
-3. Chọn buổi `English Foundation 6A` đang mở.
-4. Chọn **Tất cả có mặt**.
-5. Đổi riêng Nguyễn Minh Anh thành **Vắng**.
-6. Lưu điểm danh.
-7. Nêu rõ hệ thống tự tạo đúng một nhiệm vụ học bù cho buổi và bài học đó.
-8. Mở **Theo dõi học bù**, chỉ trạng thái, deadline và quản lý link.
+## 3. Quality gate đến renewal — 4 phút
 
-Điểm cần nói:
+1. Chạy Moderated và mở Academic Moderation.
+2. Chạy Progress Published; mở six-skill profile, evidence IDs và promotion decision.
+3. Chạy Parent Reviewed; mở Parent Progress để chứng minh internal/restricted note không lộ.
+4. Chạy Renewed; mở Manager Retention.
 
-- Trigger idempotent, không tạo trùng assignment.
-- Teacher chỉ thấy lớp được phân công.
-- Link có trạng thái/version và có thể thu hồi/gia hạn.
+Proof: final grade có independent review; promotion override có reason/evidence/audit; renewal bắt đầu từ outcome và next goal.
 
-## 3. Student flow — 3 đến 4 phút
+## 4. Governance — 2 phút
 
-1. Đăng xuất.
-2. Đăng nhập `HS6A001 / 123456`.
-3. Mở **Bài học bù**.
-4. Chọn nhiệm vụ vừa được giao.
-5. Hoàn tất video demo để lưu progress.
-6. Mở quiz.
-7. Chọn **Điền đáp án demo 8/10**.
-8. Nộp bài.
-9. Chỉ kết quả `80/100` và trạng thái **Đã bù xong**.
+1. Chuyển sang Admin, mở Domain Events và Audit Logs.
+2. Xuất CSV hoặc Print view.
+3. Mở Integrations và nhấn mạnh mọi provider đều mock.
 
-Điểm cần nói:
+## Backup khi cần nhảy nhanh
 
-- Dữ liệu không phải card tĩnh; trạng thái vừa được thay đổi trên cùng state.
-- Điểm đạt mặc định 80% và có thể cấu hình.
-- Bản prototype mới hiện thực đầy đủ single-choice; các question type khác là phạm vi thiết kế.
+Dùng dải 12 checkpoint ở Demo Guide. Mỗi nút reset seed rồi replay valid commands đến milestone đã chọn.
 
-## 4. Admin/Reporting — 3 phút
+## Kết thúc
 
-1. Chuyển sang Admin từ Hướng dẫn demo hoặc đăng nhập lại.
-2. Mở **Quản lý học bù** để thấy assignment vừa hoàn tất.
-3. Mở **Báo cáo** để xem dữ liệu theo buổi học.
-4. Mở **Audit Log** để thấy attendance trigger và completion event.
-5. Mở **Yêu cầu liên hệ** để mô tả B2C/B2B/support inbox.
-6. Mở **Tích hợp** và nói rõ các provider đang ở mock mode.
-
-## 5. Kết thúc — 1 phút
-
-Thông điệp:
-
-> Bản này chứng minh product flow và trải nghiệm. Bước tiếp theo là chốt backend, security, integration provider và backlog production; không lấy prototype frontend làm cam kết rằng mọi tích hợp đã live.
-
-## Backup route khi demo có lỗi trạng thái
-
-- Vào `/demo-guide`.
-- Chọn **Reset về điểm bắt đầu**.
-- Chạy lại canonical flow.
+> Bản v3 chứng minh flow, decision, evidence và role experience theo Release 1/2 của handbook. Production vẫn cần backend, security, integration và operational hardening.

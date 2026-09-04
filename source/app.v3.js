@@ -1280,15 +1280,15 @@
       { status: 'TEACHER_ASSIGNED', ownerRole: 'ACADEMIC_MANAGER', done: state.teacherAssignments.some((item) => item.classId === 'class-6a' && item.status === 'ACTIVE') },
       { status: 'SESSION_DELIVERED', ownerRole: 'TEACHER', done: state.deliveryRecords.some((item) => item.sessionId === 'session-canonical') },
       { status: 'REMEDIAL_ASSIGNED', ownerRole: 'TEACHER', done: state.remedialAssignments.some((item) => item.learnerId === learnerId) },
-      { status: 'REMEDIAL_COMPLETED', ownerRole: 'STUDENT', done: state.remedialAssignments.some((item) => item.learnerId === learnerId && item.status === 'COMPLETED') },
+      { status: 'REMEDIAL_COMPLETED', ownerRole: 'STUDENT', done: state.remedialAssignments.some((item) => item.learnerId === learnerId && item.status === 'COMPLETED') && state.homeworkAssignments.some((item) => item.learnerId === learnerId && item.status === 'ACCEPTED') },
       { status: 'MODERATED', ownerRole: 'ACADEMIC_MANAGER', done: state.moderationCases.some((item) => item.learnerId === learnerId && item.status === 'APPROVED') },
       { status: 'PROGRESS_PUBLISHED', ownerRole: 'ACADEMIC_MANAGER', done: state.progressReports.some((item) => item.learnerId === learnerId && item.status === 'PUBLISHED') },
       { status: 'PARENT_REVIEWED', ownerRole: 'PARENT', done: state.domainEvents.some((item) => item.type === 'PARENT_PROGRESS_VIEWED' && item.learnerId === learnerId) },
       { status: 'RENEWED', ownerRole: 'ADMISSIONS', done: state.renewals.some((item) => item.learnerId === learnerId && item.status === 'ACCEPTED') },
     ];
     const index = checks.findIndex((item) => !item.done);
-    if (index === -1) return { status: 'RENEWED', index: 11, total: checks.length, ownerRole: 'ADMISSIONS' };
-    return { status: checks[index].status, index, total: checks.length, ownerRole: checks[index].ownerRole };
+    if (index === -1) return { status: 'RENEWED', index: checks.length, total: checks.length, ownerRole: 'ADMISSIONS', complete: true };
+    return { status: checks[index].status, index, total: checks.length, ownerRole: checks[index].ownerRole, complete: false };
   }
 
   function metrics(state, role) {
@@ -1332,7 +1332,7 @@
     const courseVersion = state.courseVersions.find((item) => item.id === cohort?.courseVersionId);
     const levelCode = state.levels.find((item) => item.id === state.courses.find((course) => course.id === courseVersion?.courseId)?.levelId)?.code || '';
     const frameworkLevel = levelCode.split('.')[0];
-    const now = new Date(state.seededAt).getTime();
+    const now = new Date(state.currentAt || state.seededAt).getTime();
     const qualificationValid = Boolean(profile && state.qualifications.some((item) => item.teacherProfileId === profile.id
       && item.status === 'VALID'
       && new Date(item.expiresAt).getTime() >= now));
@@ -1430,7 +1430,7 @@
     return state.learners.flatMap((learner) => {
       const records = state.attendanceRecords.filter((item) => item.learnerId === learner.id);
       const recentAbsences = records.filter((item) => item.status === 'ABSENT').length;
-      const overdueHomework = state.homeworkAssignments.filter((item) => item.learnerId === learner.id && !['ACCEPTED', 'CLOSED'].includes(item.status) && item.dueAt && new Date(item.dueAt) < new Date(state.seededAt)).length;
+      const overdueHomework = state.homeworkAssignments.filter((item) => item.learnerId === learner.id && !['ACCEPTED', 'CLOSED'].includes(item.status) && item.dueAt && new Date(item.dueAt) < new Date(state.currentAt || state.seededAt)).length;
       const signals = [];
       if (recentAbsences >= 2) signals.push({ learnerId: learner.id, type: 'ABSENT_TWO_SESSIONS', severity: 'HIGH', ownerRole: 'STUDENT_SERVICE' });
       if (overdueHomework > 0) signals.push({ learnerId: learner.id, type: 'HOMEWORK_OVERDUE', severity: 'MEDIUM', ownerRole: 'TEACHER' });
@@ -1753,7 +1753,8 @@
     const reports = linked.flatMap((learnerId) => ctx.state.progressReports.filter((item) => item.learnerId === learnerId && item.status === 'PUBLISHED'));
     const current = reports.find((item) => item.learnerId === learner.id) || null;
     const feedback = root.YC.policy.visibleFeedback(ctx.actor, ctx.state.feedbackRecords, ctx.state);
-    return `<div class="workspace-page">${learnerSwitcher(ctx, linked, learner.id)}${pageHeader('Family portal', 'Báo cáo tiến bộ', 'Chỉ hiển thị report đã publish và teacher feedback có visibility phù hợp.', current ? button('Xác nhận đã xem', 'acknowledge-progress', { payload: { learnerId: learner.id }, icon: 'check' }) : '')}
+    const actions = current ? `${button('In báo cáo', 'print-view', { kind: 'secondary' })}${button('Xác nhận đã xem', 'acknowledge-progress', { payload: { learnerId: learner.id }, icon: 'check' })}` : '';
+    return `<div class="workspace-page">${learnerSwitcher(ctx, linked, learner.id)}${pageHeader('Family portal', 'Báo cáo tiến bộ', 'Chỉ hiển thị report đã publish và teacher feedback có visibility phù hợp.', actions)}
       ${current ? `<div class="report-banner light"><div><p class="eyebrow">Academic summary</p><h2>${escapeHtml(current.narrative)}</h2><p>${escapeHtml(current.nextActions.join(' · '))}</p></div><span class="report-average">${Math.round(current.skillProfile.reduce((sum, item) => sum + item.score, 0) / current.skillProfile.length)}<small>overall</small></span></div><div class="skill-grid compact">${current.skillProfile.map((item) => `<article><span>${escapeHtml(item.skill.replaceAll('_', ' '))}</span><strong>${item.score}</strong>${progress(item.score)}</article>`).join('')}</div>` : empty('Chưa có report cho học viên này', 'Academic Manager sẽ publish sau khi đủ skill evidence và moderation.')}
       ${section('Nhận xét có thể chia sẻ', feedback.length ? feedback.map((item) => { const target = ctx.state.learners.find((entry) => entry.id === item.learnerId); return `<blockquote><p>“${escapeHtml(item.body)}”</p><footer>${escapeHtml(target?.name || '')} · ${formatDate(item.createdAt)}</footer></blockquote>`; }).join('') : '<p class="muted">Chưa có nhận xét được phép chia sẻ.</p>', { subtitle: 'Ghi chú nội bộ và safeguarding bị loại bởi visibility policy' })}</div>`;
   }
@@ -2077,7 +2078,7 @@
   function adminDashboard(ctx) {
     return `<div class="workspace-page">${pageHeader('Admin console', 'System control & traceability', 'Một tổ chức Yen Center, nhiều branch, role scope và demo integrations.')}
       <div class="metric-grid four">${metric('Active users', ctx.state.users.filter((item) => item.status === 'ACTIVE').length, '10 role types', 'people')}${metric('Domain events', ctx.state.domainEvents.length, 'Workflow handoffs', 'trend')}${metric('Audit records', ctx.state.auditLogs.length, 'High-impact trace', 'shield')}${metric('Demo integrations', 4, 'Tất cả đang MOCK', 'grid')}</div>
-      <div class="content-grid two">${section('System boundaries', '<ul class="check-list"><li>✓ One organization, multi-branch</li><li>✓ Browser localStorage only</li><li>✓ Frontend RBAC demonstration</li><li>✓ Payment, messaging, auth are mock</li></ul>')}${section('Data health', `<dl class="detail-list"><div><dt>State version</dt><dd>${escapeHtml(ctx.state.version)}</dd></div><div><dt>Seeded at</dt><dd>${formatDate(ctx.state.seededAt)}</dd></div><div><dt>Migration notice</dt><dd>${escapeHtml(ctx.state.demo.migrationNotice || 'None')}</dd></div><div><dt>Canonical learner</dt><dd>${escapeHtml(ctx.state.demo.canonicalLearnerId)}</dd></div></dl>`)}</div></div>`;
+      <div class="content-grid two">${section('System boundaries', '<ul class="check-list"><li>✓ One organization, multi-branch</li><li>✓ Browser localStorage only</li><li>✓ Frontend RBAC demonstration</li><li>✓ Payment, messaging, auth are mock</li></ul>')}${section('Data health', `<dl class="detail-list"><div><dt>State version</dt><dd>${escapeHtml(ctx.state.schemaVersion)}</dd></div><div><dt>Seeded at</dt><dd>${formatDate(ctx.state.seededAt)}</dd></div><div><dt>Migration notice</dt><dd>${escapeHtml(ctx.state.migrationNotice?.message || 'None')}</dd></div><div><dt>Canonical learner</dt><dd>${escapeHtml(ctx.state.demo.canonicalLearnerId)}</dd></div></dl>`)}</div></div>`;
   }
 
   function access(ctx) {
@@ -2086,7 +2087,8 @@
   }
 
   function auditLogs(ctx) {
-    return `<div class="workspace-page">${pageHeader('Admin · Governance', 'Audit logs', 'Ai làm gì, trên resource nào, với lý do hoặc evidence nào.')}${section('Audit trail', table([{ label: 'Thời gian', render: (row) => formatDate(row.occurredAt) }, { label: 'Actor', render: (row) => escapeHtml(ctx.state.users.find((item) => item.id === row.actorId)?.name || row.actorId) }, { label: 'Action', render: (row) => `<code>${escapeHtml(row.action)}</code>` }, { label: 'Resource', render: (row) => `${escapeHtml(row.resourceType)}<small>${escapeHtml(row.resourceId)}</small>` }, { label: 'Detail', key: 'detail' }], ctx.state.auditLogs))}</div>`;
+    const actions = `${button('In view', 'print-view', { kind: 'secondary' })}${button('Xuất CSV', 'export-csv', { payload: { type: 'audit' } })}`;
+    return `<div class="workspace-page">${pageHeader('Admin · Governance', 'Audit logs', 'Ai làm gì, trên resource nào, với lý do hoặc evidence nào.', actions)}${section('Audit trail', table([{ label: 'Thời gian', render: (row) => formatDate(row.occurredAt) }, { label: 'Actor', render: (row) => escapeHtml(ctx.state.users.find((item) => item.id === row.actorId)?.name || row.actorId) }, { label: 'Action', render: (row) => `<code>${escapeHtml(row.action)}</code>` }, { label: 'Resource', render: (row) => `${escapeHtml(row.resourceType)}<small>${escapeHtml(row.resourceId)}</small>` }, { label: 'Detail', key: 'detail' }], ctx.state.auditLogs))}</div>`;
   }
 
   function events(ctx) {
@@ -2144,11 +2146,18 @@
     { key: 'TEACHER_ASSIGNED', label: 'Teacher eligibility', role: 'ACADEMIC_MANAGER', route: '/app/academic/assignments', evidence: 'Hard gates + workload' },
     { key: 'SESSION_DELIVERED', label: 'Chuẩn bị & delivery', role: 'TEACHER', route: '/app/teacher/sessions/session-canonical', evidence: 'Plan vs taught + gap' },
     { key: 'REMEDIAL_ASSIGNED', label: 'Attendance & remedial', role: 'TEACHER', route: '/app/teacher/sessions/session-canonical', evidence: 'Final attendance + one assignment' },
-    { key: 'REMEDIAL_COMPLETED', label: 'Learning recovery', role: 'STUDENT', route: '/app/student/course', evidence: 'Video + released quiz attempt' },
+    { key: 'REMEDIAL_COMPLETED', label: 'Learning & homework loop', role: 'STUDENT', route: '/app/student/course', evidence: 'Video + quiz + revised homework' },
     { key: 'MODERATED', label: 'Final grading & moderation', role: 'ACADEMIC_MANAGER', route: '/app/academic/moderation', evidence: 'Rubric + reviewer approval' },
     { key: 'PROGRESS_PUBLISHED', label: 'Progress & promotion', role: 'ACADEMIC_MANAGER', route: '/app/academic/progress-reviews', evidence: 'Report snapshot + decision' },
     { key: 'PARENT_REVIEWED', label: 'Parent review', role: 'PARENT', route: '/app/parent/progress', evidence: 'Visibility-filtered acknowledgement' },
     { key: 'RENEWED', label: 'Next-level renewal', role: 'ADMISSIONS', route: '/app/admissions/renewals', evidence: 'A2.2 offer accepted' },
+  ]);
+
+  const CHECKPOINTS = Object.freeze([
+    ['LEAD', 'Lead'], ['PLACEMENT', 'Placement'], ['PAID', 'Paid'], ['ENROLLED', 'Enrolled'],
+    ['TEACHER_ASSIGNED', 'Teacher'], ['SESSION_DELIVERED', 'Session'], ['REMEDIAL_ASSIGNED', 'Remedial'],
+    ['REMEDIAL_COMPLETED', 'Learning'], ['MODERATED', 'Moderated'], ['PROGRESS_PUBLISHED', 'Progress'],
+    ['PARENT_REVIEWED', 'Parent'], ['RENEWED', 'Renewed'],
   ]);
 
   function command(name, payload, actorId) {
@@ -2166,6 +2175,7 @@
     const assignment = state.teacherAssignments.find((item) => item.classId === 'class-6a' && ['PROPOSED', 'ACTIVE'].includes(item.status));
     const session = state.sessions.find((item) => item.id === 'session-canonical');
     const remedial = state.remedialAssignments.find((item) => item.learnerId === learnerId);
+    const homework = state.homeworkAssignments.find((item) => item.learnerId === learnerId);
     const attempt = state.attempts.find((item) => item.assessmentId === 'assessment-final-canonical' && item.learnerId === learnerId);
     const moderation = state.moderationCases.find((item) => item.attemptId === attempt?.id);
     const report = state.progressReports.find((item) => item.learnerId === learnerId && item.status === 'PUBLISHED');
@@ -2212,6 +2222,26 @@
       commands.push(command('SUBMIT_AUTO_ASSESSMENT', { assignmentId: remedial.id, answers: [1, 1, 0, 1, 1, 1, 1, 1, 0, 2] }, 'student-login-1'));
       return { ...STEPS[7], actorId: 'student-login-1', action: 'Hoàn thành video & quiz 8/10', commands };
     }
+    if (!homework) return { ...STEPS[7], actorId: 'teacher-1', action: 'Giao homework theo session', route: '/app/teacher/grading', commands: [command('ASSIGN_HOMEWORK', { classId: 'class-6a', learnerId, title: 'Audio story: last weekend' }, 'teacher-1')] };
+    if (homework.status === 'ASSIGNED') return { ...STEPS[7], actorId: 'student-login-1', action: 'Learner nộp homework v1', route: '/app/student/dashboard', commands: [command('SUBMIT_HOMEWORK', { homeworkId: homework.id, evidence: 'audio-demo.webm' }, 'student-login-1')] };
+    if (homework.status === 'SUBMITTED') return { ...STEPS[7], actorId: 'teacher-1', action: 'Feedback & yêu cầu revision', route: '/app/teacher/grading', commands: [
+      command('GRADE_HOMEWORK', { homeworkId: homework.id, score: 58, feedback: 'Cần dùng past tense nhất quán.' }, 'teacher-1'),
+      command('RELEASE_HOMEWORK_FEEDBACK', { homeworkId: homework.id }, 'teacher-1'),
+      command('REQUEST_REVISION', { homeworkId: homework.id, nextAction: 'Thu lại đoạn 2' }, 'teacher-1'),
+    ] };
+    if (homework.status === 'FEEDBACK_READY') return { ...STEPS[7], actorId: 'teacher-1', action: 'Release homework feedback', route: '/app/teacher/grading', commands: [command('RELEASE_HOMEWORK_FEEDBACK', { homeworkId: homework.id }, 'teacher-1')] };
+    if (homework.status === 'REVISION_REQUIRED') return { ...STEPS[7], actorId: 'student-login-1', action: 'Learner nộp lại homework v2', route: '/app/student/dashboard', commands: [command('RESUBMIT_HOMEWORK', { homeworkId: homework.id, evidence: 'audio-demo-v2.webm' }, 'student-login-1')] };
+    if (homework.status === 'RESUBMITTED') return { ...STEPS[7], actorId: 'teacher-1', action: 'Chấm lại & accept homework', route: '/app/teacher/grading', commands: [
+      command('GRADE_HOMEWORK', { homeworkId: homework.id, score: 86, feedback: 'Past tense rõ và chính xác.' }, 'teacher-1'),
+      command('RELEASE_HOMEWORK_FEEDBACK', { homeworkId: homework.id }, 'teacher-1'),
+      command('ACCEPT_HOMEWORK', { homeworkId: homework.id }, 'teacher-1'),
+    ] };
+    if (homework.status === 'RELEASED') {
+      const submission = state.homeworkSubmissions.find((item) => item.id === homework.currentSubmissionId);
+      const next = Number(submission?.version || 1) > 1 ? 'ACCEPT_HOMEWORK' : 'REQUEST_REVISION';
+      const payload = next === 'ACCEPT_HOMEWORK' ? { homeworkId: homework.id } : { homeworkId: homework.id, nextAction: 'Thu lại đoạn 2' };
+      return { ...STEPS[7], actorId: 'teacher-1', action: next === 'ACCEPT_HOMEWORK' ? 'Accept homework' : 'Yêu cầu revision', route: '/app/teacher/grading', commands: [command(next, payload, 'teacher-1')] };
+    }
     if (!attempt) return { ...STEPS[8], actorId: 'academic-1', action: 'Grade, moderate & release final', commands: [
       command('SUBMIT_MANUAL_GRADE', { assessmentId: 'assessment-final-canonical', learnerId, skills: { listening: 76, reading: 78, spokenInteraction: 62, spokenProduction: 61, writing: 72, language: 74 }, feedback: 'Đủ evidence; speaking sát ngưỡng.' }, 'teacher-1'),
     ], continueAfterResult: 'moderation' };
@@ -2231,13 +2261,13 @@
     const next = nextStep(ctx.state);
     const learner = ctx.state.learners.find((item) => item.id === ctx.state.demo.canonicalLearnerId);
     const events = ctx.state.domainEvents.filter((item) => item.learnerId === learner.id).slice(0, 8);
-    return `<main id="main-content" class="demo-guide-page"><section class="demo-hero"><div class="container"><div><p class="eyebrow on-dark">Full-journey frontend demo</p><h1>Theo dấu Nguyễn Minh Anh từ lead đến renewal.</h1><p>Một state, nhiều workspace, mỗi quyết định có evidence, event và audit. Các tích hợp ngoài đều là mock.</p><div class="hero-actions">${next.commands.length ? button(next.action, 'canonical-next', { icon: 'arrow' }) : link('Xem kết quả renewal', next.route, { kind: 'primary' })}${button('Chạy tự động đến cuối', 'canonical-run-all', { kind: 'secondary' })}${button('Reset demo', 'reset-demo', { kind: 'ghost' })}</div></div><aside><span class="journey-count">${Math.min(journey.index + 1, journey.total)}<small>/ ${journey.total}</small></span><div><small>Current milestone</small><strong>${escapeHtml(next.label)}</strong><span>Owner · ${escapeHtml(next.role.replaceAll('_', ' '))}</span></div></aside></div></section>
-      <section class="container demo-progress-section">${progress(journey.status === 'RENEWED' ? 100 : Math.round(journey.index / journey.total * 100), 'Toàn hành trình')}<div class="demo-layout"><div class="journey-rail">${STEPS.map((step, index) => { const done = journey.status === 'RENEWED' || index < journey.index; const active = !done && step.key === journey.status; return `<article class="journey-step ${done ? 'done' : ''} ${active ? 'active' : ''}"><div class="step-marker">${done ? icon('check') : index + 1}</div><div><p>${escapeHtml(step.role.replaceAll('_', ' '))}</p><h2>${escapeHtml(step.label)}</h2><span>${escapeHtml(step.evidence)}</span></div><div>${done ? badge('COMPLETED') : active ? badge('IN_PROGRESS') : badge('DRAFT', 'Chưa đến')}<a href="#${escapeHtml(step.route)}">Mở workspace ${icon('arrow')}</a></div></article>`; }).join('')}</div>
+    return `<main id="main-content" class="demo-guide-page"><section class="demo-hero"><div class="container"><div><p class="eyebrow on-dark">Full-journey frontend demo</p><h1>Theo dấu Nguyễn Minh Anh từ lead đến renewal.</h1><p>Một state, nhiều workspace, mỗi quyết định có evidence, event và audit. Các tích hợp ngoài đều là mock.</p><div class="hero-actions">${next.commands.length ? button(next.action, 'canonical-next', { icon: 'arrow' }) : link('Xem kết quả renewal', next.route, { kind: 'primary' })}${button('Chạy tự động đến cuối', 'canonical-run-all', { kind: 'secondary' })}${button('Reset demo', 'reset-demo', { kind: 'ghost' })}</div></div><aside><span class="journey-count">${Math.min(journey.index + (journey.complete ? 0 : 1), journey.total)}<small>/ ${journey.total}</small></span><div><small>${journey.complete ? 'Journey status' : 'Current milestone'}</small><strong>${escapeHtml(next.label)}</strong><span>Owner · ${escapeHtml(next.role.replaceAll('_', ' '))}</span></div></aside></div></section>
+      <section class="container demo-progress-section">${progress(journey.complete ? 100 : Math.round(journey.index / journey.total * 100), 'Toàn hành trình')}<section class="checkpoint-bar" aria-label="Demo checkpoints"><div><p class="eyebrow">Jump to evidence</p><strong>Tải một checkpoint có trạng thái nhất quán</strong></div><div class="checkpoint-actions">${CHECKPOINTS.map(([key, label]) => button(label, 'load-checkpoint', { kind: !journey.complete && key === journey.status ? 'primary' : 'secondary', small: true, payload: { checkpoint: key } })).join('')}</div></section><div class="demo-layout"><div class="journey-rail">${STEPS.map((step, index) => { const done = journey.complete || index < journey.index; const active = !done && step.key === journey.status; return `<article class="journey-step ${done ? 'done' : ''} ${active ? 'active' : ''}"><div class="step-marker">${done ? icon('check') : index + 1}</div><div><p>${escapeHtml(step.role.replaceAll('_', ' '))}</p><h2>${escapeHtml(step.label)}</h2><span>${escapeHtml(step.evidence)}</span></div><div>${done ? badge('COMPLETED') : active ? badge('IN_PROGRESS') : badge('DRAFT', 'Chưa đến')}<a href="#${escapeHtml(step.route)}">Mở workspace ${icon('arrow')}</a></div></article>`; }).join('')}</div>
       <aside class="demo-aside"><section class="panel sticky-panel"><p class="eyebrow">Next valid action</p><h2>${escapeHtml(next.action)}</h2><p>Hệ thống sẽ dùng đúng actor <strong>${escapeHtml(next.role.replaceAll('_', ' '))}</strong> và chạy qua command validation.</p>${next.commands.length ? button(next.action, 'canonical-next', { icon: 'arrow' }) : link('Xem kết quả', next.route, { kind: 'primary' })}<small>Mỗi command tự ghi event/audit phù hợp.</small></section>
       <section class="panel"><div class="panel-heading"><div><h2>Evidence mới nhất</h2><p>Domain event của canonical learner</p></div></div>${events.length ? events.map((event) => `<div class="event-row"><span>${icon('check')}</span><div><strong>${escapeHtml(event.summary)}</strong><small>${formatDate(event.occurredAt)} · ${escapeHtml(event.type)}</small></div></div>`).join('') : '<p class="muted">Bắt đầu bước đầu tiên để tạo event.</p>'}</section></aside></div></section></main>`;
   }
 
-  root.YC.define('demoGuide', Object.freeze({ STEPS, nextStep, render }));
+  root.YC.define('demoGuide', Object.freeze({ CHECKPOINTS, STEPS, nextStep, render }));
 })(globalThis);
 
 /* 13-router.js */
@@ -2348,7 +2378,20 @@
   const ACTOR_KEY = 'yc.demo.actorId';
   const LEARNER_KEY = 'yc.demo.learnerId';
 
-  function create({ store, bus, storage, location, onChange = () => {}, onToast = () => {} }) {
+  function csvCell(value) {
+    let text = String(value ?? '');
+    if (/^[=+\-@]/.test(text)) text = `'${text}`;
+    return `"${text.replaceAll('"', '""')}"`;
+  }
+
+  function auditCsv(state) {
+    const headers = ['occurredAt', 'actorId', 'action', 'resourceType', 'resourceId', 'detail'];
+    return `\uFEFF${headers.map(csvCell).join(',')}\r\n${state.auditLogs.map((row) => headers.map((key) => csvCell(row[key])).join(',')).join('\r\n')}`;
+  }
+
+  function create({ store, bus, storage, location, onChange = () => {}, onToast = () => {}, onDownload = () => {}, onPrint = () => {} }) {
+    const checkpointCache = new Map();
+
     function state() {
       return store.getState();
     }
@@ -2406,9 +2449,37 @@
       return result;
     }
 
+    function loadCheckpoint(checkpoint) {
+      const allowed = new Set(['LEAD', 'PLACEMENT', 'PAID', 'ENROLLED', 'TEACHER_ASSIGNED', 'SESSION_DELIVERED', 'REMEDIAL_ASSIGNED', 'REMEDIAL_COMPLETED', 'MODERATED', 'PROGRESS_PUBLISHED', 'PARENT_REVIEWED', 'RENEWED']);
+      if (!allowed.has(checkpoint)) return { ok: false, code: 'CHECKPOINT_NOT_FOUND', message: 'Checkpoint demo không hợp lệ.' };
+      if (checkpointCache.has(checkpoint)) {
+        store.replace(checkpointCache.get(checkpoint));
+        const cachedNext = root.YC.demoGuide.nextStep(state());
+        persistActor(cachedNext.actorId);
+        onToast(`Đã tải checkpoint ${checkpoint}.`, 'success');
+        onChange();
+        return { ok: true, checkpoint, cached: true };
+      }
+      store.reset();
+      for (let index = 0; index < 32 && root.YC.selectors.journey(state()).status !== checkpoint; index += 1) {
+        const step = root.YC.demoGuide.nextStep(state());
+        if (!step.commands.length) break;
+        const result = runCommands(step.commands);
+        if (!result.ok) return result;
+      }
+      if (root.YC.selectors.journey(state()).status !== checkpoint) return { ok: false, code: 'CHECKPOINT_UNREACHABLE', message: 'Không thể tạo checkpoint từ seed hiện tại.' };
+      checkpointCache.set(checkpoint, root.YC.utils.clone(state()));
+      const next = root.YC.demoGuide.nextStep(state());
+      persistActor(next.actorId);
+      onToast(`Đã tải checkpoint ${checkpoint}.`, 'success');
+      onChange();
+      return { ok: true, checkpoint };
+    }
+
     function execute(action, data = {}) {
       if (action === 'canonical-next') return runCanonicalNext({ navigate: true });
       if (action === 'canonical-run-all') return runCanonicalAll();
+      if (action === 'load-checkpoint') return loadCheckpoint(data.checkpoint);
       if (action === 'login') {
         const actor = state().users.find((item) => item.id === data.actorId);
         if (!actor) return { ok: false, code: 'ACTOR_NOT_FOUND', message: 'Không tìm thấy vai trò demo.' };
@@ -2452,13 +2523,23 @@
         onToast('Đã mô phỏng gửi yêu cầu. Không có dữ liệu nào rời trình duyệt.', 'success');
         return { ok: true, mocked: true };
       }
+      if (action === 'export-csv') {
+        if (data.type !== 'audit') return { ok: false, code: 'EXPORT_NOT_FOUND', message: 'Chưa có export phù hợp.' };
+        onDownload('yen-center-audit.csv', auditCsv(state()));
+        onToast('Đã tạo CSV audit theo scope demo.', 'success');
+        return { ok: true };
+      }
+      if (action === 'print-view') {
+        onPrint();
+        return { ok: true };
+      }
       return { ok: false, code: 'UNKNOWN_UI_ACTION', message: `UI action không tồn tại: ${action}` };
     }
 
-    return Object.freeze({ execute, runCanonicalAll, runCanonicalNext });
+    return Object.freeze({ execute, loadCheckpoint, runCanonicalAll, runCanonicalNext });
   }
 
-  root.YC.define('actions', Object.freeze({ ACTOR_KEY, LEARNER_KEY, create }));
+  root.YC.define('actions', Object.freeze({ ACTOR_KEY, LEARNER_KEY, auditCsv, create }));
 })(globalThis);
 
 /* 15-bootstrap.js */
@@ -2511,7 +2592,19 @@
       document.body.classList.toggle('is-app', currentPath.startsWith('/app/'));
     }
 
-    const controller = root.YC.actions.create({ store, bus, storage, location: root.location, onChange: render, onToast: toast });
+    function download(name, content) {
+      const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = name;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    const controller = root.YC.actions.create({ store, bus, storage, location: root.location, onChange: render, onToast: toast, onDownload: download, onPrint: () => root.print() });
 
     function payloadFrom(element) {
       if (!element.dataset.payload) return {};
@@ -2538,6 +2631,7 @@
       trigger.disabled = true;
       const result = controller.execute(action, data);
       if (result?.ok === false) toast(result.message, 'error');
+      if (trigger.isConnected) trigger.disabled = false;
     });
 
     root.addEventListener('hashchange', () => {

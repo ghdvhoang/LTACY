@@ -1,59 +1,45 @@
-# Frontend Demo Boundary — v2.0
+# Frontend Demo Boundary — v3.0
 
-Tài liệu này bổ sung cho `PRODUCT-SPEC.md` và làm rõ mức triển khai của package hiện tại.
+## Loại sản phẩm bàn giao
 
-## 1. Loại sản phẩm bàn giao
+Package là frontend working demonstrator, không phải full-stack MVP.
 
-Package là **frontend working demonstrator**, không phải full-stack MVP như target architecture trong Master Spec.
-
-| Thành phần | Mức thực hiện trong package |
+| Thành phần | Mức thực hiện |
 |---|---|
-| UI, route và responsive | Thực hiện thật |
-| Cross-role business flow | Thực hiện thật trong browser |
-| Shared state | `localStorage` |
-| Authentication/RBAC | Mô phỏng frontend |
-| Backend/API/Database | Chưa có |
-| Integration provider | Mock/sandbox |
-| Export | CSV thật; PDF qua browser print |
-| Automated verification | Route/data invariant/core flow smoke tests |
+| Public site, responsive role workspaces | Thực hiện thật trong browser |
+| Canonical cross-role journey | Thực hiện thật bằng command/state transitions |
+| Domain state | Normalized seed + `localStorage` schema v3 |
+| Validation/policy | Client-side command gates và selectors |
+| Event/audit/notification | Client-side records có traceability |
+| Auth/RBAC | Role simulation + route/data visibility guard |
+| Backend/API/database | Không có |
+| Payment/message/media/identity | Mock adapter/record |
+| Export | UTF-8 CSV; PDF qua browser Print/Save as PDF |
 
-## 2. Rule được prototype hóa
+## Invariants được prototype hóa
 
-- Attendance `ABSENT` tạo tối đa một assignment theo `student + session`.
-- Session canonical phải có lesson/quiz hợp lệ.
-- Assignment completion mặc định cần quiz score ≥ passing score; video threshold theo settings.
-- Link có `ACTIVE/REVOKED`, expiry và version.
-- Teacher/TA data scope giới hạn theo class được phân công ở UI/export.
-- Admin thấy dữ liệu toàn hệ thống.
-- Overdue được hiển thị cùng lifecycle status để không mất trạng thái học tập.
+- Offer, invoice, payment và enrollment là object riêng.
+- Class không vượt capacity; allocation kiểm tra level, age, availability, branch và package/payment.
+- Teacher assignment kiểm tra qualification, capability, branch/mode, availability, compliance và workload.
+- Course version đã publish là snapshot bất biến trong demo.
+- Session có readiness và delivery evidence riêng; planned content không bị dùng thay taught content.
+- Attendance `ABSENT` tạo tối đa một remedial assignment theo learner/session.
+- Remedial completion cần video threshold và quiz đạt ngưỡng.
+- Homework completion cần feedback/revision evidence trong canonical story.
+- Final result cần moderation trước release.
+- Promotion override bắt buộc reason + evidence và được audit.
+- Parent chỉ thấy learner được liên kết, report đã publish và feedback có visibility phù hợp.
 
-## 3. Canonical demo record
+## Definition of done cho demonstrator
 
-```text
-Class: English Foundation 6A
-Teacher: Hoàng Yến
-Student: Nguyễn Minh Anh — HS6A001
-Session: buổi đang mở trong seed
-Lesson: Unit 4 – Lesson 2: Past Simple
-Passing score: 80%
-```
+1. Standalone và HTTP source build đồng nhất.
+2. Public, learner, parent và mọi staff workspace render được.
+3. Direct-route mismatch bị chặn theo role demo.
+4. Canonical journey chạy được từ lead đến renewal.
+5. 12 checkpoint có thể tải lại an toàn.
+6. Domain command thất bại không để lại partial state.
+7. Event, audit, notification và evidence nối đúng handoff.
+8. CSV audit và browser print hoạt động.
+9. Automated tests, static release verification và browser QA đều đạt.
 
-## 4. Acceptance cho frontend demonstrator
-
-Package được coi là đạt khi:
-
-1. Mở được bằng local server và standalone HTML.
-2. Public critical pages render được.
-3. Đăng nhập/chuyển role demo được.
-4. Teacher mark absent sinh assignment.
-5. Student hoàn thành video/quiz và assignment cập nhật.
-6. Teacher/Admin thấy dữ liệu mới.
-7. RBAC direct route trả 403 trong UI.
-8. Lead B2C/B2B/support lưu được.
-9. Link regenerate/revoke/extend hoạt động.
-10. Reset dữ liệu đưa canonical flow về điểm đầu.
-11. Không có JavaScript/page error trong happy path được kiểm thử.
-
-## 5. Production backlog bắt buộc
-
-Master Spec vẫn là nguồn định hướng cho backend, database, server-side RBAC, file storage, provider integrations, automated tests đầy đủ, observability và security hardening. Các hạng mục này không được coi là hoàn thành chỉ vì demonstrator có UI tương ứng.
+Backend, database, server-side authorization, encrypted storage, tenant isolation, queue/outbox, provider credentials, observability và scale testing vẫn là production backlog bắt buộc.

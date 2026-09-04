@@ -1,8 +1,10 @@
-Yen Center LMS Demo v2.0 — Package Manifest
-Generated: 2026-09-01
+Yen Center Full Journey Frontend Demo v3.0 — Package Manifest
+Generated: 2026-09-05
 
 MESSAGE-TO-SEND.txt
 OPEN-DEMO.html
+CHECKSUMS-SHA256.txt
+PACKAGE-MANIFEST.txt
 README.md
 START-HERE.md
 VERSION.txt
@@ -10,28 +12,48 @@ docs/CHANGELOG.md
 docs/DEMO-SCRIPT.md
 docs/DESIGN-SYSTEM-RBAC-v2.0.md
 docs/FRONTEND-DEMO-BOUNDARY.md
+docs/HANDBOOK-COVERAGE-v1.1.md
 docs/KNOWN-LIMITATIONS.md
 docs/PO-REVIEW.md
 docs/PRODUCT-SPEC.md
 docs/SCOPE-MINDMAP.png
 docs/VERIFICATION.md
-previews/01-homepage-minimal.png
-previews/02-teacher-attendance-minimal.png
-previews/03-student-dashboard-minimal.png
-previews/04-admin-dashboard-minimal.png
-previews/05-ta-content-minimal.png
-previews/06-student-completed-minimal.png
-previews/07-mobile-homepage-minimal.png
-previews/08-mobile-homepage-top.png
-previews/09-mobile-attendance-minimal.png
-previews/10-mobile-attendance-top.png
+scripts/build_standalone.py
 source/README.md
 source/VERSION.txt
 source/app.js
+source/app.v3.js
 source/index.html
+source/modules/00-namespace.js
+source/modules/01-utils.js
+source/modules/02-seed.js
+source/modules/03-store.js
+source/modules/04-policy.js
+source/modules/05-commands.js
+source/modules/06-selectors.js
+source/modules/07-ui-kit.js
+source/modules/08-public-views.js
+source/modules/09-learning-views.js
+source/modules/10-operations-views.js
+source/modules/11-management-views.js
+source/modules/12-demo-guide.js
+source/modules/13-router.js
+source/modules/14-actions.js
+source/modules/15-bootstrap.js
 source/start-demo.bat
 source/start-demo.sh
 source/styles.css
 source/validation/verification-result.json
 source/validation/verify_prototype.py
 source/yen-center-lms-demo.html
+tests/domain/academic-teacher-ops.test.cjs
+tests/domain/admissions-commerce.test.cjs
+tests/domain/canonical-journey.test.cjs
+tests/domain/demo-controller.test.cjs
+tests/domain/foundation.test.cjs
+tests/domain/learning-outcomes.test.cjs
+tests/domain/store-policy.test.cjs
+tests/domain/views-router.test.cjs
+tests/helpers/load-runtime.cjs
+tests/static/test_build.py
+tests/static/test_release_docs.py

@@ -47,7 +47,19 @@
       document.body.classList.toggle('is-app', currentPath.startsWith('/app/'));
     }
 
-    const controller = root.YC.actions.create({ store, bus, storage, location: root.location, onChange: render, onToast: toast });
+    function download(name, content) {
+      const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = name;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    const controller = root.YC.actions.create({ store, bus, storage, location: root.location, onChange: render, onToast: toast, onDownload: download, onPrint: () => root.print() });
 
     function payloadFrom(element) {
       if (!element.dataset.payload) return {};
@@ -74,6 +86,7 @@
       trigger.disabled = true;
       const result = controller.execute(action, data);
       if (result?.ok === false) toast(result.message, 'error');
+      if (trigger.isConnected) trigger.disabled = false;
     });
 
     root.addEventListener('hashchange', () => {

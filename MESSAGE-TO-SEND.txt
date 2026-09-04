@@ -1,13 +1,5 @@
-Chào anh/chị,
+Yen Center Full Journey Frontend Demo v3.0
 
-Em gửi bản Yen Center LMS Demo v2.0 để review concept sản phẩm và luồng nghiệp vụ học bù tự động.
+Mở OPEN-DEMO.html, chọn Demo Guide rồi dùng “Chạy tự động đến cuối” hoặc 12 checkpoint. Bản demo nối lead → placement → payment → class/teacher → session → attendance/remedial → homework → assessment/moderation → progress/parent → renewal.
 
-Bản demo sử dụng phong cách international minimal UI và giữ luồng dữ liệu xuyên role:
-Giáo viên điểm danh Vắng → hệ thống giao bài học bù → học sinh xem video và làm quiz → kết quả cập nhật cho Giáo viên/Admin.
-
-Cách mở:
-1. Giải nén file ZIP.
-2. Mở OPEN-DEMO.html.
-3. Xem START-HERE.md để lấy tài khoản và kịch bản demo.
-
-Lưu ý: đây là frontend working prototype phục vụ review và validation. Auth, database và tích hợp ngoài đang được mô phỏng, chưa phải hệ thống production.
+Lưu ý: đây là frontend demonstrator. Auth/RBAC, payment, messaging, media và persistence production chưa được triển khai; vui lòng đọc docs/HANDBOOK-COVERAGE-v1.1.md và docs/KNOWN-LIMITATIONS.md trước khi estimate.

@@ -99,7 +99,7 @@
   function adminDashboard(ctx) {
     return `<div class="workspace-page">${pageHeader('Admin console', 'System control & traceability', 'Một tổ chức Yen Center, nhiều branch, role scope và demo integrations.')}
       <div class="metric-grid four">${metric('Active users', ctx.state.users.filter((item) => item.status === 'ACTIVE').length, '10 role types', 'people')}${metric('Domain events', ctx.state.domainEvents.length, 'Workflow handoffs', 'trend')}${metric('Audit records', ctx.state.auditLogs.length, 'High-impact trace', 'shield')}${metric('Demo integrations', 4, 'Tất cả đang MOCK', 'grid')}</div>
-      <div class="content-grid two">${section('System boundaries', '<ul class="check-list"><li>✓ One organization, multi-branch</li><li>✓ Browser localStorage only</li><li>✓ Frontend RBAC demonstration</li><li>✓ Payment, messaging, auth are mock</li></ul>')}${section('Data health', `<dl class="detail-list"><div><dt>State version</dt><dd>${escapeHtml(ctx.state.version)}</dd></div><div><dt>Seeded at</dt><dd>${formatDate(ctx.state.seededAt)}</dd></div><div><dt>Migration notice</dt><dd>${escapeHtml(ctx.state.demo.migrationNotice || 'None')}</dd></div><div><dt>Canonical learner</dt><dd>${escapeHtml(ctx.state.demo.canonicalLearnerId)}</dd></div></dl>`)}</div></div>`;
+      <div class="content-grid two">${section('System boundaries', '<ul class="check-list"><li>✓ One organization, multi-branch</li><li>✓ Browser localStorage only</li><li>✓ Frontend RBAC demonstration</li><li>✓ Payment, messaging, auth are mock</li></ul>')}${section('Data health', `<dl class="detail-list"><div><dt>State version</dt><dd>${escapeHtml(ctx.state.schemaVersion)}</dd></div><div><dt>Seeded at</dt><dd>${formatDate(ctx.state.seededAt)}</dd></div><div><dt>Migration notice</dt><dd>${escapeHtml(ctx.state.migrationNotice?.message || 'None')}</dd></div><div><dt>Canonical learner</dt><dd>${escapeHtml(ctx.state.demo.canonicalLearnerId)}</dd></div></dl>`)}</div></div>`;
   }
 
   function access(ctx) {
@@ -108,7 +108,8 @@
   }
 
   function auditLogs(ctx) {
-    return `<div class="workspace-page">${pageHeader('Admin · Governance', 'Audit logs', 'Ai làm gì, trên resource nào, với lý do hoặc evidence nào.')}${section('Audit trail', table([{ label: 'Thời gian', render: (row) => formatDate(row.occurredAt) }, { label: 'Actor', render: (row) => escapeHtml(ctx.state.users.find((item) => item.id === row.actorId)?.name || row.actorId) }, { label: 'Action', render: (row) => `<code>${escapeHtml(row.action)}</code>` }, { label: 'Resource', render: (row) => `${escapeHtml(row.resourceType)}<small>${escapeHtml(row.resourceId)}</small>` }, { label: 'Detail', key: 'detail' }], ctx.state.auditLogs))}</div>`;
+    const actions = `${button('In view', 'print-view', { kind: 'secondary' })}${button('Xuất CSV', 'export-csv', { payload: { type: 'audit' } })}`;
+    return `<div class="workspace-page">${pageHeader('Admin · Governance', 'Audit logs', 'Ai làm gì, trên resource nào, với lý do hoặc evidence nào.', actions)}${section('Audit trail', table([{ label: 'Thời gian', render: (row) => formatDate(row.occurredAt) }, { label: 'Actor', render: (row) => escapeHtml(ctx.state.users.find((item) => item.id === row.actorId)?.name || row.actorId) }, { label: 'Action', render: (row) => `<code>${escapeHtml(row.action)}</code>` }, { label: 'Resource', render: (row) => `${escapeHtml(row.resourceType)}<small>${escapeHtml(row.resourceId)}</small>` }, { label: 'Detail', key: 'detail' }], ctx.state.auditLogs))}</div>`;
   }
 
   function events(ctx) {

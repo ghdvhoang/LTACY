@@ -33,15 +33,15 @@
       { status: 'TEACHER_ASSIGNED', ownerRole: 'ACADEMIC_MANAGER', done: state.teacherAssignments.some((item) => item.classId === 'class-6a' && item.status === 'ACTIVE') },
       { status: 'SESSION_DELIVERED', ownerRole: 'TEACHER', done: state.deliveryRecords.some((item) => item.sessionId === 'session-canonical') },
       { status: 'REMEDIAL_ASSIGNED', ownerRole: 'TEACHER', done: state.remedialAssignments.some((item) => item.learnerId === learnerId) },
-      { status: 'REMEDIAL_COMPLETED', ownerRole: 'STUDENT', done: state.remedialAssignments.some((item) => item.learnerId === learnerId && item.status === 'COMPLETED') },
+      { status: 'REMEDIAL_COMPLETED', ownerRole: 'STUDENT', done: state.remedialAssignments.some((item) => item.learnerId === learnerId && item.status === 'COMPLETED') && state.homeworkAssignments.some((item) => item.learnerId === learnerId && item.status === 'ACCEPTED') },
       { status: 'MODERATED', ownerRole: 'ACADEMIC_MANAGER', done: state.moderationCases.some((item) => item.learnerId === learnerId && item.status === 'APPROVED') },
       { status: 'PROGRESS_PUBLISHED', ownerRole: 'ACADEMIC_MANAGER', done: state.progressReports.some((item) => item.learnerId === learnerId && item.status === 'PUBLISHED') },
       { status: 'PARENT_REVIEWED', ownerRole: 'PARENT', done: state.domainEvents.some((item) => item.type === 'PARENT_PROGRESS_VIEWED' && item.learnerId === learnerId) },
       { status: 'RENEWED', ownerRole: 'ADMISSIONS', done: state.renewals.some((item) => item.learnerId === learnerId && item.status === 'ACCEPTED') },
     ];
     const index = checks.findIndex((item) => !item.done);
-    if (index === -1) return { status: 'RENEWED', index: 11, total: checks.length, ownerRole: 'ADMISSIONS' };
-    return { status: checks[index].status, index, total: checks.length, ownerRole: checks[index].ownerRole };
+    if (index === -1) return { status: 'RENEWED', index: checks.length, total: checks.length, ownerRole: 'ADMISSIONS', complete: true };
+    return { status: checks[index].status, index, total: checks.length, ownerRole: checks[index].ownerRole, complete: false };
   }
 
   function metrics(state, role) {
@@ -85,7 +85,7 @@
     const courseVersion = state.courseVersions.find((item) => item.id === cohort?.courseVersionId);
     const levelCode = state.levels.find((item) => item.id === state.courses.find((course) => course.id === courseVersion?.courseId)?.levelId)?.code || '';
     const frameworkLevel = levelCode.split('.')[0];
-    const now = new Date(state.seededAt).getTime();
+    const now = new Date(state.currentAt || state.seededAt).getTime();
     const qualificationValid = Boolean(profile && state.qualifications.some((item) => item.teacherProfileId === profile.id
       && item.status === 'VALID'
       && new Date(item.expiresAt).getTime() >= now));
@@ -183,7 +183,7 @@
     return state.learners.flatMap((learner) => {
       const records = state.attendanceRecords.filter((item) => item.learnerId === learner.id);
       const recentAbsences = records.filter((item) => item.status === 'ABSENT').length;
-      const overdueHomework = state.homeworkAssignments.filter((item) => item.learnerId === learner.id && !['ACCEPTED', 'CLOSED'].includes(item.status) && item.dueAt && new Date(item.dueAt) < new Date(state.seededAt)).length;
+      const overdueHomework = state.homeworkAssignments.filter((item) => item.learnerId === learner.id && !['ACCEPTED', 'CLOSED'].includes(item.status) && item.dueAt && new Date(item.dueAt) < new Date(state.currentAt || state.seededAt)).length;
       const signals = [];
       if (recentAbsences >= 2) signals.push({ learnerId: learner.id, type: 'ABSENT_TWO_SESSIONS', severity: 'HIGH', ownerRole: 'STUDENT_SERVICE' });
       if (overdueHomework > 0) signals.push({ learnerId: learner.id, type: 'HOMEWORK_OVERDUE', severity: 'MEDIUM', ownerRole: 'TEACHER' });

@@ -38,6 +38,19 @@ test('teacher eligibility separates hard gates from ranking signals', () => {
   assert.ok(eligible.rankingSignals.some((item) => item.key === 'BRANCH_CONTINUITY'));
 });
 
+test('teacher eligibility evaluates qualification at current transaction time', () => {
+  let now = FIXED_NOW;
+  const YC = loadYC(['seed', 'store', 'selectors']);
+  const store = YC.store.create({ storage: memoryStorage(), clock: () => now });
+  now = '2028-09-04T02:00:00.000Z';
+  store.transact(() => {});
+
+  const evidence = YC.selectors.teacherEligibility(store.getState(), 'teacher-1', 'class-6a');
+
+  assert.equal(evidence.hardGates.find((item) => item.key === 'QUALIFICATION').passed, false);
+  assert.equal(evidence.eligible, false);
+});
+
 test('ineligible teacher cannot be proposed for a young learner class', () => {
   const runtime = createRuntime();
 
