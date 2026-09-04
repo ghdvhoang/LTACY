@@ -89,6 +89,22 @@
       if (trigger.isConnected) trigger.disabled = false;
     });
 
+    document.addEventListener('submit', (event) => {
+      const form = event.target.closest('form[data-form]');
+      if (!form) return;
+      event.preventDefault();
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+      const values = new FormData(form);
+      let action = '';
+      let data = {};
+      if (form.dataset.form === 'login') { action = 'credential-login'; data = { identifier: values.get('identifier'), secret: values.get('secret') }; }
+      if (form.dataset.form === 'forgot') { action = 'request-otp'; data = { identifier: values.get('identifier') }; }
+      if (form.dataset.form === 'otp') { action = 'verify-otp'; data = { otp: values.get('otp') }; }
+      if (!action) return;
+      const result = controller.execute(action, data);
+      if (result?.ok === false) toast(result.message, 'error');
+    });
+
     root.addEventListener('hashchange', () => {
       document.body.classList.remove('mobile-nav-open');
       if (root.scrollTo) root.scrollTo({ top: 0, behavior: 'instant' });

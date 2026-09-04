@@ -79,9 +79,30 @@
   }
 
   function login(ctx) {
-    const roleOrder = ['ADMISSIONS', 'ACADEMIC_MANAGER', 'STUDENT_SERVICE', 'FINANCE', 'TEACHER', 'STUDENT', 'PARENT', 'CENTER_MANAGER', 'ADMIN'];
-    const users = roleOrder.map((role) => ctx.state.users.find((item) => item.role === role)).filter(Boolean);
-    return `<main id="main-content" class="login-page"><section class="login-intro"><a class="brand brand-light" href="#/"><span class="brand-mark"></span><span class="brand-copy"><strong>Yen Center</strong><small>LEARNING OPERATING SYSTEM</small></span></a><div><p class="eyebrow on-dark">Demo workspace</p><h1>Chọn một vai trò để bước vào hành trình.</h1><p>Mỗi vai trò có quyết định, phạm vi và evidence riêng. Đăng nhập này chỉ là mô phỏng frontend.</p></div><small>Demo authentication · Không dùng cho dữ liệu thật.</small></section><section class="role-picker"><div><p class="eyebrow">Quick access</p><h2>Bạn muốn xem workspace nào?</h2><p>Chuyển vai trò bất kỳ lúc nào từ thanh điều hướng.</p></div><div class="role-card-grid">${users.map((user) => `<button type="button" class="role-card" data-action="login" data-actor-id="${escapeHtml(user.id)}"><span class="avatar">${escapeHtml(user.name.split(' ').slice(-2).map((part) => part[0]).join(''))}</span><span><strong>${escapeHtml(user.name)}</strong><small>${escapeHtml(user.role.replaceAll('_', ' '))}</small></span>${icon('arrow')}</button>`).join('')}</div>${link('Hoặc mở Demo Guide', '/demo-guide', { kind: 'ghost' })}</section></main>`;
+    const primaryAccounts = [
+      ['teacher-1', 'Giáo viên', 'teacher@yencenter.demo · Demo@123'],
+      ['ta-1', 'Trợ giảng', 'ta@yencenter.demo · Demo@123'],
+      ['student-login-1', 'Học viên', 'HS6A001 · 123456'],
+      ['admin-1', 'Quản trị viên', 'admin@yencenter.demo · Demo@123'],
+    ].map(([id, label, credentials]) => ({ user: ctx.state.users.find((item) => item.id === id), label, credentials })).filter((item) => item.user);
+    return `<main id="main-content" class="login-page"><section class="login-intro"><a class="brand brand-light" href="#/"><span class="brand-mark"></span><span class="brand-copy"><strong>Yen Center</strong><small>HỆ THỐNG VẬN HÀNH HỌC TẬP</small></span></a><div><p class="eyebrow on-dark">Cổng học tập demo</p><h1>Đăng nhập như phiên bản quen thuộc.</h1><p>Dùng tài khoản bên dưới để kiểm tra luồng Giáo viên giao việc và Học viên Nguyễn Minh Anh nhận đúng nội dung trên cùng dữ liệu.</p></div><small>Xác thực mô phỏng · Không dùng dữ liệu thật.</small></section><section class="role-picker"><div><p class="eyebrow">Đăng nhập</p><h2>Chào mừng bạn quay lại</h2><p>Nhập email/mã học viên và mật khẩu hoặc dùng tài khoản nhanh.</p></div>
+      <form class="login-form" data-form="login" novalidate><label>Email hoặc mã học viên<input class="input" name="identifier" autocomplete="username" required placeholder="Ví dụ: HS6A001"></label><label>Mật khẩu / PIN<input class="input" name="secret" type="password" autocomplete="current-password" required placeholder="Nhập mật khẩu"></label><button class="btn btn-primary" type="submit">Đăng nhập</button><a class="text-link" href="#/forgot-password">Quên mật khẩu?</a></form>
+      <div class="login-divider"><span>Hoặc dùng tài khoản nhanh</span></div><div class="role-card-grid primary-accounts">${primaryAccounts.map(({ user, label, credentials }) => `<button type="button" class="role-card" data-primary-account data-action="login" data-actor-id="${escapeHtml(user.id)}"><span class="avatar">${escapeHtml(user.name.split(' ').slice(-2).map((part) => part[0]).join(''))}</span><span><strong>${escapeHtml(label)}</strong><small>${escapeHtml(user.name)} · ${escapeHtml(credentials)}</small></span>${icon('arrow')}</button>`).join('')}</div>${link('Mở hướng dẫn demo', '/demo-guide', { kind: 'ghost' })}</section></main>`;
+  }
+
+  function forgotPassword() {
+    return `<main id="main-content" class="auth-page"><section class="form-card auth-card"><a class="back-link" href="#/login">← Quay lại đăng nhập</a><p class="eyebrow">Khôi phục tài khoản</p><h1>Quên mật khẩu</h1><p>Nhập email hoặc mã học viên. Bản demo sẽ tạo mã xác thực mô phỏng và không gửi ra ngoài.</p><form data-form="forgot" class="stack"><label>Email hoặc mã học viên<input class="input" name="identifier" required placeholder="HS6A001"></label><button class="btn btn-primary" type="submit">Nhận mã xác thực</button></form></section></main>`;
+  }
+
+  function verifyOtp() {
+    return `<main id="main-content" class="auth-page"><section class="form-card auth-card"><a class="back-link" href="#/forgot-password">← Nhập lại tài khoản</a><p class="eyebrow">Xác thực mô phỏng</p><h1>Nhập mã xác thực</h1><p>Dùng mã <strong>123456</strong> để hoàn tất luồng demo.</p><form data-form="otp" class="stack"><label>Mã xác thực gồm 6 số<input class="input" name="otp" inputmode="numeric" minlength="6" maxlength="6" required value="123456"></label><button class="btn btn-primary" type="submit">Xác nhận mã</button></form></section></main>`;
+  }
+
+  function selectProfile(ctx) {
+    const actor = ctx.actor;
+    const learnerIds = actor?.linkedLearnerIds || [];
+    const learners = learnerIds.map((id) => ctx.state.learners.find((item) => item.id === id)).filter(Boolean);
+    return `<main id="main-content" class="auth-page"><section class="form-card auth-card"><p class="eyebrow">Tài khoản gia đình</p><h1>Chọn hồ sơ học viên</h1><p>Chọn người học bạn muốn xem trong phiên này.</p><div class="profile-choice-list">${learners.map((learner) => `<button type="button" class="role-card" data-action="select-login-profile" data-learner-id="${escapeHtml(learner.id)}"><span class="avatar">${escapeHtml(learner.name.split(' ').slice(-2).map((part) => part[0]).join(''))}</span><span><strong>${escapeHtml(learner.name)}</strong><small>${escapeHtml(learner.code)}</small></span>${icon('arrow')}</button>`).join('') || '<p>Hãy đăng nhập bằng tài khoản có nhiều hồ sơ để kiểm tra bước này.</p>'}<a class="text-link" href="#/login">Dùng tài khoản khác</a></div></section></main>`;
   }
 
   function render(path, ctx) {
@@ -93,6 +114,9 @@
     if (path === '/giai-phap-trung-tam') return centerSolution(ctx);
     if (path === '/lien-he') return contact(ctx);
     if (path === '/login') return login(ctx);
+    if (path === '/forgot-password') return forgotPassword(ctx);
+    if (path === '/verify-otp') return verifyOtp(ctx);
+    if (path === '/select-profile') return selectProfile(ctx);
     return '';
   }
 

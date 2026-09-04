@@ -26,6 +26,15 @@
       if (storage) storage.setItem(ACTOR_KEY, actorId);
     }
 
+    function loginActor(actor, { chooseProfile = false } = {}) {
+      persistActor(actor.id);
+      const needsProfile = chooseProfile && actor.role === 'PARENT' && (actor.linkedLearnerIds || []).length > 1;
+      if (location) location.hash = needsProfile ? '#/select-profile' : `#${root.YC.selectors.roleHome(actor.role)}`;
+      onToast(`Đã đăng nhập tài khoản ${root.YC.router.ROLE_LABELS[actor.role] || actor.role}.`, 'success');
+      onChange();
+      return { ok: true, actorId: actor.id, needsProfile };
+    }
+
     function runCommands(commands) {
       const completed = [];
       for (const item of commands) {
@@ -109,11 +118,44 @@
       if (action === 'login') {
         const actor = state().users.find((item) => item.id === data.actorId);
         if (!actor) return { ok: false, code: 'ACTOR_NOT_FOUND', message: 'Không tìm thấy vai trò demo.' };
-        persistActor(actor.id);
-        if (location) location.hash = `#${root.YC.selectors.roleHome(actor.role)}`;
-        onToast(`Đang mở workspace ${root.YC.router.ROLE_LABELS[actor.role] || actor.role}.`, 'success');
+        return loginActor(actor);
+      }
+      if (action === 'credential-login') {
+        const identifier = String(data.identifier || '').trim().toLowerCase();
+        const actor = state().users.find((item) => (item.identifiers || []).some((value) => String(value).toLowerCase() === identifier) && item.secret === String(data.secret || ''));
+        if (!actor || actor.status !== 'ACTIVE') return { ok: false, code: 'INVALID_CREDENTIALS', message: 'Tài khoản hoặc mật khẩu không đúng.' };
+        return loginActor(actor, { chooseProfile: true });
+      }
+      if (action === 'logout') {
+        if (storage) { storage.removeItem(ACTOR_KEY); storage.removeItem(LEARNER_KEY); }
+        if (location) location.hash = '#/login';
+        onToast('Đã đăng xuất khỏi phiên demo.', 'success');
         onChange();
-        return { ok: true, actorId: actor.id };
+        return { ok: true };
+      }
+      if (action === 'request-otp') {
+        if (storage) storage.setItem('yc.demo.otp', '123456');
+        if (location) location.hash = '#/verify-otp';
+        onToast('Đã tạo mã xác thực mô phỏng 123456.', 'success');
+        onChange();
+        return { ok: true, mocked: true };
+      }
+      if (action === 'verify-otp') {
+        const expected = storage?.getItem('yc.demo.otp') || '123456';
+        if (String(data.otp || '') !== expected) return { ok: false, code: 'INVALID_OTP', message: 'Mã xác thực không đúng.' };
+        if (location) location.hash = '#/login';
+        onToast('Xác thực thành công. Bạn có thể đăng nhập lại.', 'success');
+        onChange();
+        return { ok: true };
+      }
+      if (action === 'select-login-profile') {
+        const currentActorId = storage?.getItem(ACTOR_KEY);
+        const currentActor = state().users.find((item) => item.id === currentActorId);
+        if (!currentActor || !(currentActor.linkedLearnerIds || []).includes(data.learnerId)) return { ok: false, code: 'PROFILE_FORBIDDEN', message: 'Hồ sơ không thuộc tài khoản này.' };
+        if (storage) storage.setItem(LEARNER_KEY, data.learnerId);
+        if (location) location.hash = `#${root.YC.selectors.roleHome(currentActor.role)}`;
+        onChange();
+        return { ok: true };
       }
       if (action === 'reset-demo') {
         store.reset();
