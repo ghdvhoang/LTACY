@@ -38,12 +38,25 @@
     const videoProgress = assignment?.videoProgress || 0;
     return `<div class="workspace-page course-player-page"><div class="course-player-head"><div><a href="#/app/student/dashboard" class="back-link">← My learning</a><p class="eyebrow">Tiếp tục học · ${escapeHtml(version.title)}</p><h1>Unit 4 · Past experiences</h1></div><div class="course-overall"><span>Course progress</span><strong>68%</strong></div></div>
       <div class="course-player-layout"><aside class="curriculum-sidebar"><div class="curriculum-summary">${progress(68, '12 / 18 activities')}</div>
-        <details class="course-module" open><summary><span><small>MODULE 4</small><strong>Past experiences</strong></span><span>3/5 ${icon('arrow')}</span></summary><nav><a class="done" href="#/app/student/course">${icon('check')}<span><b>Reading</b><small>A weekend to remember · 12 phút</small></span></a><a class="active" href="#/app/student/course">${icon('book')}<span><b>Video</b><small>Past Simple in context · 18 phút</small></span></a><a href="#/app/student/assessments">${icon('check')}<span><b>Quiz</b><small>Past Simple Check · 10 câu</small></span></a><a href="#/app/student/remedial">${icon('spark')}<span><b>Practice</b><small>-ed pronunciation · 15 phút</small></span></a></nav></details>
+        <details class="course-module" open><summary><span><small>HỌC PHẦN 4</small><strong>Trải nghiệm trong quá khứ</strong></span><span>3/5 ${icon('arrow')}</span></summary><nav><a class="done" href="#/app/student/course/item-past-simple-video">${icon('check')}<span><b>Đọc hiểu</b><small>Một cuối tuần đáng nhớ · 12 phút</small></span></a><a class="active" href="#/app/student/course/item-past-simple-video">${icon('book')}<span><b>Video</b><small>Past Simple in context · 18 phút</small></span></a><a href="#/app/student/assessments">${icon('check')}<span><b>Bài kiểm tra</b><small>Past Simple Check · 10 câu</small></span></a><a href="#/app/student/remedial">${icon('spark')}<span><b>Luyện tập</b><small>Phát âm đuôi -ed · 15 phút</small></span></a></nav></details>
         <details class="course-module"><summary><span><small>MODULE 5</small><strong>Stories we share</strong></span><span>0/4 ${icon('arrow')}</span></summary><nav><a href="#/app/student/course"><span>Speaking lab</span></a></nav></details></aside>
         <main class="learning-content"><div class="video-stage"><div class="video-illustration"><span class="play-button">▶</span><div><small>LESSON VIDEO</small><strong>Past Simple in context</strong></div></div><div class="video-controls"><span>▶</span><div><i style="width:${videoProgress || 42}%"></i></div><span>${videoProgress ? `${videoProgress}%` : '07:32 / 18:00'}</span></div></div>
           <article class="lesson-copy"><p class="eyebrow">Learning objective</p><h2>Kể lại một trải nghiệm đã xảy ra</h2><p>Nhận biết và dùng past simple trong ngữ cảnh kể chuyện. Sau video, hoàn thành knowledge check để lưu evidence.</p><div class="lesson-callout"><b>Ghi nhớ</b><p>Regular verbs thường thêm <code>-ed</code>; irregular verbs cần dùng dạng quá khứ riêng.</p></div>
           <div class="lesson-footer"><span>${icon('clock')} 18 phút</span><span>${icon('shield')} Required evidence</span>${assignment ? button(videoProgress >= 100 ? 'Video đã hoàn thành' : 'Đánh dấu xem đủ 100%', 'complete-video', { payload: { assignmentId: assignment.id }, disabled: videoProgress >= 100 }) : link('Mở Demo Guide để tạo assignment', '/demo-guide')}</div></article>
         </main></div></div>`;
+  }
+
+  function studentActivity(ctx, itemId) {
+    const learner = learnerFor(ctx);
+    const { version } = courseContext(ctx.state, learner);
+    const item = ctx.state.learningItems.find((entry) => entry.id === itemId) || ctx.state.learningItems[0];
+    const lesson = ctx.state.lessonTemplates.find((entry) => entry.id === item.lessonTemplateId);
+    const unit = ctx.state.units.find((entry) => entry.id === lesson?.unitId);
+    const assignment = ctx.state.remedialAssignments.find((entry) => entry.learnerId === learner.id && entry.lessonTemplateId === lesson?.id);
+    return `<div class="workspace-page course-player-page"><div class="course-player-head"><div><a href="#/app/student/course" class="back-link">← Về khóa học</a><p class="eyebrow">${escapeHtml(version.title)} · ${escapeHtml(unit?.title || '')}</p><h1>${escapeHtml(item.title)}</h1></div><div class="course-overall"><span>Tiến độ khóa học</span><strong>68%</strong></div></div>
+      <div class="course-player-layout"><aside class="curriculum-sidebar"><div class="curriculum-summary">${progress(68, '12 / 18 hoạt động')}</div><details class="course-module" open><summary><span><small>HỌC PHẦN ${unit?.order || 4}</small><strong>${escapeHtml(unit?.title || '')}</strong></span><span>${icon('arrow')}</span></summary><nav>${ctx.state.learningItems.filter((entry) => entry.lessonTemplateId === lesson?.id).map((entry) => `<a class="${entry.id === item.id ? 'active' : ''}" href="#/app/student/course/${entry.id}">${icon(entry.type === 'QUIZ' ? 'check' : 'book')}<span><b>${escapeHtml(entry.title)}</b><small>${entry.durationMinutes} phút · ${entry.required ? 'Bắt buộc' : 'Tự chọn'}</small></span></a>`).join('')}</nav></details></aside>
+      <main class="learning-content"><div class="video-stage"><div class="video-illustration"><span class="play-button">▶</span><div><small>${escapeHtml(item.type === 'VIDEO' ? 'VIDEO BÀI HỌC' : 'HOẠT ĐỘNG HỌC')}</small><strong>${escapeHtml(item.title)}</strong></div></div><div class="video-controls"><span>▶</span><div><i style="width:${assignment?.videoProgress || 0}%"></i></div><span>${assignment ? `${assignment.videoProgress || 0}%` : `${item.durationMinutes}:00`}</span></div></div>
+      <article class="lesson-copy"><p class="eyebrow">Mục tiêu học tập</p><h2>${escapeHtml(lesson?.objectives?.[0] || unit?.outcome || '')}</h2><p>Hoàn thành hoạt động này để ghi nhận tiến độ trong khóa học và làm cơ sở cho bài kiểm tra cuối bài.</p><div class="lesson-callout"><b>Nội dung chính</b><p>${escapeHtml((lesson?.objectives || []).join(' · '))}</p></div><div class="lesson-footer"><span>${icon('clock')} ${item.durationMinutes} phút</span><span>${icon('shield')} ${item.required ? 'Bằng chứng bắt buộc' : 'Hoạt động tự chọn'}</span>${assignment && item.type === 'VIDEO' ? button('Lưu tiến độ video', 'complete-video', { payload: { assignmentId: assignment.id }, icon: 'check' }) : link('Tiếp tục đến bài kiểm tra', '/app/student/assessments', { kind: 'primary' })}</div></article></main></div></div>`;
   }
 
   function studentRemedial(ctx) {
@@ -144,6 +157,7 @@
       '/app/parent/services': parentServices,
       '/app/parent/tuition': parentTuition,
     };
+    if (path.startsWith('/app/student/course/')) return studentActivity(ctx, path.split('/').at(-1));
     return routes[path] ? routes[path](ctx) : '';
   }
 

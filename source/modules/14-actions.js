@@ -175,6 +175,13 @@
         onChange();
         return result;
       }
+      if (action === 'create-content-draft') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'teacher-1';
+        const result = bus.dispatch('CREATE_CONTENT_DRAFT', data, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
       if (action === 'submit-demo-quiz') {
         const result = bus.dispatch('SUBMIT_AUTO_ASSESSMENT', { assignmentId: data.assignmentId, answers: [1, 1, 0, 1, 1, 1, 1, 1, 0, 2] }, 'student-login-1');
         onToast(result.message, result.ok ? 'success' : 'error');

@@ -150,6 +150,22 @@
       <div class="quality-grid">${[['Delivery completeness', 92, 'Lesson plan, taught vs deferred'], ['Feedback timeliness', 86, 'Grading và release timestamps'], ['Learner progress', 78, 'Skill evidence theo cohort'], ['Class continuity', 96, 'Attendance và substitution'], ['Observation', 82, 'Academic coaching evidence']].map(([label, value, note]) => `<article><div><span>${label}</span><strong>${value}%</strong></div>${progress(value)}<small>${note}</small></article>`).join('')}</div>${section('Evidence policy', '<p>Quality signals dùng cho coaching và capacity planning. Safeguarding, restricted note và dữ liệu không đủ context không được đưa vào score hiển thị.</p>', { className: 'notice-panel' })}</div>`;
   }
 
+  function contentStudio(ctx) {
+    const drafts = ctx.state.contentDrafts || [];
+    const activePath = ctx.path || '/app/teacher/content';
+    const tabs = [['Kho nội dung', '/app/teacher/content'], ['Khóa học', '/app/teacher/courses'], ['Ngân hàng câu hỏi', '/app/teacher/question-bank'], ['Bài kiểm tra', '/app/teacher/quizzes']];
+    return `<div class="workspace-page">${pageHeader('Giáo viên · Course', 'Xưởng nội dung', 'Chuẩn bị bài học, xem trước activity và quản lý câu hỏi trên cùng curriculum.', button('Tạo bản nháp mẫu', 'create-content-draft', { payload: { courseVersionId: 'course-v6', lessonTemplateId: 'lesson-past-simple', title: 'Luyện nói cuối bài' }, icon: 'book' }))}
+      <nav class="session-tabs">${tabs.map(([label, href]) => `<a class="${activePath === href ? 'active' : ''}" href="#${href}">${label}</a>`).join('')}</nav>
+      <div class="content-grid main-aside">${section('Kho nội dung khóa học', ctx.state.lessonTemplates.map((lesson) => { const unit = ctx.state.units.find((item) => item.id === lesson.unitId); const items = ctx.state.learningItems.filter((item) => item.lessonTemplateId === lesson.id); return `<article class="lesson-plan"><div><p class="eyebrow">${escapeHtml(unit?.title || '')}</p><h3>${escapeHtml(lesson.title)}</h3><small>${items.length} hoạt động · ${lesson.durationMinutes} phút</small></div><div class="inline">${badge(lesson.status)}${link('Xem trước', `/app/teacher/content/preview/${lesson.id}`, { small: true })}</div></article>`; }).join(''))}
+      ${section('Ngân hàng câu hỏi', `<dl class="detail-list"><div><dt>Tổng câu hỏi</dt><dd>${ctx.state.questions.length}</dd></div><div><dt>Bài kiểm tra đã xuất bản</dt><dd>${ctx.state.assessments.filter((item) => item.status === 'PUBLISHED').length}</dd></div><div><dt>Bản nháp cá nhân</dt><dd>${drafts.length}</dd></div></dl>${drafts.map((item) => `<div class="queue-card"><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.type)}</small></div>${badge(item.status)}</div>`).join('')}`)}</div></div>`;
+  }
+
+  function contentPreview(ctx, lessonId) {
+    const lesson = ctx.state.lessonTemplates.find((item) => item.id === lessonId) || ctx.state.lessonTemplates[0];
+    const items = ctx.state.learningItems.filter((item) => item.lessonTemplateId === lesson.id);
+    return `<div class="workspace-page">${pageHeader('Giáo viên · Xem trước', 'Xem trước bài học', 'Chế độ này không ghi tiến độ vào tài khoản học viên.', link('Về Xưởng nội dung', '/app/teacher/content'))}<section class="course-overview"><div><p class="eyebrow">${escapeHtml(lesson.status)}</p><h2>${escapeHtml(lesson.title)}</h2><p>${escapeHtml(lesson.objectives.join(' · '))}</p></div><div class="course-stat"><strong>${items.length}</strong><span>hoạt động</span></div></section><div class="lesson-list">${items.map((item, index) => `<article class="lesson-row"><span class="lesson-order">${index + 1}</span><div class="lesson-copy"><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.type)} · ${item.durationMinutes} phút</span></div><div class="lesson-action">${badge(item.required ? 'ACTIVE' : 'DRAFT', item.required ? 'Bắt buộc' : 'Tự chọn')}</div></article>`).join('')}</div></div>`;
+  }
+
   function render(path, ctx) {
     if (path === '/app/admissions/dashboard') return admissionsDashboard(ctx);
     if (path === '/app/admissions/leads') return admissionsLeads(ctx);
@@ -172,6 +188,8 @@
     if (path === '/app/teacher/grading') return grading(ctx);
     if (path === '/app/teacher/workload') return workload(ctx);
     if (path === '/app/teacher/quality') return quality(ctx);
+    if (path.startsWith('/app/teacher/content/preview/')) return contentPreview(ctx, path.split('/').at(-1));
+    if (['/app/teacher/content', '/app/teacher/courses', '/app/teacher/question-bank', '/app/teacher/quizzes'].includes(path) || path.startsWith('/app/teacher/quizzes/')) return contentStudio(ctx);
     return '';
   }
 

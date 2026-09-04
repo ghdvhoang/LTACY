@@ -124,6 +124,7 @@
         { id: 'item-pronunciation', lessonTemplateId: 'lesson-past-simple', type: 'PRACTICE', title: 'Pronunciation: -ed endings', required: true, durationMinutes: 15, order: 3 },
         { id: 'item-remedial-quiz', lessonTemplateId: 'lesson-past-simple', type: 'QUIZ', title: 'Past Simple Check', required: true, durationMinutes: 15, order: 4 },
       ],
+      contentDrafts: [],
       teacherProfiles: [
         { id: 'teacher-profile-1', userId: 'teacher-1', teacherCode: 'GV001', status: 'ACTIVE', branchIds: ['branch-q3'], ageBands: ['YOUNG_LEARNER', 'TEEN'], levels: ['A1', 'A2', 'B1'], modes: ['OFFLINE', 'ONLINE'] },
         { id: 'teacher-profile-2', userId: 'teacher-2', teacherCode: 'GV002', status: 'ACTIVE', branchIds: ['branch-td'], ageBands: ['TEEN', 'ADULT'], levels: ['A2', 'B1', 'B2'], modes: ['OFFLINE', 'ONLINE'] },

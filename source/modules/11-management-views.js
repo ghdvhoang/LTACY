@@ -127,6 +127,21 @@
       <div class="settings-grid">${Object.entries(settings).map(([key, value]) => `<article><label>${escapeHtml(key.replaceAll(/([A-Z])/g, ' $1'))}</label><strong>${escapeHtml(String(value))}</strong><small>Seeded configuration · resettable</small></article>`).join('')}</div>${section('Reset controls', `<p>Reset đưa toàn bộ state về checkpoint ban đầu và xóa các thao tác demo trong localStorage.</p>${button('Reset toàn bộ demo', 'reset-demo', { kind: 'secondary' })}`, { className: 'danger-zone' })}</div>`;
   }
 
+  function adminCourses(ctx) {
+    const rows = ctx.state.courses.map((course) => {
+      const versions = ctx.state.courseVersions.filter((item) => item.courseId === course.id);
+      const versionIds = versions.map((item) => item.id);
+      const units = ctx.state.units.filter((item) => versionIds.includes(item.courseVersionId));
+      const unitIds = units.map((item) => item.id);
+      const lessons = ctx.state.lessonTemplates.filter((item) => unitIds.includes(item.unitId));
+      return { ...course, versions, lessons };
+    });
+    return `<div class="workspace-page">${pageHeader('Quản trị viên · Course', 'Quản trị khóa học', 'Kiểm kê khóa học, phiên bản, bài học, video, câu hỏi và bài kiểm tra từ cùng một state.')}
+      <div class="metric-grid four">${metric('Khóa học', ctx.state.courses.length, 'Theo chương trình và level', 'book')}${metric('Bài học', ctx.state.lessonTemplates.length, 'Template có version', 'grid')}${metric('Video', ctx.state.learningItems.filter((item) => item.type === 'VIDEO').length, 'Metadata demo', 'trend')}${metric('Câu hỏi', ctx.state.questions.length, 'Ngân hàng dùng chung', 'check')}</div>
+      ${section('Danh mục Course', table([{ label: 'Khóa học', render: (row) => `<strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.code)}</small>` }, { label: 'Phiên bản', render: (row) => row.versions.map((item) => `v${item.version}`).join(', ') }, { label: 'Bài học', render: (row) => row.lessons.length }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows))}
+      <div class="content-grid two">${section('Video & hoạt động', table([{ label: 'Nội dung', render: (row) => `<strong>${escapeHtml(row.title)}</strong><small>${escapeHtml(row.type)}</small>` }, { label: 'Thời lượng', render: (row) => `${row.durationMinutes} phút` }, { label: 'Yêu cầu', render: (row) => row.required ? 'Bắt buộc' : 'Tự chọn' }], ctx.state.learningItems))}${section('Bài kiểm tra', table([{ label: 'Tên bài', key: 'title' }, { label: 'Số câu', render: (row) => row.questionIds.length }, { label: 'Điểm đạt', render: (row) => `${row.passingScore}%` }, { label: 'Trạng thái', render: (row) => badge(row.status) }], ctx.state.assessments))}</div></div>`;
+  }
+
   function render(path, ctx) {
     const routes = {
       '/app/academic/dashboard': academicDashboard,
@@ -146,6 +161,7 @@
       '/app/admin/integrations': integrations,
       '/app/admin/settings': settings,
     };
+    if (['/app/admin/courses', '/app/admin/lessons', '/app/admin/videos', '/app/admin/questions', '/app/admin/quizzes'].includes(path)) return adminCourses(ctx);
     return routes[path] ? routes[path](ctx) : '';
   }
 

@@ -276,6 +276,31 @@
         return { message: 'Đã hoàn tất renewal.' };
       },
 
+      CREATE_CONTENT_DRAFT(draft, payload, context) {
+        requireRole(context.actor, ['TEACHER', 'ACADEMIC_MANAGER']);
+        const version = required(draft.courseVersions.find((item) => item.id === payload.courseVersionId), 'COURSE_VERSION_NOT_FOUND', 'Không tìm thấy phiên bản khóa học.');
+        const lesson = required(draft.lessonTemplates.find((item) => item.id === payload.lessonTemplateId), 'LESSON_NOT_FOUND', 'Không tìm thấy bài học.');
+        const unit = required(draft.units.find((item) => item.id === lesson.unitId && item.courseVersionId === version.id), 'LESSON_COURSE_MISMATCH', 'Bài học không thuộc phiên bản khóa học đã chọn.');
+        const title = String(payload.title || '').trim();
+        if (!title) throw new CommandError('TITLE_REQUIRED', 'Cần nhập tên nội dung.');
+        const draftItem = {
+          id: uid('content-draft'),
+          courseVersionId: version.id,
+          unitId: unit.id,
+          lessonTemplateId: lesson.id,
+          type: payload.type || 'PRACTICE',
+          title,
+          status: 'DRAFT',
+          createdBy: context.actor.id,
+          createdAt: nowIso(),
+        };
+        draft.contentDrafts ||= [];
+        draft.contentDrafts.unshift(draftItem);
+        appendEvent(draft, context, 'CONTENT_DRAFT_CREATED', 'CONTENT_DRAFT', draftItem.id, `${title} · ${version.title}.`);
+        appendAudit(draft, context, 'CONTENT_DRAFT_CREATED', 'CONTENT_DRAFT', draftItem.id, `Bài ${lesson.title}.`);
+        return { message: 'Đã tạo bản nháp nội dung.', contentDraftId: draftItem.id };
+      },
+
       PUBLISH_COURSE_VERSION(draft, payload, context) {
         requireRole(context.actor, ['ACADEMIC_MANAGER']);
         const version = required(draft.courseVersions.find((item) => item.id === payload.courseVersionId), 'COURSE_VERSION_NOT_FOUND', 'Không tìm thấy course version.');
