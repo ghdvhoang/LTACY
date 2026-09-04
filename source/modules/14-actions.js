@@ -15,6 +15,19 @@
     return `\uFEFF${headers.map(csvCell).join(',')}\r\n${state.auditLogs.map((row) => headers.map((key) => csvCell(row[key])).join(',')).join('\r\n')}`;
   }
 
+  function csv(headers, rows) {
+    return `\uFEFF${headers.map(csvCell).join(',')}\r\n${rows.map((row) => row.map(csvCell).join(',')).join('\r\n')}`;
+  }
+
+  function exportDataset(state, type) {
+    if (type === 'audit') return { name: 'yen-center-audit.csv', content: auditCsv(state) };
+    if (type === 'students') return { name: 'yen-center-hoc-vien.csv', content: csv(['Mã', 'Họ tên', 'Lớp', 'Mục tiêu', 'Trạng thái'], state.learners.map((learner) => [learner.code, learner.name, state.classes.find((item) => item.id === learner.classId)?.name || '', learner.goal, learner.status])) };
+    if (type === 'contacts') return { name: 'yen-center-lien-he.csv', content: csv(['Mã', 'Loại', 'Tên', 'Tổ chức/Học viên', 'Điện thoại', 'Email', 'Nhu cầu', 'Trạng thái'], state.leads.map((lead) => [lead.code, lead.type, lead.name, lead.organization || lead.studentName || '', lead.phone, lead.email, lead.message || lead.goal, lead.status])) };
+    if (type === 'remedial') return { name: 'yen-center-hoc-bu.csv', content: csv(['Học viên', 'Bài học', 'Hạn', 'Video %', 'Điểm', 'Trạng thái'], state.remedialAssignments.map((item) => [state.learners.find((learner) => learner.id === item.learnerId)?.name || '', state.lessonTemplates.find((lesson) => lesson.id === item.lessonTemplateId)?.title || '', item.dueAt, item.videoProgress, item.highestScore ?? '', item.status])) };
+    if (type === 'sessions') return { name: 'yen-center-buoi-hoc.csv', content: csv(['Buổi', 'Lớp', 'Bài học', 'Có mặt', 'Vắng', 'Đã giao bù'], state.sessions.map((session) => [session.startsAt, state.classes.find((item) => item.id === session.classId)?.name || '', state.lessonTemplates.find((item) => item.id === session.lessonTemplateId)?.title || '', state.attendanceRecords.filter((item) => item.sessionId === session.id && item.status === 'PRESENT').length, state.attendanceRecords.filter((item) => item.sessionId === session.id && item.status === 'ABSENT').length, state.remedialAssignments.filter((item) => item.sessionId === session.id).length])) };
+    return null;
+  }
+
   function create({ store, bus, storage, location, onChange = () => {}, onToast = () => {}, onDownload = () => {}, onPrint = () => {}, onCopy = () => {} }) {
     const checkpointCache = new Map();
     const attendanceDrafts = new Map();
@@ -281,10 +294,51 @@
         onToast('Đã mô phỏng gửi yêu cầu. Không có dữ liệu nào rời trình duyệt.', 'success');
         return { ok: true, mocked: true };
       }
+      if (action === 'submit-public-lead') {
+        const result = bus.dispatch('CREATE_PUBLIC_LEAD', data, 'public-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'add-learner') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'admin-1';
+        const result = bus.dispatch('CREATE_LEARNER', data, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'lead-status') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'admin-1';
+        const result = bus.dispatch('UPDATE_LEAD_STATUS', { leadId: data.leadId, status: data.status }, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'mark-notifications-read') {
+        const actorId = storage?.getItem(ACTOR_KEY);
+        const result = bus.dispatch('MARK_NOTIFICATIONS_READ', {}, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'mock-sync') {
+        const result = bus.dispatch('RUN_MOCK_SYNC', {}, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
       if (action === 'export-csv') {
-        if (data.type !== 'audit') return { ok: false, code: 'EXPORT_NOT_FOUND', message: 'Chưa có export phù hợp.' };
-        onDownload('yen-center-audit.csv', auditCsv(state()));
-        onToast('Đã tạo CSV audit theo scope demo.', 'success');
+        const output = exportDataset(state(), data.type);
+        if (!output) return { ok: false, code: 'EXPORT_NOT_FOUND', message: 'Chưa có dữ liệu xuất phù hợp.' };
+        onDownload(output.name, output.content);
+        onToast('Đã tạo tệp CSV trong trình duyệt.', 'success');
+        return { ok: true };
+      }
+      if (action === 'download-demo-document') {
+        const item = state().publicContent.documents.find((document) => document.id === data.documentId);
+        if (!item) return { ok: false, code: 'DOCUMENT_NOT_FOUND', message: 'Không tìm thấy tài liệu.' };
+        onDownload(`tai-lieu-${item.id}.csv`, csv(['Thuộc tính', 'Giá trị'], [['Tên tài liệu', item.title], ['Đối tượng', item.audience], ['Loại', item.type], ['Ghi chú', 'Bản tải mô phỏng trong frontend demo']]));
+        onToast('Đã tạo bản tải mô phỏng.', 'success');
         return { ok: true };
       }
       if (action === 'print-view') {
@@ -297,5 +351,5 @@
     return Object.freeze({ execute, getAttendanceDraft, loadCheckpoint, runCanonicalAll, runCanonicalNext });
   }
 
-  root.YC.define('actions', Object.freeze({ ACTOR_KEY, LEARNER_KEY, auditCsv, create }));
+  root.YC.define('actions', Object.freeze({ ACTOR_KEY, LEARNER_KEY, auditCsv, create, exportDataset }));
 })(globalThis);

@@ -101,6 +101,8 @@
       if (action === 'close-role-switcher') { hide('[data-role-switcher]'); return; }
       if (action === 'show-notifications') { const element = document.querySelector('[data-notification-drawer]'); if (element) element.removeAttribute('hidden'); return; }
       if (action === 'close-notifications') { hide('[data-notification-drawer]'); return; }
+      if (action === 'open-add-student') { document.querySelector('[data-add-student-dialog]')?.showModal(); return; }
+      if (action === 'close-add-student') { document.querySelector('[data-add-student-dialog]')?.close(); return; }
       if (action === 'fill-demo-quiz') { document.querySelectorAll('[data-demo-answer]').forEach((input) => { input.checked = true; }); toast('Đã điền bộ đáp án demo 8/10.', 'info'); return; }
       if (action === 'toggle-video') {
         if (videoTimer) { root.clearInterval(videoTimer); videoTimer = null; return; }
@@ -112,7 +114,7 @@
         }, 500);
         return;
       }
-      const data = { ...payloadFrom(trigger), actorId: trigger.dataset.actorId, learnerId: trigger.dataset.learnerId, sessionId: trigger.dataset.sessionId, assignmentId: trigger.dataset.assignmentId, status: trigger.dataset.status, progress: trigger.dataset.progress };
+      const data = { ...payloadFrom(trigger), actorId: trigger.dataset.actorId, learnerId: trigger.dataset.learnerId, sessionId: trigger.dataset.sessionId, assignmentId: trigger.dataset.assignmentId, documentId: trigger.dataset.documentId, status: trigger.dataset.status, progress: trigger.dataset.progress };
       trigger.disabled = true;
       const result = controller.execute(action, data);
       if (result?.ok === false) toast(result.message, 'error');
@@ -131,8 +133,17 @@
       if (form.dataset.form === 'forgot') { action = 'request-otp'; data = { identifier: values.get('identifier') }; }
       if (form.dataset.form === 'otp') { action = 'verify-otp'; data = { otp: values.get('otp') }; }
       if (form.dataset.form === 'quiz') { action = 'submit-quiz'; data = { assignmentId: form.dataset.assignmentId, answers: Array.from(form.querySelectorAll('.question-card'), (_card, index) => { const selected = form.querySelector(`input[name="answer-${index}"]:checked`); return selected ? Number(selected.value) : null; }) }; }
+      if (form.dataset.form === 'public-lead') { action = 'submit-public-lead'; data = { type: form.dataset.type, name: values.get('name'), studentName: values.get('studentName'), organization: values.get('organization'), phone: values.get('phone'), email: values.get('email'), message: values.get('message') }; }
+      if (form.dataset.form === 'add-student') { action = 'add-learner'; data = { code: values.get('code'), name: values.get('name'), phone: values.get('phone'), classId: values.get('classId') }; }
       if (!action) return;
       const result = controller.execute(action, data);
+      if (result?.ok === false) toast(result.message, 'error');
+    });
+
+    document.addEventListener('change', (event) => {
+      const trigger = event.target.closest('[data-action="lead-status"]');
+      if (!trigger) return;
+      const result = controller.execute('lead-status', { leadId: trigger.dataset.leadId, status: trigger.value });
       if (result?.ok === false) toast(result.message, 'error');
     });
 

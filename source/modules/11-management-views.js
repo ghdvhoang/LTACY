@@ -118,7 +118,41 @@
 
   function integrations() {
     const rows = [['Payment gateway', 'DEMO_LEDGER', 'MOCKED', 'Không gọi provider'], ['Email / SMS / Zalo', 'OUTBOUND_PREVIEW', 'MOCKED', 'Chỉ lưu message record'], ['Video learning', 'LOCAL_PROGRESS', 'MOCKED', 'Progress trong localStorage'], ['Identity provider', 'ROLE_PICKER', 'MOCKED', 'Quick access demo']];
-    return `<div class="workspace-page">${pageHeader('Admin · Platform', 'Integrations', 'Provider boundaries được gắn nhãn rõ để demo không bị hiểu nhầm là production.')}${section('Connector registry', table([{ label: 'Capability', render: (row) => `<strong>${escapeHtml(row[0])}</strong>` }, { label: 'Adapter', render: (row) => `<code>${escapeHtml(row[1])}</code>` }, { label: 'Mode', render: (row) => badge(row[2]) }, { label: 'Boundary', render: (row) => escapeHtml(row[3]) }], rows))}</div>`;
+    return `<div class="workspace-page">${pageHeader('Quản trị viên · Nền tảng', 'Tích hợp', 'Ranh giới nhà cung cấp được gắn nhãn rõ để demo không bị hiểu nhầm là sản phẩm thật.', button('Chạy đồng bộ mô phỏng', 'mock-sync', { icon: 'trend' }))}${section('Danh sách kết nối', table([{ label: 'Khả năng', render: (row) => `<strong>${escapeHtml(row[0])}</strong>` }, { label: 'Bộ chuyển đổi', render: (row) => `<code>${escapeHtml(row[1])}</code>` }, { label: 'Chế độ', render: (row) => badge(row[2]) }, { label: 'Ranh giới', render: (row) => escapeHtml(row[3]) }], rows))}</div>`;
+  }
+
+  function adminUsers(ctx) {
+    const rows = ctx.path === '/app/admin/teachers' ? ctx.state.users.filter((item) => ['TEACHER', 'TA'].includes(item.role)) : ctx.state.users.filter((item) => item.role !== 'PUBLIC');
+    return `<div class="workspace-page">${pageHeader('Quản trị viên · Tài khoản', ctx.path === '/app/admin/teachers' ? 'Giáo viên và trợ giảng' : 'Người dùng và phân quyền', 'Tài khoản, vai trò và phạm vi truy cập trong bản demo.')}${section('Danh sách tài khoản', table([{ label: 'Người dùng', render: (row) => person(row, row.identifiers?.[0] || row.id) }, { label: 'Vai trò', render: (row) => badge('ACTIVE', root.YC.router.ROLE_LABELS[row.role] || row.role) }, { label: 'Chi nhánh', render: (row) => escapeHtml((row.branchIds || []).join(', ') || 'Theo hồ sơ liên kết') }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows))}</div>`;
+  }
+
+  function adminStudents(ctx) {
+    return `<div class="workspace-page">${pageHeader('Quản trị viên · Học viên', 'Quản lý học viên', 'Tìm kiếm, thêm hồ sơ và kiểm tra lớp đang học.', `<button class="btn btn-primary" type="button" data-action="open-add-student">Thêm học viên</button>${button('Xuất CSV', 'export-csv', { kind: 'secondary', payload: { type: 'students' } })}`)}${section('Danh sách học viên', table([{ label: 'Mã', key: 'code' }, { label: 'Họ và tên', key: 'name' }, { label: 'Lớp', render: (row) => escapeHtml(ctx.state.classes.find((item) => item.id === row.classId)?.name || 'Chưa xếp lớp') }, { label: 'Mục tiêu', key: 'goal' }, { label: 'Trạng thái', render: (row) => badge(row.status) }], ctx.state.learners))}
+      <dialog class="form-card" data-add-student-dialog><form data-form="add-student" class="stack"><div class="between"><h2>Thêm học viên</h2><button type="button" class="icon-btn" data-action="close-add-student">×</button></div><label>Mã học viên<input class="input" name="code" required placeholder="HSNEW01"></label><label>Họ và tên<input class="input" name="name" required placeholder="Nguyễn Văn An"></label><label>Số điện thoại<input class="input" name="phone" placeholder="0900 000 000"></label><label>Lớp<select class="input" name="classId"><option value="">Chưa xếp lớp</option>${ctx.state.classes.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`).join('')}</select></label><button class="btn btn-primary" type="submit">Lưu học viên</button></form></dialog></div>`;
+  }
+
+  function adminClasses(ctx) {
+    const rows = ctx.state.classes.map((cohort) => ({ ...cohort, enrollmentCount: ctx.state.enrollments.filter((item) => item.classId === cohort.id && item.status === 'ACTIVE').length, sessionCount: ctx.state.sessions.filter((item) => item.classId === cohort.id).length }));
+    return `<div class="workspace-page">${pageHeader('Quản trị viên · Vận hành', 'Lớp, lịch và buổi học', 'Enrollment, lịch học và session dùng cùng Course version.')}${section('Danh sách lớp', table([{ label: 'Lớp', render: (row) => `<strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.code)}</small>` }, { label: 'Lịch', key: 'scheduleLabel' }, { label: 'Course', render: (row) => escapeHtml(ctx.state.courseVersions.find((item) => item.id === row.courseVersionId)?.title || '') }, { label: 'Học viên', render: (row) => `${row.enrollmentCount}/${row.capacity}` }, { label: 'Buổi học', key: 'sessionCount' }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows))}</div>`;
+  }
+
+  function adminRemedial(ctx) {
+    const rows = ctx.state.remedialAssignments.map((item) => ({ ...item, learner: ctx.state.learners.find((learner) => learner.id === item.learnerId) }));
+    return `<div class="workspace-page">${pageHeader('Quản trị viên · Học bù', 'Quản lý học bù', 'Theo dõi deadline, link, tiến độ video và kết quả.', button('Xuất CSV', 'export-csv', { kind: 'secondary', payload: { type: 'remedial' } }))}${section('Toàn trung tâm', table([{ label: 'Học viên', render: (row) => `<strong>${escapeHtml(row.learner?.name || '')}</strong><small>${escapeHtml(row.learner?.code || '')}</small>` }, { label: 'Hạn', render: (row) => formatDate(row.dueAt) }, { label: 'Tiến độ', render: (row) => `${row.videoProgress || 0}% · ${row.highestScore ?? '—'}/100` }, { label: 'Link', render: (row) => `${row.accessStatus || 'ACTIVE'} · v${row.linkVersion || 1}` }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows, { emptyTitle: 'Chưa có bài học bù', emptyBody: 'Bản ghi sẽ xuất hiện khi giáo viên lưu một attendance vắng.' }))}</div>`;
+  }
+
+  function adminContacts(ctx) {
+    return `<div class="workspace-page">${pageHeader('Quản trị viên · Liên hệ', 'Hộp thư liên hệ', 'Yêu cầu B2C, B2B và hỗ trợ từ các biểu mẫu công khai.', button('Xuất CSV', 'export-csv', { kind: 'secondary', payload: { type: 'contacts' } }))}${section('Yêu cầu đã tiếp nhận', table([{ label: 'Mã', render: (row) => `<strong>${escapeHtml(row.code)}</strong><small>${escapeHtml(row.type)}</small>` }, { label: 'Người liên hệ', render: (row) => `<strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.organization || row.studentName || '')}</small>` }, { label: 'Liên hệ', render: (row) => escapeHtml(row.phone || row.email) }, { label: 'Nhu cầu', render: (row) => escapeHtml(row.message || row.goal || '') }, { label: 'Trạng thái', render: (row) => `<select data-action="lead-status" data-lead-id="${escapeHtml(row.id)}"><option value="NEW" ${row.status === 'NEW' ? 'selected' : ''}>Mới</option><option value="CONTACTED" ${row.status === 'CONTACTED' ? 'selected' : ''}>Đã liên hệ</option><option value="WON" ${row.status === 'WON' ? 'selected' : ''}>Đã chốt</option><option value="LOST" ${row.status === 'LOST' ? 'selected' : ''}>Không phù hợp</option></select>` }], ctx.state.leads))}</div>`;
+  }
+
+  function adminReports(ctx) {
+    const completed = ctx.state.remedialAssignments.filter((item) => item.status === 'COMPLETED').length;
+    return `<div class="workspace-page">${pageHeader('Quản trị viên · Báo cáo', 'Báo cáo hệ thống', 'Chuyên cần, học bù, kết quả và dữ liệu vận hành.', `${button('Xuất báo cáo buổi học', 'export-csv', { kind: 'secondary', payload: { type: 'sessions' } })}${button('In báo cáo', 'print-view', { kind: 'secondary' })}`)}<div class="metric-grid four">${metric('Học viên', ctx.state.learners.length, 'Tất cả hồ sơ', 'people')}${metric('Attendance', ctx.state.attendanceRecords.length, 'Bản ghi đã lưu', 'calendar')}${metric('Bài học bù', ctx.state.remedialAssignments.length, `${completed} hoàn thành`, 'spark')}${metric('Kết quả', ctx.state.attempts.length, 'Tất cả lượt làm', 'check')}</div></div>`;
+  }
+
+  function adminNotifications(ctx) {
+    const rows = ctx.state.notifications.filter((item) => item.userId === ctx.actor.id);
+    return `<div class="workspace-page">${pageHeader('Quản trị viên · Thông báo', 'Thông báo', 'Sự kiện hệ thống và việc cần xử lý.', button('Đánh dấu tất cả đã đọc', 'mark-notifications-read', { kind: 'secondary' }))}${section('Hộp thư', rows.length ? rows.map((item) => `<article class="notification-item ${item.read ? '' : 'unread'}"><span>${icon('spark')}</span><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.body)}</p><small>${formatDate(item.createdAt)}</small></div>${badge(item.read ? 'COMPLETED' : 'NEW', item.read ? 'Đã đọc' : 'Mới')}</article>`).join('') : '<p class="muted">Chưa có thông báo.</p>')}</div>`;
   }
 
   function settings(ctx) {
@@ -162,6 +196,14 @@
       '/app/admin/settings': settings,
     };
     if (['/app/admin/courses', '/app/admin/lessons', '/app/admin/videos', '/app/admin/questions', '/app/admin/quizzes'].includes(path)) return adminCourses(ctx);
+    if (['/app/admin/users', '/app/admin/teachers'].includes(path)) return adminUsers(ctx);
+    if (path === '/app/admin/students') return adminStudents(ctx);
+    if (['/app/admin/classes', '/app/admin/enrollments', '/app/admin/schedules', '/app/admin/sessions'].includes(path)) return adminClasses(ctx);
+    if (path === '/app/admin/remedial') return adminRemedial(ctx);
+    if (path === '/app/admin/contacts') return adminContacts(ctx);
+    if (path === '/app/admin/reports') return adminReports(ctx);
+    if (path === '/app/admin/notifications') return adminNotifications(ctx);
+    if (path === '/app/admin/demo') return settings(ctx);
     return routes[path] ? routes[path](ctx) : '';
   }
 

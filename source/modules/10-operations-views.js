@@ -157,6 +157,11 @@
     return `<div class="workspace-page">${pageHeader('Giáo viên · Báo cáo', 'Báo cáo lớp học', 'Đối chiếu attendance, học bù và kết quả theo từng buổi.', `${button('Xuất CSV', 'export-csv', { kind: 'secondary', payload: { type: 'sessions' } })}${button('In báo cáo', 'print-view', { kind: 'secondary' })}`)}${section('Theo từng buổi học', table([{ label: 'Buổi học', render: (row) => `<strong>${escapeHtml(row.cohort?.name || '')}</strong><small>${formatDate(row.session.startsAt)}</small>` }, { label: 'Có mặt', render: (row) => row.attendance.filter((item) => item.status === 'PRESENT').length }, { label: 'Vắng', render: (row) => row.attendance.filter((item) => item.status === 'ABSENT').length }, { label: 'Đã giao bù', render: (row) => row.remedial.length }, { label: 'Đã hoàn thành', render: (row) => row.remedial.filter((item) => item.status === 'COMPLETED').length }], rows))}</div>`;
   }
 
+  function teacherNotifications(ctx) {
+    const rows = ctx.state.notifications.filter((item) => item.userId === ctx.actor.id);
+    return `<div class="workspace-page">${pageHeader('Giáo viên · Thông báo', 'Thông báo', 'Bài học bù hoàn tất, phân công và việc cần xử lý.', button('Đánh dấu tất cả đã đọc', 'mark-notifications-read', { kind: 'secondary' }))}${section('Hộp thư', rows.length ? rows.map((item) => `<article class="notification-item ${item.read ? '' : 'unread'}"><span>${icon('spark')}</span><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.body)}</p><small>${formatDate(item.createdAt)}</small></div>${badge(item.read ? 'COMPLETED' : 'NEW', item.read ? 'Đã đọc' : 'Mới')}</article>`).join('') : '<p class="muted">Chưa có thông báo.</p>')}</div>`;
+  }
+
   function sessionDetail(ctx, sessionId) {
     const workbench = root.YC.selectors.sessionWorkbench(ctx.state, sessionId) || root.YC.selectors.sessionWorkbench(ctx.state, 'session-canonical');
     const { session, plan, roster, risks, openHomework, delivery } = workbench;
@@ -230,6 +235,7 @@
     if (path.startsWith('/app/teacher/sessions/')) return sessionDetail(ctx, path.split('/').at(-1));
     if (path === '/app/teacher/remedial') return teacherRemedial(ctx);
     if (path === '/app/teacher/reports') return teacherReports(ctx);
+    if (path === '/app/teacher/notifications') return teacherNotifications(ctx);
     if (path === '/app/teacher/grading') return grading(ctx);
     if (path === '/app/teacher/workload') return workload(ctx);
     if (path === '/app/teacher/quality') return quality(ctx);

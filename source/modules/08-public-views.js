@@ -64,18 +64,54 @@
       <div class="schedule-list">${state.classes.map((cohort) => { const used = state.enrollments.filter((item) => item.classId === cohort.id && item.status === 'ACTIVE').length; return `<article class="schedule-row"><div><p>${escapeHtml(state.branches.find((item) => item.id === cohort.branchId)?.name || '')}</p><h3>${escapeHtml(cohort.name)}</h3><span>${escapeHtml(cohort.code)}</span></div><div><small>Lịch học</small><strong>${escapeHtml(cohort.scheduleLabel)}</strong><span>${escapeHtml(cohort.mode)} · ${escapeHtml(cohort.room)}</span></div><div><small>Số chỗ</small><strong>${Math.max(0, cohort.capacity - used)}/${cohort.capacity}</strong>${badge(cohort.status)}</div>${link('Nhận tư vấn', '/lien-he')}</article>`; }).join('')}</div></section></main>`;
   }
 
+  function publicLeadForm(type) {
+    const isB2B = type === 'B2B';
+    const isSupport = type === 'SUPPORT';
+    return `<form class="panel contact-form" data-form="public-lead" data-type="${type}" novalidate><h2>${isSupport ? 'Gửi yêu cầu hỗ trợ' : isB2B ? 'Đặt lịch demo giải pháp' : 'Đăng ký tư vấn chương trình'}</h2>
+      ${isB2B ? '<label>Tên tổ chức<input name="organization" required placeholder="Trung tâm hoặc trường học"></label>' : ''}
+      <label>Họ và tên<input name="name" required placeholder="Nguyễn Thu Hà"></label>${!isB2B && !isSupport ? '<label>Tên học viên<input name="studentName" placeholder="Nguyễn Minh Anh"></label>' : ''}
+      <label>Số điện thoại<input name="phone" inputmode="tel" placeholder="0900 000 000"></label><label>Email<input name="email" type="email" placeholder="email@example.com"></label>
+      <label>${isSupport ? 'Nội dung cần hỗ trợ' : 'Nhu cầu'}<textarea name="message" rows="3" required placeholder="Mô tả ngắn nhu cầu của bạn"></textarea></label><label class="checkbox"><input type="checkbox" name="consent" required><span>Tôi đồng ý để Yen Center xử lý thông tin nhằm liên hệ.</span></label>
+      <button class="btn btn-primary" type="submit">${isSupport ? 'Gửi yêu cầu hỗ trợ' : 'Gửi yêu cầu'}</button><small>Dữ liệu chỉ lưu trong trình duyệt của bản demo.</small></form>`;
+  }
+
   function family() {
-    return `<main id="main-content" class="public-main"><section class="simple-hero family-hero"><div class="container feature-split"><div><p class="eyebrow">Phụ huynh & học viên</p><h1>Mỗi tuần đều biết mình đang tiến về đâu</h1><p>Một cổng học tập tách biệt cho học viên và phụ huynh, với quyền xem đúng phạm vi.</p>${link('Đăng nhập cổng học tập', '/login', { kind: 'primary' })}</div><div class="family-cards"><article><b>01</b><h3>Tiếp tục học</h3><p>Video, quiz, homework và feedback trong một learning path.</p></article><article><b>02</b><h3>Theo dõi evidence</h3><p>Attendance, skill profile và next action đã được duyệt.</p></article><article><b>03</b><h3>Phối hợp đúng lúc</h3><p>Nhận thay đổi lịch, dịch vụ và học phí phù hợp quyền xem.</p></article></div></div></section></main>`;
+    return `<main id="main-content" class="public-main"><section class="simple-hero family-hero"><div class="container feature-split"><div><p class="eyebrow">Phụ huynh & học viên</p><h1>Mỗi tuần đều biết mình đang tiến về đâu</h1><p>Một cổng học tập cho học viên và phụ huynh, với quyền xem đúng phạm vi.</p>${link('Đăng nhập cổng học tập', '/login', { kind: 'primary' })}</div><div class="family-cards"><article><b>01</b><h3>Tiếp tục học</h3><p>Video, bài kiểm tra, bài tập và nhận xét trong một lộ trình.</p></article><article><b>02</b><h3>Theo dõi bằng chứng</h3><p>Chuyên cần, hồ sơ kỹ năng và bước tiếp theo đã được duyệt.</p></article><article><b>03</b><h3>Phối hợp đúng lúc</h3><p>Nhận thay đổi lịch, dịch vụ và học phí phù hợp quyền xem.</p></article></div></div></section><section class="public-section container contact-grid"><div><p class="eyebrow">Tư vấn chương trình</p><h2>Chọn đúng lớp ngay từ đầu</h2><p>Yêu cầu sau khi gửi sẽ xuất hiện ngay trong Hộp thư liên hệ của Quản trị viên.</p></div>${publicLeadForm('B2C')}</section></main>`;
   }
 
   function centerSolution() {
     return `<main id="main-content" class="public-main"><section class="simple-hero dark"><div class="container"><p class="eyebrow on-dark">Giải pháp trung tâm</p><h1>Một operating model từ lead đến renewal</h1><p>Quyết định dựa trên evidence, chuyển giao bằng event, truy vết bằng audit.</p></div></section><section class="public-section container"><div class="solution-grid">${[
       ['Admissions & placement', 'Lead, consultation, placement, offer và mock commerce.'], ['Academic design', 'Course version immutable, lesson template và completion rule.'], ['Teacher operations', 'Eligibility, workload, assignment, delivery và grading.'], ['Student service', 'Allocation, make-up, transfer, substitution và case ownership.'], ['Learning outcomes', 'Homework loop, assessment, moderation và promotion.'], ['Parent & renewal', 'Published progress, visibility policy và next-level offer.'],
-    ].map(([title, text], index) => `<article><span>${String(index + 1).padStart(2, '0')}</span><h3>${title}</h3><p>${text}</p></article>`).join('')}</div>${section('Frontend demo trung thực', '<p>Authentication, payment, messaging và integrations đều được mô phỏng rõ ràng. Không có dữ liệu thật được gửi ra bên ngoài.</p>', { className: 'notice-panel' })}</section></main>`;
+    ].map(([title, text], index) => `<article><span>${String(index + 1).padStart(2, '0')}</span><h3>${title}</h3><p>${text}</p></article>`).join('')}</div>${section('Bản demo frontend trung thực', '<p>Xác thực, thanh toán, nhắn tin và tích hợp đều được mô phỏng rõ ràng. Không có dữ liệu thật được gửi ra bên ngoài.</p>', { className: 'notice-panel' })}</section><section class="public-section container contact-grid"><div><p class="eyebrow">Dành cho trung tâm</p><h2>Đặt lịch xem luồng vận hành</h2><p>Thông tin được lưu vào Hộp thư liên hệ để kiểm tra xuyên vai trò.</p></div>${publicLeadForm('B2B')}</section></main>`;
   }
 
   function contact() {
-    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Tư vấn & placement</p><h1>Bắt đầu bằng một cuộc trò chuyện đúng trọng tâm</h1><p>Form này chỉ mô phỏng trải nghiệm frontend; dữ liệu không được gửi đến hệ thống ngoài.</p></div></section><section class="public-section container contact-grid"><form class="panel contact-form" data-demo-form><label>Họ và tên<input name="name" required placeholder="Nguyễn Minh Anh"></label><label>Số điện thoại<input name="phone" required placeholder="0900 000 000"></label><label>Mục tiêu học<select name="goal"><option>Nền tảng giao tiếp</option><option>IELTS</option><option>Speaking confidence</option></select></label><label>Khung giờ phù hợp<textarea name="schedule" rows="3" placeholder="Ví dụ: Thứ 3 & 5 sau 18:00"></textarea></label>${button('Gửi yêu cầu demo', 'submit-demo-contact', { icon: 'arrow' })}<small>Demo only · Không gửi email, SMS hoặc Zalo thật.</small></form><aside><p class="eyebrow">Sau khi gửi</p><h2>Luồng xử lý minh bạch</h2><ol class="process-list"><li><b>1</b><span><strong>Admissions liên hệ</strong><small>Xác nhận nhu cầu và lịch.</small></span></li><li><b>2</b><span><strong>Placement đa kỹ năng</strong><small>Academic Manager review.</small></span></li><li><b>3</b><span><strong>Khuyến nghị level</strong><small>Offer và lịch lớp phù hợp.</small></span></li></ol></aside></section></main>`;
+    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Liên hệ và hỗ trợ</p><h1>Bắt đầu bằng một cuộc trò chuyện đúng trọng tâm</h1><p>Yêu cầu hỗ trợ được lưu trong trình duyệt và hiển thị ngay cho Quản trị viên.</p></div></section><section class="public-section container contact-grid">${publicLeadForm('SUPPORT')}<aside><p class="eyebrow">Sau khi gửi</p><h2>Luồng xử lý minh bạch</h2><ol class="process-list"><li><b>1</b><span><strong>Tiếp nhận</strong><small>Tạo mã yêu cầu.</small></span></li><li><b>2</b><span><strong>Phân loại</strong><small>Chuyển đúng người phụ trách.</small></span></li><li><b>3</b><span><strong>Theo dõi</strong><small>Cập nhật trạng thái trong hộp thư.</small></span></li></ol></aside></section></main>`;
+  }
+
+  function publicNews(ctx) {
+    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Tin tức</p><h1>Cập nhật từ Yen Center</h1><p>Thông tin chương trình, khai giảng và hoạt động học tập.</p></div></section><section class="public-section container"><div class="program-grid">${ctx.state.publicContent.news.map((item) => `<article class="program-card"><div class="program-body"><p class="eyebrow">${escapeHtml(item.category)}</p><h2>${escapeHtml(item.title)}</h2><p>Nội dung minh họa được xuất bản trong cổng thông tin.</p>${badge(item.status)}</div></article>`).join('')}</div></section></main>`;
+  }
+
+  function publicEvents(ctx) {
+    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Sự kiện</p><h1>Hoạt động sắp diễn ra</h1><p>Đăng ký kiểm tra đầu vào và các buổi trải nghiệm.</p></div></section><section class="public-section container">${ctx.state.publicContent.events.map((item) => `<article class="schedule-row"><div><p>Sự kiện</p><h3>${escapeHtml(item.title)}</h3><span>${escapeHtml(item.location)}</span></div><div><small>Thời gian</small><strong>${escapeHtml(item.startsAt)}</strong></div>${link('Đăng ký', '/lien-he', { kind: 'primary' })}</article>`).join('')}</section></main>`;
+  }
+
+  function publicDocuments(ctx) {
+    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Tài liệu</p><h1>Hướng dẫn sử dụng</h1><p>Tài liệu tải xuống được tạo cục bộ trong bản demo.</p></div></section><section class="public-section container"><div class="program-grid">${ctx.state.publicContent.documents.map((item) => `<article class="program-card"><div class="program-body"><p class="eyebrow">${escapeHtml(item.type)}</p><h2>${escapeHtml(item.title)}</h2><p>Dành cho ${escapeHtml(item.audience)}.</p><button class="btn btn-secondary" type="button" data-action="download-demo-document" data-document-id="${escapeHtml(item.id)}">Tải bản mô phỏng</button></div></article>`).join('')}</div></section></main>`;
+  }
+
+  function faq() {
+    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Câu hỏi thường gặp</p><h1>Thông tin cần biết</h1></div></section><section class="public-section container"><details class="course-module" open><summary><strong>Bài học bù được tạo khi nào?</strong>${icon('arrow')}</summary><div><p>Khi giáo viên lưu trạng thái vắng, hệ thống tạo đúng một nhiệm vụ gắn với bài của buổi học.</p></div></details><details class="course-module"><summary><strong>Dữ liệu demo có được gửi đi không?</strong>${icon('arrow')}</summary><div><p>Không. Tất cả chỉ được lưu cục bộ trong trình duyệt.</p></div></details></section></main>`;
+  }
+
+  function legal(kind) {
+    const privacy = kind === 'privacy';
+    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Thông tin pháp lý</p><h1>${privacy ? 'Chính sách bảo mật' : 'Điều khoản sử dụng'}</h1><p>Bản demo frontend này không phải dịch vụ sản xuất và không tiếp nhận dữ liệu thật.</p></div></section><section class="public-section container"><div class="panel panel-body"><h2>${privacy ? 'Dữ liệu cục bộ' : 'Phạm vi sử dụng'}</h2><p>${privacy ? 'Dữ liệu nhập trong demo được lưu vào localStorage của trình duyệt và có thể xóa bằng thao tác đặt lại demo.' : 'Chỉ sử dụng để đánh giá luồng giao diện và nghiệp vụ mô phỏng. Thanh toán, nhắn tin và tích hợp không gọi hệ thống bên ngoài.'}</p></div></section></main>`;
+  }
+
+  function errorPage(code) {
+    return `<main id="main-content" class="not-found"><div class="not-found-code">${code}</div><p class="eyebrow">${code === 403 ? 'Không có quyền truy cập' : 'Không tìm thấy trang'}</p><h1>${code === 403 ? 'Bạn không có quyền mở khu vực này' : 'Không tìm thấy trang'}</h1><p>Hãy quay về trang chủ hoặc đăng nhập bằng tài khoản phù hợp.</p><a class="btn btn-primary" href="#/">Về trang chủ</a></main>`;
   }
 
   function login(ctx) {
@@ -113,6 +149,14 @@
     if (path === '/phu-huynh-hoc-sinh') return family(ctx);
     if (path === '/giai-phap-trung-tam') return centerSolution(ctx);
     if (path === '/lien-he') return contact(ctx);
+    if (path === '/tin-tuc') return publicNews(ctx);
+    if (path === '/su-kien') return publicEvents(ctx);
+    if (path === '/tai-lieu') return publicDocuments(ctx);
+    if (path === '/faq') return faq(ctx);
+    if (path === '/dieu-khoan-su-dung') return legal('terms');
+    if (path === '/chinh-sach-bao-mat') return legal('privacy');
+    if (path === '/403') return errorPage(403);
+    if (path === '/404') return errorPage(404);
     if (path === '/login') return login(ctx);
     if (path === '/forgot-password') return forgotPassword(ctx);
     if (path === '/verify-otp') return verifyOtp(ctx);

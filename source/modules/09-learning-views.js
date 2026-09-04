@@ -98,6 +98,11 @@
     return `<div class="workspace-page">${pageHeader('Học viên · Kết quả', 'Kết quả học tập', 'Xem điểm, số câu đúng, trạng thái và lịch sử từng lượt làm.')}${section('Lịch sử bài kiểm tra', attempts.length ? attempts.map((attempt) => `<article class="attempt-row"><span>Lượt ${attempt.attemptNumber}</span><strong>${attempt.score}/100</strong><span>${attempt.correct}/10 câu đúng</span>${badge(attempt.status)}<small>${formatDate(attempt.submittedAt)}</small></article>`).join('') : '<p class="muted">Chưa có kết quả. Hãy hoàn thành một bài kiểm tra.</p>')}</div>`;
   }
 
+  function studentNotifications(ctx) {
+    const rows = ctx.state.notifications.filter((item) => item.userId === ctx.actor.id);
+    return `<div class="workspace-page">${pageHeader('Học viên · Thông báo', 'Thông báo của tôi', 'Bài học bù, kết quả và báo cáo được gửi vào cùng hộp thư.', button('Đánh dấu tất cả đã đọc', 'mark-notifications-read', { kind: 'secondary' }))}${section('Hộp thư', rows.length ? rows.map((item) => `<article class="notification-item ${item.read ? '' : 'unread'}"><span>${icon('spark')}</span><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.body)}</p><small>${formatDate(item.createdAt)}</small></div>${badge(item.read ? 'COMPLETED' : 'NEW', item.read ? 'Đã đọc' : 'Mới')}</article>`).join('') : '<p class="muted">Chưa có thông báo.</p>')}</div>`;
+  }
+
   function studentAssessments(ctx) {
     const learner = learnerFor(ctx);
     const assignment = ctx.state.remedialAssignments.find((item) => item.learnerId === learner.id);
@@ -183,6 +188,8 @@
       '/app/student/remedial': studentRemedial,
       '/app/student/assessments': studentAssessments,
       '/app/student/progress': studentProgress,
+      '/app/student/lessons': studentCourse,
+      '/app/student/notifications': studentNotifications,
       '/app/parent/dashboard': parentDashboard,
       '/app/parent/attendance': parentAttendance,
       '/app/parent/progress': parentProgress,

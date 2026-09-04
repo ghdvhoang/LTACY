@@ -58,6 +58,7 @@
         { id: 'branch-td', organizationId: 'org-yen', code: 'TD', name: 'Cơ sở Thủ Đức', address: '48 Võ Văn Ngân, Thủ Đức', status: 'ACTIVE' },
       ],
       users: [
+        { id: 'public-1', role: 'PUBLIC', name: 'Khách truy cập', identifiers: [], secret: '', status: 'ACTIVE', branchIds: [] },
         { id: 'admin-1', role: 'ADMIN', name: 'Nguyễn Minh Quân', identifiers: ['admin@yencenter.demo'], secret: 'Demo@123', status: 'ACTIVE', branchIds: ['branch-q3', 'branch-td'] },
         { id: 'manager-1', role: 'CENTER_MANAGER', name: 'Lê Thu Trang', identifiers: ['manager@yencenter.demo'], secret: 'Demo@123', status: 'ACTIVE', branchIds: ['branch-q3', 'branch-td'] },
         { id: 'admissions-1', role: 'ADMISSIONS', name: 'Trần Quỳnh Anh', identifiers: ['admissions@yencenter.demo'], secret: 'Demo@123', status: 'ACTIVE', branchIds: ['branch-q3'] },

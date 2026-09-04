@@ -72,6 +72,74 @@
     }
 
     const handlers = {
+      CREATE_PUBLIC_LEAD(draft, payload, context) {
+        requireRole(context.actor, ['PUBLIC']);
+        const type = String(payload.type || 'B2C').toUpperCase();
+        if (!['B2C', 'B2B', 'SUPPORT'].includes(type)) throw new CommandError('INVALID_LEAD_TYPE', 'Loại yêu cầu không hợp lệ.');
+        const name = String(payload.name || '').trim();
+        const phone = String(payload.phone || '').trim();
+        const email = String(payload.email || '').trim();
+        const message = String(payload.message || '').trim();
+        if (!name || (!phone && !email) || !message) throw new CommandError('CONTACT_REQUIRED', 'Cần họ tên, thông tin liên hệ và nội dung yêu cầu.');
+        const count = draft.leads.filter((item) => item.type === type).length + 1;
+        const lead = {
+          id: uid('lead'), code: `YC-${type}-${String(count).padStart(4, '0')}`, type, name,
+          studentName: String(payload.studentName || '').trim(), organization: String(payload.organization || '').trim(),
+          phone, email, message, goal: String(payload.goal || message).trim(), availability: [],
+          branchId: payload.branchId || 'branch-q3', learnerId: null, status: 'NEW', ownerId: 'admissions-1', createdAt: nowIso(),
+        };
+        draft.leads.unshift(lead);
+        draft.outboundMessages.unshift({ id: uid('outbound'), channel: 'IN_APP', recipient: email || phone, template: type === 'SUPPORT' ? 'SUPPORT_ACKNOWLEDGED' : 'CONTACT_ACKNOWLEDGED', status: 'MOCKED', createdAt: nowIso() });
+        appendEvent(draft, context, 'PUBLIC_REQUEST_CREATED', 'LEAD', lead.id, `${lead.code} · ${lead.name}.`);
+        appendAudit(draft, context, 'PUBLIC_REQUEST_CREATED', 'LEAD', lead.id, `${type} · ${message}`);
+        notifyRole(draft, 'ADMISSIONS', 'Có yêu cầu mới', `${lead.code} · ${lead.name}.`, '/app/admissions/leads');
+        return { message: `Đã tiếp nhận yêu cầu ${lead.code}.`, code: lead.code, leadId: lead.id };
+      },
+
+      CREATE_LEARNER(draft, payload, context) {
+        requireRole(context.actor, ['ADMIN']);
+        const code = String(payload.code || '').trim().toUpperCase();
+        const name = String(payload.name || '').trim();
+        if (!code || !name) throw new CommandError('LEARNER_REQUIRED', 'Cần mã và họ tên học viên.');
+        if (draft.learners.some((item) => item.code === code)) throw new CommandError('LEARNER_CODE_EXISTS', 'Mã học viên đã tồn tại.');
+        const cohort = payload.classId ? required(draft.classes.find((item) => item.id === payload.classId), 'CLASS_NOT_FOUND', 'Không tìm thấy lớp.') : null;
+        const learner = { id: uid('student'), code, name, phone: String(payload.phone || '').trim(), birthDate: '', status: 'ACTIVE', classId: cohort?.id || null, branchId: cohort?.branchId || 'branch-q3', goal: String(payload.goal || 'Bổ sung từ Quản trị viên').trim() };
+        draft.learners.push(learner);
+        if (cohort) draft.enrollments.push({ id: uid('enrollment'), learnerId: learner.id, classId: cohort.id, courseVersionId: cohort.courseVersionId, status: 'ACTIVE', startsAt: nowIso(), endsAt: null });
+        appendEvent(draft, context, 'LEARNER_CREATED', 'LEARNER', learner.id, `${learner.name} · ${learner.code}.`, { learnerId: learner.id });
+        appendAudit(draft, context, 'LEARNER_CREATED', 'LEARNER', learner.id, cohort ? `Xếp lớp ${cohort.name}.` : 'Chưa xếp lớp.');
+        return { message: 'Đã thêm học viên.', learnerId: learner.id };
+      },
+
+      UPDATE_LEAD_STATUS(draft, payload, context) {
+        requireRole(context.actor, ['ADMISSIONS']);
+        const lead = findLead(draft, payload.leadId);
+        const status = String(payload.status || '').toUpperCase();
+        if (!['NEW', 'CONTACTED', 'PLACEMENT_BOOKED', 'PLACED', 'WON', 'LOST'].includes(status)) throw new CommandError('INVALID_LEAD_STATUS', 'Trạng thái yêu cầu không hợp lệ.');
+        const previous = lead.status;
+        lead.status = status;
+        appendEvent(draft, context, 'LEAD_STATUS_UPDATED', 'LEAD', lead.id, `${previous} → ${status}.`, { learnerId: lead.learnerId });
+        appendAudit(draft, context, 'LEAD_STATUS_UPDATED', 'LEAD', lead.id, `${previous} → ${status}.`);
+        return { message: 'Đã cập nhật trạng thái yêu cầu.' };
+      },
+
+      MARK_NOTIFICATIONS_READ(draft, _payload, context) {
+        const rows = draft.notifications.filter((item) => item.userId === context.actor.id && !item.read);
+        rows.forEach((item) => { item.read = true; item.readAt = nowIso(); });
+        appendAudit(draft, context, 'NOTIFICATIONS_MARKED_READ', 'USER', context.actor.id, `${rows.length} thông báo.`);
+        return { message: `Đã đánh dấu ${rows.length} thông báo là đã đọc.`, count: rows.length };
+      },
+
+      RUN_MOCK_SYNC(draft, _payload, context) {
+        requireRole(context.actor, ['ADMIN']);
+        const sync = { id: uid('sync'), adapter: 'GOOGLE_SHEETS_MOCK', status: 'COMPLETED', createdAt: nowIso(), createdBy: context.actor.id };
+        draft.integrationRuns ||= [];
+        draft.integrationRuns.unshift(sync);
+        appendEvent(draft, context, 'MOCK_SYNC_COMPLETED', 'INTEGRATION_RUN', sync.id, 'Đồng bộ Google Sheets mô phỏng đã hoàn tất.');
+        appendAudit(draft, context, 'MOCK_SYNC_COMPLETED', 'INTEGRATION_RUN', sync.id, 'Không gửi dữ liệu ra ngoài.');
+        return { message: 'Đã chạy đồng bộ mô phỏng.' };
+      },
+
       CONTACT_LEAD(draft, payload, context) {
         requireRole(context.actor, ['ADMISSIONS']);
         const lead = findLead(draft, payload.leadId);
