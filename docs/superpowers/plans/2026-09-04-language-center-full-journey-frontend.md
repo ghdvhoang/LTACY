@@ -30,14 +30,11 @@
 - Create: `scripts/build_standalone.py`
 - Create: `source/modules/00-namespace.js`
 - Create: `source/modules/01-utils.js`
-- Modify: `source/index.html`
-- Generate: `source/app.js`
-- Generate: `source/yen-center-lms-demo.html`
-- Generate: `OPEN-DEMO.html`
+- Generate: `source/app.v3.js`
 
 **Interfaces:**
 - Produces: `window.YC`, `YC.define(name, value)`, `YC.require(name)`, `YC.utils.escapeHtml(value)`, `YC.utils.uid(prefix)`.
-- Produces: `python3 scripts/build_standalone.py --check` for stale-artifact verification.
+- Produces: `python3 scripts/build_standalone.py --check` for stale v3 bundle verification.
 
 - [ ] **Step 1: Write the failing build tests**
 
@@ -64,11 +61,11 @@ Expected: FAIL with import or missing-file error for `scripts/build_standalone.p
 
 - [ ] **Step 3: Implement the namespace, utilities, manifest, and standalone builder**
 
-The builder reads `source/modules/*.js` in filename order, writes their concatenation to `source/app.js`, injects `styles.css` and the bundle into a standalone HTML template, and supports `--check` without writing.
+The builder reads `source/modules/*.js` in filename order, writes their concatenation to `source/app.v3.js`, and supports `--check` without writing. Its `--release` mode additionally replaces `source/app.js` and regenerates both standalone HTML files after Task 8 passes.
 
-- [ ] **Step 4: Update `source/index.html` to load the generated bundle and retain skip-link/app-root semantics**
+- [ ] **Step 4: Preserve the v2 entrypoint until the v3 canonical journey passes**
 
-Use `<script src="app.js"></script>` without module mode so the source and standalone variants behave consistently under `file://`.
+Do not change `source/index.html`, `source/app.js`, or either standalone artifact in this task. This keeps every intermediate commit demoable while v3 is developed behind `source/app.v3.js`.
 
 - [ ] **Step 5: Run build/static checks**
 
@@ -79,7 +76,7 @@ Expected: generated files are current and all tests PASS.
 - [ ] **Step 6: Commit the foundation**
 
 ```bash
-git add scripts source tests/static OPEN-DEMO.html
+git add scripts source/modules source/app.v3.js tests/static
 git commit -m "build: add modular standalone frontend pipeline"
 ```
 
@@ -344,12 +341,12 @@ git commit -m "feat: connect learning evidence to promotion outcomes"
 
 ```python
 def test_learning_and_parent_routes_have_renderers(self):
-    bundle = (ROOT / "source/app.js").read_text()
+    bundle = (ROOT / "source/app.v3.js").read_text()
     for route in ("/app/student/course", "/app/student/progress", "/app/parent/dashboard", "/app/parent/tuition"):
         self.assertIn(route, bundle)
 
 def test_no_placeholder_renderer_remains(self):
-    bundle = (ROOT / "source/app.js").read_text()
+    bundle = (ROOT / "source/app.v3.js").read_text()
     self.assertNotIn("simplePlaceholder", bundle)
 ```
 
@@ -497,7 +494,9 @@ Run: `node --test tests/domain/*.test.cjs`
 Run: `python3 -m unittest discover -s tests/static -p 'test_*.py' -v`  
 Expected: PASS.
 
-- [ ] **Step 8: Commit the complete interactive journey**
+- [ ] **Step 8: Promote the passing v3 bundle to all runtime artifacts and commit**
+
+Run `python3 scripts/build_standalone.py --release`, then update `source/index.html` only if its existing `app.js` reference changed. The release build writes `source/app.js`, `source/yen-center-lms-demo.html`, and `OPEN-DEMO.html` from the same v3 source.
 
 ```bash
 git add source tests OPEN-DEMO.html
