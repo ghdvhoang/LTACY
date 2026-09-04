@@ -275,6 +275,206 @@
         appendAudit(draft, context, 'RENEWAL_ACCEPTED', 'RENEWAL', renewal.id, 'Admissions ghi nhận xác nhận trong demo.');
         return { message: 'Đã hoàn tất renewal.' };
       },
+
+      PUBLISH_COURSE_VERSION(draft, payload, context) {
+        requireRole(context.actor, ['ACADEMIC_MANAGER']);
+        const version = required(draft.courseVersions.find((item) => item.id === payload.courseVersionId), 'COURSE_VERSION_NOT_FOUND', 'Không tìm thấy course version.');
+        if (version.status === 'PUBLISHED' && version.immutable) throw new CommandError('COURSE_VERSION_IMMUTABLE', 'Course version đã publish là immutable.');
+        if (!['DRAFT', 'APPROVED'].includes(version.status)) throw new CommandError('INVALID_COURSE_VERSION_STATE', 'Course version chưa sẵn sàng để publish.');
+        version.status = 'PUBLISHED';
+        version.immutable = true;
+        version.publishedAt = nowIso();
+        appendEvent(draft, context, 'COURSE_VERSION_PUBLISHED', 'COURSE_VERSION', version.id, `${version.title} đã publish.`);
+        appendAudit(draft, context, 'COURSE_VERSION_PUBLISHED', 'COURSE_VERSION', version.id, 'Khóa snapshot curriculum.');
+        return { message: 'Đã publish course version.' };
+      },
+
+      PROPOSE_TEACHER_ASSIGNMENT(draft, payload, context) {
+        requireRole(context.actor, ['ACADEMIC_MANAGER']);
+        const profile = required(draft.teacherProfiles.find((item) => item.userId === payload.teacherId), 'TEACHER_NOT_FOUND', 'Không tìm thấy teacher profile.');
+        const cohort = required(draft.classes.find((item) => item.id === payload.classId), 'CLASS_NOT_FOUND', 'Không tìm thấy lớp.');
+        const evidence = root.YC.selectors.teacherEligibility(draft, payload.teacherId, cohort.id, Number(payload.workloadMinutes || 720));
+        if (!evidence.eligible) throw new CommandError('TEACHER_INELIGIBLE', 'Giáo viên không vượt qua eligibility gate.', { evidence });
+        if (draft.teacherAssignments.some((item) => item.classId === cohort.id && ['PROPOSED', 'ACCEPTED', 'ACTIVE'].includes(item.status))) {
+          throw new CommandError('CLASS_ALREADY_ASSIGNED', 'Lớp đã có teacher assignment đang hiệu lực.');
+        }
+        const assignment = {
+          id: uid('teacher-assignment'),
+          teacherProfileId: profile.id,
+          classId: cohort.id,
+          role: 'PRIMARY',
+          startsAt: nowIso(),
+          endsAt: new Date(new Date(nowIso()).getTime() + 120 * 86400000).toISOString(),
+          workloadMinutes: Number(payload.workloadMinutes || 720),
+          status: 'PROPOSED',
+          proposedAt: nowIso(),
+          assignedBy: context.actor.id,
+          eligibilityEvidence: evidence,
+        };
+        draft.teacherAssignments.push(assignment);
+        appendEvent(draft, context, 'TEACHER_ASSIGNMENT_PROPOSED', 'TEACHER_ASSIGNMENT', assignment.id, `${draft.users.find((item) => item.id === payload.teacherId)?.name} được đề xuất cho ${cohort.name}.`);
+        appendAudit(draft, context, 'TEACHER_ASSIGNMENT_PROPOSED', 'TEACHER_ASSIGNMENT', assignment.id, 'Eligibility hard gates đều đạt.');
+        draft.notifications.unshift({ id: uid('notification'), userId: payload.teacherId, title: 'Có đề xuất nhận lớp mới', body: cohort.name, link: '/app/teacher/dashboard', read: false, createdAt: nowIso() });
+        return { message: 'Đã gửi đề xuất assignment cho giáo viên.', evidence };
+      },
+
+      ACCEPT_TEACHER_ASSIGNMENT(draft, payload, context) {
+        requireRole(context.actor, ['TEACHER']);
+        const profile = required(draft.teacherProfiles.find((item) => item.userId === context.actor.id), 'TEACHER_NOT_FOUND', 'Không tìm thấy teacher profile.');
+        const assignment = required(draft.teacherAssignments.find((item) => item.teacherProfileId === profile.id && item.classId === payload.classId && item.status === 'PROPOSED'), 'ASSIGNMENT_NOT_FOUND', 'Không tìm thấy đề xuất assignment.');
+        assignment.status = 'ACTIVE';
+        assignment.acceptedAt = nowIso();
+        draft.sessionAssignments.push(...draft.sessions.filter((item) => item.classId === assignment.classId).map((session) => ({ id: uid('session-assignment'), sessionId: session.id, teacherProfileId: profile.id, role: assignment.role, status: 'ACTIVE', startsAt: assignment.startsAt, endsAt: assignment.endsAt })));
+        appendEvent(draft, context, 'TEACHER_ASSIGNMENT_ACCEPTED', 'TEACHER_ASSIGNMENT', assignment.id, 'Giáo viên đã nhận lớp.');
+        appendAudit(draft, context, 'TEACHER_ASSIGNMENT_ACTIVATED', 'TEACHER_ASSIGNMENT', assignment.id, 'Quyền lớp có hiệu lực theo thời hạn assignment.');
+        notifyRole(draft, 'ACADEMIC_MANAGER', 'Giáo viên đã nhận lớp', `${context.actor.name} đã nhận assignment.`, '/app/academic/assignments');
+        return { message: 'Đã nhận lớp và kích hoạt quyền theo assignment.' };
+      },
+
+      CONFIRM_SESSION(draft, payload, context) {
+        requireRole(context.actor, ['ACADEMIC_MANAGER', 'STUDENT_SERVICE']);
+        const session = required(draft.sessions.find((item) => item.id === payload.sessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học.');
+        if (session.status !== 'PLANNED') throw new CommandError('INVALID_SESSION_STATE', 'Chỉ buổi Planned mới được confirm.');
+        const cohort = draft.classes.find((item) => item.id === session.classId);
+        const conflicts = root.YC.selectors.scheduleConflicts(draft, { teacherId: payload.teacherId, branchId: cohort.branchId, room: session.room, startsAt: session.startsAt, endsAt: session.endsAt });
+        if (conflicts.length) throw new CommandError('SCHEDULE_CONFLICT', 'Lịch bị trùng giáo viên hoặc phòng.', { evidence: conflicts });
+        session.status = 'CONFIRMED';
+        appendEvent(draft, context, 'SESSION_CONFIRMED', 'SESSION', session.id, 'Buổi học đã được xác nhận.');
+        appendAudit(draft, context, 'SESSION_CONFIRMED', 'SESSION', session.id, 'Đã qua conflict gate.');
+        return { message: 'Đã xác nhận buổi học.' };
+      },
+
+      MARK_SESSION_READY(draft, payload, context) {
+        requireRole(context.actor, ['TEACHER']);
+        const session = required(draft.sessions.find((item) => item.id === payload.sessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học.');
+        const profile = draft.teacherProfiles.find((item) => item.userId === context.actor.id);
+        const assigned = profile && draft.teacherAssignments.some((item) => item.teacherProfileId === profile.id && item.classId === session.classId && item.status === 'ACTIVE');
+        if (!assigned) throw new CommandError('SESSION_NOT_ASSIGNED', 'Giáo viên không được assign vào lớp này.');
+        const plan = required(draft.lessonPlans.find((item) => item.sessionId === session.id), 'LESSON_PLAN_NOT_FOUND', 'Buổi học chưa có lesson plan.');
+        plan.adaptations = payload.adaptations || plan.adaptations;
+        plan.readiness = 'READY';
+        plan.readyAt = nowIso();
+        appendEvent(draft, context, 'SESSION_READY', 'LESSON_PLAN', plan.id, 'Giáo viên xác nhận sẵn sàng trước buổi học.');
+        appendAudit(draft, context, 'SESSION_READY', 'LESSON_PLAN', plan.id, `${plan.adaptations.length} adaptation.`);
+        return { message: 'Đã xác nhận lesson plan sẵn sàng.' };
+      },
+
+      START_SESSION(draft, payload, context) {
+        requireRole(context.actor, ['TEACHER']);
+        const session = required(draft.sessions.find((item) => item.id === payload.sessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học.');
+        const plan = draft.lessonPlans.find((item) => item.sessionId === session.id);
+        if (!plan || plan.readiness !== 'READY') throw new CommandError('SESSION_NOT_READY', 'Cần xác nhận lesson plan sẵn sàng trước khi bắt đầu.');
+        if (session.status !== 'CONFIRMED') throw new CommandError('INVALID_SESSION_STATE', 'Chỉ buổi Confirmed mới được bắt đầu.');
+        session.status = 'IN_PROGRESS';
+        session.actualStartsAt = nowIso();
+        appendEvent(draft, context, 'SESSION_STARTED', 'SESSION', session.id, 'Giáo viên check-in và bắt đầu buổi học.');
+        appendAudit(draft, context, 'TEACHER_CHECKED_IN', 'SESSION', session.id, context.actor.name);
+        return { message: 'Buổi học đã bắt đầu.' };
+      },
+
+      COMPLETE_SESSION(draft, payload, context) {
+        requireRole(context.actor, ['TEACHER']);
+        const session = required(draft.sessions.find((item) => item.id === payload.sessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học.');
+        if (session.status !== 'IN_PROGRESS') throw new CommandError('INVALID_SESSION_STATE', 'Buổi học phải đang diễn ra trước khi hoàn tất.');
+        const taughtItemIds = payload.taughtItemIds || [];
+        if (!taughtItemIds.length) throw new CommandError('DELIVERY_EVIDENCE_REQUIRED', 'Cần ghi nhận ít nhất một learning item đã dạy.');
+        const delivery = {
+          id: uid('delivery'),
+          sessionId: session.id,
+          teacherId: context.actor.id,
+          actualStartsAt: session.actualStartsAt,
+          actualEndsAt: nowIso(),
+          taughtItemIds,
+          deferredItemIds: payload.deferredItemIds || [],
+          note: payload.note || '',
+          coverageStatus: (payload.deferredItemIds || []).length ? 'GAP' : 'COMPLETE',
+          status: 'RECORDED',
+        };
+        draft.deliveryRecords.push(delivery);
+        session.status = 'COMPLETED';
+        session.actualEndsAt = delivery.actualEndsAt;
+        appendEvent(draft, context, 'DELIVERY_RECORDED', 'DELIVERY_RECORD', delivery.id, `${taughtItemIds.length} item đã dạy, ${delivery.deferredItemIds.length} item deferred.`);
+        appendAudit(draft, context, 'SESSION_COMPLETED', 'SESSION', session.id, payload.note || 'Delivery evidence complete.');
+        if (delivery.coverageStatus === 'GAP') notifyRole(draft, 'ACADEMIC_MANAGER', 'Có coverage gap cần theo dõi', payload.note || 'Buổi học có nội dung deferred.', '/app/academic/dashboard');
+        return { message: 'Đã hoàn tất session và lưu delivery evidence.' };
+      },
+
+      CORRECT_ATTENDANCE(draft, payload, context) {
+        requireRole(context.actor, ['STUDENT_SERVICE', 'ACADEMIC_MANAGER']);
+        if (!String(payload.reason || '').trim()) throw new CommandError('REASON_REQUIRED', 'Sửa attendance cần lý do để audit.');
+        const record = required(draft.attendanceRecords.find((item) => item.id === payload.attendanceId), 'ATTENDANCE_NOT_FOUND', 'Không tìm thấy attendance record.');
+        const previous = record.status;
+        record.status = payload.status;
+        record.correctedAt = nowIso();
+        record.correctedBy = context.actor.id;
+        record.correctionReason = payload.reason.trim();
+        appendEvent(draft, context, 'ATTENDANCE_CORRECTED', 'ATTENDANCE', record.id, `${previous} → ${record.status}.`, { learnerId: record.learnerId });
+        appendAudit(draft, context, 'ATTENDANCE_CORRECTED', 'ATTENDANCE', record.id, payload.reason.trim());
+        return { message: 'Đã sửa attendance với đầy đủ lý do.' };
+      },
+
+      REQUEST_SUBSTITUTION(draft, payload, context) {
+        requireRole(context.actor, ['STUDENT_SERVICE', 'ACADEMIC_MANAGER']);
+        if (!String(payload.reason || '').trim()) throw new CommandError('REASON_REQUIRED', 'Yêu cầu dạy thay cần lý do.');
+        const session = required(draft.sessions.find((item) => item.id === payload.sessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học.');
+        if (draft.substitutions.some((item) => item.sessionId === session.id && !['CLOSED', 'CANCELLED'].includes(item.status))) throw new CommandError('SUBSTITUTION_EXISTS', 'Buổi học đã có substitution đang xử lý.');
+        const primary = draft.teacherAssignments.find((item) => item.classId === session.classId && item.status === 'ACTIVE');
+        const substitution = { id: uid('substitution'), sessionId: session.id, originalTeacherProfileId: primary?.teacherProfileId || null, replacementTeacherProfileId: null, reason: payload.reason.trim(), status: 'REQUESTED', handover: null, requestedBy: context.actor.id, requestedAt: nowIso(), accessStartsAt: null, accessEndsAt: null };
+        draft.substitutions.push(substitution);
+        appendEvent(draft, context, 'SUBSTITUTION_REQUESTED', 'SUBSTITUTION', substitution.id, payload.reason.trim());
+        appendAudit(draft, context, 'SUBSTITUTION_REQUESTED', 'SUBSTITUTION', substitution.id, payload.reason.trim());
+        return { message: 'Đã mở yêu cầu tìm giáo viên dạy thay.' };
+      },
+
+      CONFIRM_SUBSTITUTE(draft, payload, context) {
+        requireRole(context.actor, ['STUDENT_SERVICE', 'ACADEMIC_MANAGER']);
+        const substitution = required(draft.substitutions.find((item) => item.sessionId === payload.sessionId && item.status === 'REQUESTED'), 'SUBSTITUTION_NOT_FOUND', 'Không tìm thấy yêu cầu substitution.');
+        const session = draft.sessions.find((item) => item.id === payload.sessionId);
+        const eligibility = root.YC.selectors.teacherEligibility(draft, payload.replacementTeacherId, session.classId, 90);
+        if (!eligibility.eligible) throw new CommandError('TEACHER_INELIGIBLE', 'Giáo viên dạy thay không vượt qua eligibility gate.', { evidence: eligibility });
+        const replacement = draft.teacherProfiles.find((item) => item.userId === payload.replacementTeacherId);
+        substitution.replacementTeacherProfileId = replacement.id;
+        substitution.status = 'CONFIRMED';
+        substitution.confirmedAt = nowIso();
+        substitution.accessStartsAt = new Date(new Date(session.startsAt).getTime() - 86400000).toISOString();
+        substitution.accessEndsAt = new Date(new Date(session.endsAt).getTime() + 86400000).toISOString();
+        appendEvent(draft, context, 'SUBSTITUTE_CONFIRMED', 'SUBSTITUTION', substitution.id, `${draft.users.find((item) => item.id === payload.replacementTeacherId)?.name} đã được chọn.`);
+        appendAudit(draft, context, 'SUBSTITUTE_ACCESS_GRANTED', 'SUBSTITUTION', substitution.id, 'Quyền theo session trong handover window.');
+        return { message: 'Đã xác nhận giáo viên dạy thay.' };
+      },
+
+      MARK_HANDOVER_READY(draft, payload, context) {
+        requireRole(context.actor, ['TEACHER', 'STUDENT_SERVICE']);
+        const substitution = required(draft.substitutions.find((item) => item.sessionId === payload.sessionId && item.status === 'CONFIRMED'), 'SUBSTITUTION_NOT_CONFIRMED', 'Substitution chưa được xác nhận.');
+        if (!String(payload.note || '').trim()) throw new CommandError('HANDOVER_REQUIRED', 'Cần nội dung handover.');
+        substitution.handover = { note: payload.note.trim(), lessonTemplateId: draft.sessions.find((item) => item.id === payload.sessionId)?.lessonTemplateId, openHomeworkIds: draft.homeworkAssignments.filter((item) => item.classId === draft.sessions.find((session) => session.id === payload.sessionId)?.classId).map((item) => item.id), preparedBy: context.actor.id, preparedAt: nowIso() };
+        substitution.status = 'HANDOVER_READY';
+        appendEvent(draft, context, 'SUBSTITUTION_HANDOVER_READY', 'SUBSTITUTION', substitution.id, payload.note.trim());
+        appendAudit(draft, context, 'SUBSTITUTION_HANDOVER_READY', 'SUBSTITUTION', substitution.id, 'Lesson, risk và homework context đã sẵn sàng.');
+        return { message: 'Handover package đã sẵn sàng.' };
+      },
+
+      CLOSE_SUBSTITUTION(draft, payload, context) {
+        requireRole(context.actor, ['STUDENT_SERVICE', 'ACADEMIC_MANAGER']);
+        const substitution = required(draft.substitutions.find((item) => item.sessionId === payload.sessionId && !['CLOSED', 'CANCELLED'].includes(item.status)), 'SUBSTITUTION_NOT_FOUND', 'Không tìm thấy substitution.');
+        if (substitution.status !== 'HANDOVER_READY') throw new CommandError('HANDOVER_NOT_READY', 'Cần hoàn tất handover trước khi đóng substitution.');
+        substitution.status = 'CLOSED';
+        substitution.closedAt = nowIso();
+        appendEvent(draft, context, 'SUBSTITUTION_CLOSED', 'SUBSTITUTION', substitution.id, 'Đã đóng substitution và giới hạn access window.');
+        appendAudit(draft, context, 'SUBSTITUTION_CLOSED', 'SUBSTITUTION', substitution.id, 'Handover evidence retained.');
+        return { message: 'Đã đóng substitution.' };
+      },
+
+      BOOK_MAKE_UP(draft, payload, context) {
+        requireRole(context.actor, ['STUDENT_SERVICE']);
+        const attendance = required(draft.attendanceRecords.find((item) => item.id === payload.attendanceId && ['ABSENT', 'EXCUSED'].includes(item.status)), 'MAKE_UP_NOT_ELIGIBLE', 'Attendance chưa đủ điều kiện học bù.');
+        const session = required(draft.sessions.find((item) => item.id === payload.makeUpSessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học bù.');
+        const booking = { id: uid('make-up'), learnerId: attendance.learnerId, sourceAttendanceId: attendance.id, sessionId: session.id, status: 'BOOKED', bookedBy: context.actor.id, bookedAt: nowIso() };
+        draft.makeUpBookings.push(booking);
+        appendEvent(draft, context, 'MAKE_UP_BOOKED', 'MAKE_UP', booking.id, 'Đã đặt buổi học bù.', { learnerId: booking.learnerId });
+        appendAudit(draft, context, 'MAKE_UP_BOOKED', 'MAKE_UP', booking.id, `Session ${session.id}.`);
+        return { message: 'Đã đặt buổi học bù.' };
+      },
     };
 
     function dispatch(name, payload = {}, actorId) {

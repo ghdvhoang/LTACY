@@ -58,5 +58,90 @@
     return common;
   }
 
-  root.YC.define('selectors', Object.freeze({ byId, journey, metrics, roleHome }));
+  function teacherWorkload(state, teacherId) {
+    const profile = state.teacherProfiles.find((item) => item.userId === teacherId);
+    const teachingMinutes = profile
+      ? state.teacherAssignments
+        .filter((item) => item.teacherProfileId === profile.id && ['ACCEPTED', 'ACTIVE'].includes(item.status))
+        .reduce((sum, item) => sum + Number(item.workloadMinutes || 0), 0)
+      : 0;
+    const preparationMinutes = Math.round(teachingMinutes * 0.2);
+    const gradingMinutes = Math.round(teachingMinutes * 0.25);
+    const administrationMinutes = Math.round(teachingMinutes * 0.15);
+    return {
+      teachingMinutes,
+      preparationMinutes,
+      gradingMinutes,
+      administrationMinutes,
+      totalMinutes: teachingMinutes + preparationMinutes + gradingMinutes + administrationMinutes,
+      limitMinutes: state.settings.workloadLimitMinutes,
+    };
+  }
+
+  function teacherEligibility(state, teacherId, classId, requestedWorkloadMinutes = 720) {
+    const user = state.users.find((item) => item.id === teacherId);
+    const profile = state.teacherProfiles.find((item) => item.userId === teacherId);
+    const cohort = state.classes.find((item) => item.id === classId);
+    const courseVersion = state.courseVersions.find((item) => item.id === cohort?.courseVersionId);
+    const levelCode = state.levels.find((item) => item.id === state.courses.find((course) => course.id === courseVersion?.courseId)?.levelId)?.code || '';
+    const frameworkLevel = levelCode.split('.')[0];
+    const now = new Date(state.seededAt).getTime();
+    const qualificationValid = Boolean(profile && state.qualifications.some((item) => item.teacherProfileId === profile.id
+      && item.status === 'VALID'
+      && new Date(item.expiresAt).getTime() >= now));
+    const workload = teacherWorkload(state, teacherId);
+    const hardGates = [
+      { key: 'ACTIVE_PROFILE', label: 'Hồ sơ đang hoạt động', passed: Boolean(user?.status === 'ACTIVE' && profile?.status === 'ACTIVE') },
+      { key: 'QUALIFICATION', label: 'Qualification còn hiệu lực', passed: qualificationValid },
+      { key: 'LEVEL', label: `Được phép dạy ${frameworkLevel || 'level yêu cầu'}`, passed: Boolean(profile?.levels.includes(frameworkLevel)) },
+      { key: 'AGE_BAND', label: `Có kinh nghiệm ${cohort?.ageBand || 'age band'}`, passed: Boolean(profile?.ageBands.includes(cohort?.ageBand)) },
+      { key: 'BRANCH', label: `Được phân scope ${cohort?.branchId || 'chi nhánh'}`, passed: Boolean(profile?.branchIds.includes(cohort?.branchId)) },
+      { key: 'MODE', label: `Dạy được mode ${cohort?.mode || ''}`, passed: Boolean(profile?.modes.includes(cohort?.mode) || (cohort?.mode === 'HYBRID' && profile?.modes.includes('ONLINE') && profile?.modes.includes('OFFLINE'))) },
+      { key: 'WORKLOAD', label: 'Không vượt giới hạn workload', passed: workload.totalMinutes + Math.round(requestedWorkloadMinutes * 1.6) <= workload.limitMinutes },
+    ];
+    const rankingSignals = [
+      { key: 'BRANCH_CONTINUITY', label: 'Liên tục cùng chi nhánh', score: profile?.branchIds.includes(cohort?.branchId) ? 20 : 0 },
+      { key: 'PROGRAM_EXPERIENCE', label: 'Kinh nghiệm cùng level', score: profile?.levels.includes(frameworkLevel) ? 20 : 0 },
+      { key: 'LOAD_BALANCE', label: 'Dư địa workload', score: Math.max(0, Math.round((1 - workload.totalMinutes / workload.limitMinutes) * 20)) },
+    ];
+    return { teacherId, classId, eligible: hardGates.every((item) => item.passed), hardGates, rankingSignals, workload };
+  }
+
+  function overlaps(firstStart, firstEnd, secondStart, secondEnd) {
+    return new Date(firstStart).getTime() < new Date(secondEnd).getTime()
+      && new Date(firstEnd).getTime() > new Date(secondStart).getTime();
+  }
+
+  function scheduleConflicts(state, request) {
+    const profile = state.teacherProfiles.find((item) => item.userId === request.teacherId);
+    const conflicts = [];
+    for (const session of state.sessions.filter((item) => !['CANCELLED', 'REVIEWED'].includes(item.status))) {
+      if (!overlaps(request.startsAt, request.endsAt, session.startsAt, session.endsAt)) continue;
+      if (session.room === request.room && state.classes.find((item) => item.id === session.classId)?.branchId === request.branchId) {
+        conflicts.push({ type: 'ROOM', sessionId: session.id, label: `Phòng ${request.room} đã có lịch.` });
+      }
+      const assigned = profile && state.teacherAssignments.some((item) => item.teacherProfileId === profile.id
+        && item.classId === session.classId
+        && ['ACCEPTED', 'ACTIVE'].includes(item.status));
+      if (assigned) conflicts.push({ type: 'TEACHER', sessionId: session.id, label: 'Giáo viên đã có buổi dạy trùng giờ.' });
+    }
+    return conflicts;
+  }
+
+  function sessionWorkbench(state, sessionId) {
+    const session = byId(state, 'sessions', sessionId);
+    if (!session) return null;
+    const plan = state.lessonPlans.find((item) => item.sessionId === sessionId) || null;
+    const learnerIds = state.enrollments.filter((item) => item.classId === session.classId && item.status === 'ACTIVE').map((item) => item.learnerId);
+    return {
+      session,
+      plan,
+      roster: state.learners.filter((item) => learnerIds.includes(item.id)),
+      risks: state.interventionCases.filter((item) => learnerIds.includes(item.learnerId) && item.status === 'OPEN'),
+      openHomework: state.homeworkAssignments.filter((item) => item.classId === session.classId && !['ACCEPTED', 'CLOSED'].includes(item.status)),
+      delivery: state.deliveryRecords.find((item) => item.sessionId === sessionId) || null,
+    };
+  }
+
+  root.YC.define('selectors', Object.freeze({ byId, journey, metrics, roleHome, scheduleConflicts, sessionWorkbench, teacherEligibility, teacherWorkload }));
 })(globalThis);

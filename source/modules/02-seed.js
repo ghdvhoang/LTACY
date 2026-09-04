@@ -65,6 +65,7 @@
         { id: 'finance-1', role: 'FINANCE', name: 'Đỗ Minh Châu', identifiers: ['finance@yencenter.demo'], secret: 'Demo@123', status: 'ACTIVE', branchIds: ['branch-q3', 'branch-td'] },
         { id: 'teacher-1', role: 'TEACHER', name: 'Hoàng Yến', identifiers: ['teacher@yencenter.demo'], secret: 'Demo@123', status: 'ACTIVE', branchIds: ['branch-q3'] },
         { id: 'teacher-2', role: 'TEACHER', name: 'Lê Hải Nam', identifiers: ['nam@yencenter.demo'], secret: 'Demo@123', status: 'ACTIVE', branchIds: ['branch-td'] },
+        { id: 'teacher-3', role: 'TEACHER', name: 'Phạm Thu Hương', identifiers: ['huong@yencenter.demo'], secret: 'Demo@123', status: 'ACTIVE', branchIds: ['branch-q3'] },
         { id: 'teacher-ineligible', role: 'TEACHER', name: 'David Trần', identifiers: ['david@yencenter.demo'], secret: 'Demo@123', status: 'ACTIVE', branchIds: ['branch-q3'] },
         { id: 'ta-1', role: 'TA', name: 'Trần Mai Anh', identifiers: ['ta@yencenter.demo'], secret: 'Demo@123', status: 'ACTIVE', branchIds: ['branch-q3'] },
         { id: 'student-login-1', role: 'STUDENT', name: 'Nguyễn Minh Anh', identifiers: ['HS6A001', '0901000001'], secret: '123456', status: 'ACTIVE', linkedLearnerIds: ['student-canonical'] },
@@ -125,17 +126,20 @@
       teacherProfiles: [
         { id: 'teacher-profile-1', userId: 'teacher-1', teacherCode: 'GV001', status: 'ACTIVE', branchIds: ['branch-q3'], ageBands: ['YOUNG_LEARNER', 'TEEN'], levels: ['A1', 'A2', 'B1'], modes: ['OFFLINE', 'ONLINE'] },
         { id: 'teacher-profile-2', userId: 'teacher-2', teacherCode: 'GV002', status: 'ACTIVE', branchIds: ['branch-td'], ageBands: ['TEEN', 'ADULT'], levels: ['A2', 'B1', 'B2'], modes: ['OFFLINE', 'ONLINE'] },
-        { id: 'teacher-profile-ineligible', userId: 'teacher-ineligible', teacherCode: 'GV003', status: 'ACTIVE', branchIds: ['branch-q3'], ageBands: ['ADULT'], levels: ['B2', 'C1'], modes: ['ONLINE'] },
+        { id: 'teacher-profile-3', userId: 'teacher-3', teacherCode: 'GV003', status: 'ACTIVE', branchIds: ['branch-q3'], ageBands: ['YOUNG_LEARNER', 'TEEN'], levels: ['A1', 'A2', 'B1'], modes: ['OFFLINE', 'HYBRID'] },
+        { id: 'teacher-profile-ineligible', userId: 'teacher-ineligible', teacherCode: 'GV004', status: 'ACTIVE', branchIds: ['branch-q3'], ageBands: ['ADULT'], levels: ['B2', 'C1'], modes: ['ONLINE'] },
       ],
       qualifications: [
         { id: 'qualification-1', teacherProfileId: 'teacher-profile-1', type: 'TESOL', level: 'ALL', issuedAt: at(-500), expiresAt: at(300), status: 'VALID' },
         { id: 'qualification-2', teacherProfileId: 'teacher-profile-2', type: 'CELTA', level: 'ALL', issuedAt: at(-800), expiresAt: at(180), status: 'VALID' },
+        { id: 'qualification-4', teacherProfileId: 'teacher-profile-3', type: 'TESOL', level: 'ALL', issuedAt: at(-450), expiresAt: at(240), status: 'VALID' },
         { id: 'qualification-3', teacherProfileId: 'teacher-profile-ineligible', type: 'BUSINESS_ENGLISH', level: 'ADULT', issuedAt: at(-300), expiresAt: at(120), status: 'VALID' },
       ],
       availabilitySlots: [
         { id: 'availability-1', teacherProfileId: 'teacher-profile-1', day: 'TUE', start: '17:30', end: '21:00', branchId: 'branch-q3', mode: 'OFFLINE', effectiveFrom: at(-30), effectiveTo: at(120) },
         { id: 'availability-2', teacherProfileId: 'teacher-profile-1', day: 'THU', start: '17:30', end: '21:00', branchId: 'branch-q3', mode: 'OFFLINE', effectiveFrom: at(-30), effectiveTo: at(120) },
         { id: 'availability-3', teacherProfileId: 'teacher-profile-2', day: 'MON', start: '18:00', end: '21:00', branchId: 'branch-td', mode: 'OFFLINE', effectiveFrom: at(-30), effectiveTo: at(120) },
+        { id: 'availability-4', teacherProfileId: 'teacher-profile-3', day: 'TUE', start: '17:00', end: '21:00', branchId: 'branch-q3', mode: 'OFFLINE', effectiveFrom: at(-30), effectiveTo: at(120) },
       ],
       teacherAssignments: [
         { id: 'teacher-assignment-7b', teacherProfileId: 'teacher-profile-2', classId: 'class-7b', role: 'PRIMARY', startsAt: at(-30), endsAt: at(120), workloadMinutes: 720, status: 'ACTIVE', acceptedAt: at(-35), assignedBy: 'academic-1' },
@@ -187,6 +191,7 @@
       serviceCases: [
         { id: 'service-no-seat', learnerId: null, leadId: 'lead-no-seat', type: 'NO_SEAT', ownerId: 'service-1', status: 'OPEN', reason: 'Lớp cuối tuần đã đủ chỗ', createdAt: at(-2) },
       ],
+      makeUpBookings: [],
       substitutions: [
         { id: 'substitution-seed', sessionId: 'session-7b', originalTeacherProfileId: 'teacher-profile-2', replacementTeacherProfileId: null, reason: 'Giáo viên chính bận công tác', status: 'REQUESTED', handover: null, accessStartsAt: null, accessEndsAt: null },
       ],
