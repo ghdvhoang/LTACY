@@ -59,10 +59,12 @@
   }
 
   function formatDate(value, includeTime = false) {
+    const date = new Date(value);
+    if (!value || Number.isNaN(date.getTime())) return '—';
     const options = includeTime
       ? { dateStyle: 'short', timeStyle: 'short' }
       : { day: '2-digit', month: '2-digit', year: 'numeric' };
-    return new Intl.DateTimeFormat('vi-VN', options).format(new Date(value));
+    return new Intl.DateTimeFormat('vi-VN', options).format(date);
   }
 
   function percent(part, total) {
@@ -1188,13 +1190,18 @@
         const skillThresholds = report.skillProfile.map((item) => ({ skill: item.skill, score: item.score, minimum, passed: item.score >= minimum }));
         const overall = Math.round(report.skillProfile.reduce((sum, item) => sum + item.score, 0) / report.skillProfile.length);
         const evidence = { skillThresholds, attendanceRate: report.snapshot.attendanceRate, overall, rule: courseVersion.completionRule };
-        if (payload.decision === 'PROMOTE' && (!skillThresholds.every((item) => item.passed) || report.snapshot.attendanceRate < courseVersion.completionRule.attendanceMinimum || overall < courseVersion.completionRule.finalScoreMinimum)) {
-          throw new CommandError('PROMOTION_THRESHOLDS_NOT_MET', 'Evidence chưa đạt đủ promotion rule.', { evidence });
+        const thresholdsPassed = skillThresholds.every((item) => item.passed)
+          && report.snapshot.attendanceRate >= courseVersion.completionRule.attendanceMinimum
+          && overall >= courseVersion.completionRule.finalScoreMinimum;
+        const overrideReason = String(payload.overrideReason || '').trim();
+        const overrideEvidence = Array.isArray(payload.overrideEvidence) ? payload.overrideEvidence.filter(Boolean) : [];
+        if (payload.decision === 'PROMOTE' && !thresholdsPassed && (!overrideReason || overrideEvidence.length === 0)) {
+          throw new CommandError('PROMOTION_THRESHOLDS_NOT_MET', 'Evidence chưa đạt đủ promotion rule; override cần lý do và evidence.', { evidence });
         }
-        const decision = { id: uid('promotion'), learnerId: learner.id, progressReportId: report.id, decision: payload.decision, nextCourseVersionId: payload.nextCourseVersionId || null, evidence, status: 'FINAL', decidedBy: context.actor.id, decidedAt: nowIso(), overrideReason: payload.overrideReason || null };
+        const decision = { id: uid('promotion'), learnerId: learner.id, progressReportId: report.id, decision: payload.decision, nextCourseVersionId: payload.nextCourseVersionId || null, evidence, status: 'FINAL', decidedBy: context.actor.id, decidedAt: nowIso(), overrideReason: overrideReason || null, overrideEvidence };
         draft.promotionDecisions.unshift(decision);
         appendEvent(draft, context, 'PROMOTION_DECIDED', 'PROMOTION', decision.id, `${learner.name}: ${decision.decision}.`, { learnerId: learner.id });
-        appendAudit(draft, context, 'PROMOTION_DECIDED', 'PROMOTION', decision.id, `${decision.decision} · overall ${overall}.`);
+        appendAudit(draft, context, 'PROMOTION_DECIDED', 'PROMOTION', decision.id, `${decision.decision} · overall ${overall}${overrideReason ? ` · override: ${overrideReason}` : ''}.`);
         notifyRole(draft, 'ADMISSIONS', 'Học viên sẵn sàng renewal', `${learner.name}: ${decision.decision}.`, '/app/admissions/renewals');
         return { message: 'Đã chốt promotion decision.', evidence };
       },
@@ -1430,4 +1437,1099 @@
   }
 
   root.YC.define('selectors', Object.freeze({ byId, completionStatus, journey, metrics, progressReportEvidence, riskSignals, roleHome, scheduleConflicts, sessionWorkbench, skillProfile, teacherEligibility, teacherWorkload }));
+})(globalThis);
+
+/* 07-ui-kit.js */
+(function defineUiKit(root) {
+  'use strict';
+
+  const { escapeHtml, formatDate } = root.YC.utils;
+
+  const STATUS_LABELS = Object.freeze({
+    NEW: 'Mới', CONTACTED: 'Đã liên hệ', PLACEMENT_BOOKED: 'Đã đặt placement', PLACED: 'Đã placement',
+    OFFERED: 'Đã gửi đề nghị', SENT: 'Đã gửi', ACCEPTED: 'Đã chấp nhận', ISSUED: 'Đã phát hành', PAID: 'Đã thanh toán', WON: 'Đã chốt',
+    OPEN: 'Đang mở', ACTIVE: 'Đang hoạt động', PROPOSED: 'Chờ xác nhận', CONFIRMED: 'Đã xác nhận', DRAFT: 'Bản nháp',
+    READY: 'Sẵn sàng', IN_PROGRESS: 'Đang diễn ra', COMPLETED: 'Hoàn thành', NOT_PASSED: 'Cần học lại', ASSIGNED: 'Đã giao',
+    SUBMITTED: 'Đã nộp', RESUBMITTED: 'Đã nộp lại', FEEDBACK_READY: 'Chờ phát hành', RELEASED: 'Đã phát hành',
+    REVISION_REQUIRED: 'Cần chỉnh sửa', APPROVED: 'Đã duyệt', MODERATION: 'Đang moderation', PUBLISHED: 'Đã publish',
+    FINAL: 'Đã chốt', MOCKED: 'Mô phỏng', FULL: 'Hết chỗ', PRESENT: 'Có mặt', ABSENT: 'Vắng', LATE: 'Đi muộn',
+    REQUESTED: 'Đã yêu cầu', HANDOVER_READY: 'Đã bàn giao', CLOSED: 'Đã đóng', VALID: 'Còn hiệu lực',
+  });
+
+  function money(value, currency = 'VND') {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency, maximumFractionDigits: 0 }).format(Number(value || 0));
+  }
+
+  function tone(status) {
+    if (['ACTIVE', 'ACCEPTED', 'PAID', 'WON', 'READY', 'COMPLETED', 'RELEASED', 'APPROVED', 'PUBLISHED', 'FINAL', 'PRESENT', 'VALID'].includes(status)) return 'success';
+    if (['ABSENT', 'FULL', 'NOT_PASSED', 'REJECTED', 'OVERDUE'].includes(status)) return 'danger';
+    if (['DRAFT', 'PROPOSED', 'SUBMITTED', 'FEEDBACK_READY', 'MODERATION', 'REQUESTED', 'PLACEMENT_BOOKED'].includes(status)) return 'warning';
+    return 'info';
+  }
+
+  function badge(status, label) {
+    return `<span class="status status-${tone(status)}"><span aria-hidden="true"></span>${escapeHtml(label || STATUS_LABELS[status] || status || '—')}</span>`;
+  }
+
+  function icon(name) {
+    const paths = {
+      arrow: '<path d="m9 18 6-6-6-6"/>',
+      book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>',
+      calendar: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+      check: '<path d="m20 6-11 11-5-5"/>',
+      clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+      grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+      people: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+      search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+      shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/>',
+      spark: '<path d="m12 3-1.7 4.3L6 9l4.3 1.7L12 15l1.7-4.3L18 9l-4.3-1.7L12 3Z"/><path d="m5 16-.8 2.2L2 19l2.2.8L5 22l.8-2.2L8 19l-2.2-.8L5 16Z"/>',
+      trend: '<path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+      wallet: '<path d="M20 7V5a2 2 0 0 0-2-2H5a3 3 0 0 0 0 6h15v12H5a3 3 0 0 1-3-3V6"/><path d="M16 13h2"/>',
+    };
+    return `<svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.grid}</svg>`;
+  }
+
+  function button(label, action, options = {}) {
+    const classes = `btn ${options.kind === 'secondary' ? 'btn-secondary' : options.kind === 'ghost' ? 'btn-ghost' : 'btn-primary'}${options.small ? ' btn-sm' : ''}`;
+    const payload = options.payload ? ` data-payload="${escapeHtml(encodeURIComponent(JSON.stringify(options.payload)))}"` : '';
+    const disabled = options.disabled ? ' disabled aria-disabled="true"' : '';
+    return `<button class="${classes}" type="button" data-action="${escapeHtml(action)}"${payload}${disabled}>${options.icon ? icon(options.icon) : ''}${escapeHtml(label)}</button>`;
+  }
+
+  function link(label, href, options = {}) {
+    return `<a class="btn ${options.kind === 'primary' ? 'btn-primary' : options.kind === 'ghost' ? 'btn-ghost' : 'btn-secondary'}${options.small ? ' btn-sm' : ''}" href="#${escapeHtml(href)}">${options.icon ? icon(options.icon) : ''}${escapeHtml(label)}</a>`;
+  }
+
+  function metric(label, value, note, iconName = 'trend', accent = '') {
+    return `<article class="metric-card ${accent}"><div class="metric-icon">${icon(iconName)}</div><div><p>${escapeHtml(label)}</p><strong>${escapeHtml(String(value))}</strong><small>${escapeHtml(note || '')}</small></div></article>`;
+  }
+
+  function progress(value, label = '') {
+    const normalized = Math.max(0, Math.min(100, Number(value || 0)));
+    return `<div class="progress-block"><div class="progress-meta"><span>${escapeHtml(label)}</span><strong>${normalized}%</strong></div><div class="progress-track"><span style="width:${normalized}%"></span></div></div>`;
+  }
+
+  function empty(title, body, actionHtml = '') {
+    return `<div class="empty-state"><div class="empty-icon">${icon('spark')}</div><h3>${escapeHtml(title)}</h3><p>${escapeHtml(body)}</p>${actionHtml}</div>`;
+  }
+
+  function table(columns, rows, options = {}) {
+    if (!rows.length) return empty(options.emptyTitle || 'Chưa có dữ liệu', options.emptyBody || 'Evidence sẽ xuất hiện sau khi luồng được thực hiện.');
+    return `<div class="table-wrap"><table><thead><tr>${columns.map((item) => `<th>${escapeHtml(item.label)}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr>${columns.map((column) => `<td>${typeof column.render === 'function' ? column.render(row) : escapeHtml(row[column.key] ?? '—')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  }
+
+  function pageHeader(eyebrow, title, description, actions = '') {
+    return `<header class="page-heading"><div><p class="eyebrow">${escapeHtml(eyebrow)}</p><h1>${escapeHtml(title)}</h1><p>${escapeHtml(description)}</p></div>${actions ? `<div class="page-actions">${actions}</div>` : ''}</header>`;
+  }
+
+  function section(title, body, options = {}) {
+    return `<section class="panel ${options.className || ''}"><div class="panel-heading"><div><h2>${escapeHtml(title)}</h2>${options.subtitle ? `<p>${escapeHtml(options.subtitle)}</p>` : ''}</div>${options.action || ''}</div>${body}</section>`;
+  }
+
+  function person(user, subtitle = '') {
+    const initials = (user?.name || '?').split(' ').slice(-2).map((word) => word[0]).join('').toUpperCase();
+    return `<div class="person"><span class="avatar">${escapeHtml(initials)}</span><span><strong>${escapeHtml(user?.name || 'Chưa gán')}</strong><small>${escapeHtml(subtitle)}</small></span></div>`;
+  }
+
+  function fact(iconName, label, value) {
+    return `<div class="fact">${icon(iconName)}<span><small>${escapeHtml(label)}</small><strong>${escapeHtml(value)}</strong></span></div>`;
+  }
+
+  root.YC.define('ui', Object.freeze({ badge, button, empty, fact, formatDate, icon, link, metric, money, pageHeader, person, progress, section, table }));
+})(globalThis);
+
+/* 08-public-views.js */
+(function definePublicViews(root) {
+  'use strict';
+
+  const { badge, button, fact, icon, link, money, section } = root.YC.ui;
+  const { escapeHtml } = root.YC.utils;
+
+  function programCards(state) {
+    const accents = ['blue', 'violet', 'amber'];
+    return `<div class="program-grid">${state.programs.map((program, index) => {
+      const courseCount = state.courses.filter((course) => course.programId === program.id).length;
+      return `<article class="program-card accent-${accents[index % accents.length]}">
+        <div class="program-art"><span>${String(index + 1).padStart(2, '0')}</span>${icon(index === 1 ? 'trend' : index === 2 ? 'people' : 'book')}</div>
+        <div class="program-body"><p class="eyebrow">${escapeHtml(program.audience)}</p><h3>${escapeHtml(program.name)}</h3><p>${escapeHtml(program.outcome)}</p>
+        <div class="card-meta"><span>${courseCount || 1} lộ trình</span><span>Offline · Online</span></div>${link('Khám phá chương trình', `/chuong-trinh/${program.id}`, { kind: 'ghost' })}</div>
+      </article>`;
+    }).join('')}</div>`;
+  }
+
+  function home(ctx) {
+    const { state } = ctx;
+    return `<main id="main-content" class="public-main">
+      <section class="hero"><div class="container hero-grid"><div class="hero-copy"><p class="eyebrow on-dark">Lộ trình ngoại ngữ có evidence</p>
+        <h1>Học đúng trình độ.<br><span>Tiến bộ nhìn thấy được.</span></h1>
+        <p>Yen Center kết nối kiểm tra đầu vào, lớp học, bài tập, đánh giá và báo cáo phụ huynh trong một hành trình minh bạch.</p>
+        <div class="hero-actions">${link('Khám phá chương trình', '/chuong-trinh', { kind: 'primary' })}${link('Xem demo vận hành', '/demo-guide')}</div>
+        <div class="hero-proof"><span>${icon('shield')} Dữ liệu demo minh bạch</span><span>${icon('people')} Nhiều vai trò cùng phối hợp</span></div></div>
+        <div class="hero-visual" aria-label="Minh họa lộ trình học"><div class="learning-window"><div class="window-bar"><span></span><span></span><span></span><small>My Learning</small></div>
+          <div class="window-content"><div class="lesson-kicker">ENGLISH FOUNDATION · A2.1</div><h2>Tiếp tục hành trình của Minh Anh</h2><p>Unit 4 · Past experiences</p>
+          <div class="hero-progress"><span style="width:68%"></span></div><div class="module-preview"><b>✓</b><span><strong>Video · Past Simple in context</strong><small>18 phút · Đã hoàn thành</small></span></div>
+          <div class="module-preview active"><b>▶</b><span><strong>Practice · Pair storytelling</strong><small>22 phút · Tiếp theo</small></span></div></div></div>
+          <div class="floating-stat"><strong>+18%</strong><span>Speaking confidence</span></div></div>
+      </div></section>
+      <section class="trust-strip"><div class="container"><span>HÀNH TRÌNH KẾT NỐI</span><strong>Placement</strong><strong>Lớp học</strong><strong>Assessment</strong><strong>Progress</strong><strong>Renewal</strong></div></section>
+      <section class="public-section container"><div class="section-intro"><p class="eyebrow">Chương trình nổi bật</p><h2>Một mục tiêu, một lộ trình rõ ràng</h2><p>Mỗi chương trình gắn chuẩn đầu ra, khối lượng học và evidence tiến bộ.</p></div>${programCards(state)}</section>
+      <section class="public-section public-band"><div class="container feature-split"><div><p class="eyebrow">Không chỉ là điểm số</p><h2>Phụ huynh biết điều gì đã xảy ra và nên hỗ trợ gì tiếp theo.</h2><p>Báo cáo kết hợp attendance, homework, sáu nhóm kỹ năng, nhận xét được phép chia sẻ và next action.</p>${link('Trải nghiệm cổng phụ huynh', '/phu-huynh-hoc-sinh', { kind: 'primary' })}</div>
+        <div class="evidence-card"><div class="evidence-top"><span class="avatar avatar-lg">MA</span><div><b>Nguyễn Minh Anh</b><small>English Foundation 6 · A2.1</small></div>${badge('ACTIVE')}</div>
+        ${['Listening|76', 'Reading|78', 'Spoken interaction|62', 'Writing|72'].map((item) => { const [label, score] = item.split('|'); return `<div class="skill-row"><span>${label}</span><div><i style="width:${score}%"></i></div><b>${score}</b></div>`; }).join('')}</div></div></section>
+      <section class="public-cta"><div class="container"><div><p class="eyebrow on-dark">Bắt đầu từ đúng trình độ</p><h2>Đặt lịch kiểm tra đầu vào miễn phí</h2><p>Nhận khuyến nghị chương trình theo sáu nhóm kỹ năng.</p></div>${link('Đăng ký tư vấn', '/lien-he', { kind: 'primary' })}</div></section>
+    </main>`;
+  }
+
+  function catalog(ctx) {
+    return `<main id="main-content" class="public-main"><section class="catalog-hero"><div class="container"><p class="eyebrow on-dark">Khám phá</p><h1>Chọn lộ trình phù hợp với mục tiêu</h1><p>Tìm theo độ tuổi, trình độ và hình thức học. Mọi khóa đều có chuẩn đầu ra và progress evidence.</p>
+      <label class="search-box">${icon('search')}<input type="search" placeholder="Tìm chương trình, kỹ năng hoặc trình độ" aria-label="Tìm chương trình"></label></div></section>
+      <section class="public-section container"><div class="filter-row"><button class="chip active">Tất cả</button><button class="chip">Young Learners</button><button class="chip">Teen</button><button class="chip">Adult</button><button class="chip">IELTS</button></div>${programCards(ctx.state)}</section></main>`;
+  }
+
+  function programDetail(ctx, programId) {
+    const state = ctx.state;
+    const program = state.programs.find((item) => item.id === programId) || state.programs[0];
+    const courses = state.courses.filter((item) => item.programId === program.id);
+    const versions = courses.map((course) => state.courseVersions.find((item) => item.courseId === course.id)).filter(Boolean);
+    return `<main id="main-content" class="public-main"><section class="course-hero"><div class="container"><div><p class="eyebrow on-dark">${escapeHtml(program.audience)}</p><h1>${escapeHtml(program.name)}</h1><p>${escapeHtml(program.outcome)}. Học theo lộ trình rõ ràng với feedback và báo cáo tiến bộ định kỳ.</p>${link('Đăng ký placement', '/lien-he', { kind: 'primary' })}</div>
+      <aside class="course-summary"><span class="summary-mark">YC</span><h3>Bắt đầu bằng placement</h3><p>Xác định đúng level trước khi chọn lớp.</p>${link('Xem lịch khai giảng', '/lich-hoc')}</aside></div></section>
+      <section class="course-facts"><div class="container">${fact('trend', 'Trình độ', versions.map((item) => item.title.split('·').at(-1).trim()).join(' → ') || 'Theo placement')}${fact('clock', 'Thời lượng', `${versions[0]?.totalHours || 48} giờ / level`)}${fact('calendar', 'Hình thức', 'Offline · Online')}${fact('shield', 'Đầu ra', '6 skill evidence')}</div></section>
+      <section class="public-section container course-layout"><div><div class="section-intro align-left"><p class="eyebrow">Lộ trình học</p><h2>Từ nền tảng đến sử dụng tự tin</h2></div>
+        <div class="course-levels">${versions.map((version, index) => `<details class="course-module" ${index === 0 ? 'open' : ''}><summary><span><small>LEVEL ${index + 1}</small><strong>${escapeHtml(version.title)}</strong></span><span>${version.totalHours} giờ ${icon('arrow')}</span></summary><div><p>Chuẩn đầu ra: attendance ≥ ${version.completionRule.attendanceMinimum}%, final ≥ ${version.completionRule.finalScoreMinimum}, từng skill ≥ ${version.completionRule.skillMinimum}.</p><ul><li>Live lesson và guided practice</li><li>Homework với feedback vòng lặp</li><li>Progress report và promotion decision</li></ul></div></details>`).join('')}</div></div>
+        <aside class="sticky-enroll"><p class="eyebrow">Bước tiếp theo</p><h3>Chưa chắc mình ở level nào?</h3><p>Placement đa kỹ năng giúp trung tâm xếp đúng lớp và lịch phù hợp.</p>${link('Đặt lịch miễn phí', '/lien-he', { kind: 'primary' })}<small>Không cần thanh toán ở bước này.</small></aside></section></main>`;
+  }
+
+  function schedule(ctx) {
+    const { state } = ctx;
+    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Lịch khai giảng</p><h1>Tìm lớp vừa mục tiêu, vừa lịch sống</h1><p>Lịch dưới đây là dữ liệu demo và số chỗ được tính từ enrollment hiện tại.</p></div></section><section class="public-section container">
+      <div class="schedule-list">${state.classes.map((cohort) => { const used = state.enrollments.filter((item) => item.classId === cohort.id && item.status === 'ACTIVE').length; return `<article class="schedule-row"><div><p>${escapeHtml(state.branches.find((item) => item.id === cohort.branchId)?.name || '')}</p><h3>${escapeHtml(cohort.name)}</h3><span>${escapeHtml(cohort.code)}</span></div><div><small>Lịch học</small><strong>${escapeHtml(cohort.scheduleLabel)}</strong><span>${escapeHtml(cohort.mode)} · ${escapeHtml(cohort.room)}</span></div><div><small>Số chỗ</small><strong>${Math.max(0, cohort.capacity - used)}/${cohort.capacity}</strong>${badge(cohort.status)}</div>${link('Nhận tư vấn', '/lien-he')}</article>`; }).join('')}</div></section></main>`;
+  }
+
+  function family() {
+    return `<main id="main-content" class="public-main"><section class="simple-hero family-hero"><div class="container feature-split"><div><p class="eyebrow">Phụ huynh & học viên</p><h1>Mỗi tuần đều biết mình đang tiến về đâu</h1><p>Một cổng học tập tách biệt cho học viên và phụ huynh, với quyền xem đúng phạm vi.</p>${link('Đăng nhập cổng học tập', '/login', { kind: 'primary' })}</div><div class="family-cards"><article><b>01</b><h3>Tiếp tục học</h3><p>Video, quiz, homework và feedback trong một learning path.</p></article><article><b>02</b><h3>Theo dõi evidence</h3><p>Attendance, skill profile và next action đã được duyệt.</p></article><article><b>03</b><h3>Phối hợp đúng lúc</h3><p>Nhận thay đổi lịch, dịch vụ và học phí phù hợp quyền xem.</p></article></div></div></section></main>`;
+  }
+
+  function centerSolution() {
+    return `<main id="main-content" class="public-main"><section class="simple-hero dark"><div class="container"><p class="eyebrow on-dark">Giải pháp trung tâm</p><h1>Một operating model từ lead đến renewal</h1><p>Quyết định dựa trên evidence, chuyển giao bằng event, truy vết bằng audit.</p></div></section><section class="public-section container"><div class="solution-grid">${[
+      ['Admissions & placement', 'Lead, consultation, placement, offer và mock commerce.'], ['Academic design', 'Course version immutable, lesson template và completion rule.'], ['Teacher operations', 'Eligibility, workload, assignment, delivery và grading.'], ['Student service', 'Allocation, make-up, transfer, substitution và case ownership.'], ['Learning outcomes', 'Homework loop, assessment, moderation và promotion.'], ['Parent & renewal', 'Published progress, visibility policy và next-level offer.'],
+    ].map(([title, text], index) => `<article><span>${String(index + 1).padStart(2, '0')}</span><h3>${title}</h3><p>${text}</p></article>`).join('')}</div>${section('Frontend demo trung thực', '<p>Authentication, payment, messaging và integrations đều được mô phỏng rõ ràng. Không có dữ liệu thật được gửi ra bên ngoài.</p>', { className: 'notice-panel' })}</section></main>`;
+  }
+
+  function contact() {
+    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Tư vấn & placement</p><h1>Bắt đầu bằng một cuộc trò chuyện đúng trọng tâm</h1><p>Form này chỉ mô phỏng trải nghiệm frontend; dữ liệu không được gửi đến hệ thống ngoài.</p></div></section><section class="public-section container contact-grid"><form class="panel contact-form" data-demo-form><label>Họ và tên<input name="name" required placeholder="Nguyễn Minh Anh"></label><label>Số điện thoại<input name="phone" required placeholder="0900 000 000"></label><label>Mục tiêu học<select name="goal"><option>Nền tảng giao tiếp</option><option>IELTS</option><option>Speaking confidence</option></select></label><label>Khung giờ phù hợp<textarea name="schedule" rows="3" placeholder="Ví dụ: Thứ 3 & 5 sau 18:00"></textarea></label>${button('Gửi yêu cầu demo', 'submit-demo-contact', { icon: 'arrow' })}<small>Demo only · Không gửi email, SMS hoặc Zalo thật.</small></form><aside><p class="eyebrow">Sau khi gửi</p><h2>Luồng xử lý minh bạch</h2><ol class="process-list"><li><b>1</b><span><strong>Admissions liên hệ</strong><small>Xác nhận nhu cầu và lịch.</small></span></li><li><b>2</b><span><strong>Placement đa kỹ năng</strong><small>Academic Manager review.</small></span></li><li><b>3</b><span><strong>Khuyến nghị level</strong><small>Offer và lịch lớp phù hợp.</small></span></li></ol></aside></section></main>`;
+  }
+
+  function login(ctx) {
+    const roleOrder = ['ADMISSIONS', 'ACADEMIC_MANAGER', 'STUDENT_SERVICE', 'FINANCE', 'TEACHER', 'STUDENT', 'PARENT', 'CENTER_MANAGER', 'ADMIN'];
+    const users = roleOrder.map((role) => ctx.state.users.find((item) => item.role === role)).filter(Boolean);
+    return `<main id="main-content" class="login-page"><section class="login-intro"><a class="brand brand-light" href="#/"><span class="brand-mark"></span><span class="brand-copy"><strong>Yen Center</strong><small>LEARNING OPERATING SYSTEM</small></span></a><div><p class="eyebrow on-dark">Demo workspace</p><h1>Chọn một vai trò để bước vào hành trình.</h1><p>Mỗi vai trò có quyết định, phạm vi và evidence riêng. Đăng nhập này chỉ là mô phỏng frontend.</p></div><small>Demo authentication · Không dùng cho dữ liệu thật.</small></section><section class="role-picker"><div><p class="eyebrow">Quick access</p><h2>Bạn muốn xem workspace nào?</h2><p>Chuyển vai trò bất kỳ lúc nào từ thanh điều hướng.</p></div><div class="role-card-grid">${users.map((user) => `<button type="button" class="role-card" data-action="login" data-actor-id="${escapeHtml(user.id)}"><span class="avatar">${escapeHtml(user.name.split(' ').slice(-2).map((part) => part[0]).join(''))}</span><span><strong>${escapeHtml(user.name)}</strong><small>${escapeHtml(user.role.replaceAll('_', ' '))}</small></span>${icon('arrow')}</button>`).join('')}</div>${link('Hoặc mở Demo Guide', '/demo-guide', { kind: 'ghost' })}</section></main>`;
+  }
+
+  function render(path, ctx) {
+    if (path === '/') return home(ctx);
+    if (path === '/chuong-trinh') return catalog(ctx);
+    if (path.startsWith('/chuong-trinh/')) return programDetail(ctx, path.split('/').at(-1));
+    if (path === '/lich-hoc') return schedule(ctx);
+    if (path === '/phu-huynh-hoc-sinh') return family(ctx);
+    if (path === '/giai-phap-trung-tam') return centerSolution(ctx);
+    if (path === '/lien-he') return contact(ctx);
+    if (path === '/login') return login(ctx);
+    return '';
+  }
+
+  root.YC.define('publicViews', Object.freeze({ render }));
+})(globalThis);
+
+/* 09-learning-views.js */
+(function defineLearningViews(root) {
+  'use strict';
+
+  const { badge, button, empty, fact, icon, link, metric, pageHeader, person, progress, section, table } = root.YC.ui;
+  const { escapeHtml, formatDate } = root.YC.utils;
+
+  function learnerFor(ctx) {
+    const linked = ctx.actor?.linkedLearnerIds || [];
+    return ctx.state.learners.find((item) => item.id === (ctx.learnerId || linked[0]))
+      || ctx.state.learners.find((item) => item.id === linked[0])
+      || ctx.state.learners.find((item) => item.id === ctx.state.demo.canonicalLearnerId);
+  }
+
+  function courseContext(state, learner) {
+    const enrollment = state.enrollments.find((item) => item.learnerId === learner?.id && item.status === 'ACTIVE');
+    const cohort = state.classes.find((item) => item.id === (enrollment?.classId || learner?.classId)) || state.classes.find((item) => item.id === 'class-6a');
+    const version = state.courseVersions.find((item) => item.id === (enrollment?.courseVersionId || cohort?.courseVersionId)) || state.courseVersions[0];
+    return { enrollment, cohort, version };
+  }
+
+  function studentDashboard(ctx) {
+    const learner = learnerFor(ctx);
+    const { cohort, version } = courseContext(ctx.state, learner);
+    const remedial = ctx.state.remedialAssignments.find((item) => item.learnerId === learner.id);
+    const homework = ctx.state.homeworkAssignments.filter((item) => item.learnerId === learner.id);
+    const latestReport = ctx.state.progressReports.filter((item) => item.learnerId === learner.id && item.status === 'PUBLISHED').at(-1);
+    return `<div class="workspace-page learner-page">${pageHeader('My learning', `Chào ${learner.name.split(' ').at(-1)}, sẵn sàng học tiếp?`, 'Một việc quan trọng nhất luôn được đưa lên đầu.', link('Xem lộ trình', '/app/student/course', { kind: 'primary' }))}
+      <section class="continue-card"><div class="continue-cover"><span>A2.1</span><small>ENGLISH FOUNDATION</small></div><div class="continue-body"><p class="eyebrow">Tiếp tục học</p><h2>Unit 4 · Past Simple in context</h2><p>${escapeHtml(version.title)} · ${escapeHtml(cohort.scheduleLabel)}</p>${progress(remedial?.videoProgress || 42, 'Tiến độ bài hiện tại')}<div class="inline">${link('Tiếp tục học', '/app/student/course', { kind: 'primary', icon: 'arrow' })}<span class="text-small muted">Khoảng 18 phút còn lại</span></div></div></section>
+      <div class="metric-grid three">${metric('Việc cần làm', (remedial && remedial.status !== 'COMPLETED' ? 1 : 0) + homework.filter((item) => item.status !== 'ACCEPTED').length, 'Video, quiz hoặc homework', 'check')}${metric('Buổi học tiếp theo', '18:00', 'Thứ 5 · P.302', 'calendar')}${metric('Skill gần nhất', latestReport ? `${Math.round(latestReport.skillProfile.reduce((sum, item) => sum + item.score, 0) / 6)}/100` : 'Chưa có', 'Chỉ hiển thị kết quả đã release', 'trend')}</div>
+      <div class="content-grid main-aside">${section('Kế hoạch tuần này', `<div class="task-list"><a href="#/app/student/course"><span class="task-icon blue">${icon('book')}</span><span><strong>Xem lại Past Simple</strong><small>Video · 18 phút</small></span>${badge(remedial?.status || 'ASSIGNED')}</a><a href="#/app/student/assessments"><span class="task-icon violet">${icon('check')}</span><span><strong>Past Simple Check</strong><small>10 câu · Cần đạt 80%</small></span>${badge(remedial?.status === 'COMPLETED' ? 'COMPLETED' : 'ASSIGNED')}</a><a href="#/app/student/progress"><span class="task-icon green">${icon('trend')}</span><span><strong>Xem skill profile</strong><small>6 nhóm kỹ năng</small></span>${badge(latestReport ? 'PUBLISHED' : 'DRAFT')}</a></div>`)}
+      ${section('Lịch học', `<div class="agenda"><div class="agenda-date"><b>05</b><span>THÁNG 9</span></div><div><strong>${escapeHtml(cohort.name)}</strong><p>${escapeHtml(cohort.scheduleLabel)} · ${escapeHtml(cohort.room)}</p><span>${icon('people')} Giáo viên Hoàng Yến</span></div></div><a class="text-link" href="#/app/student/course">Xem nội dung buổi học ${icon('arrow')}</a>`)}</div></div>`;
+  }
+
+  function studentCourse(ctx) {
+    const learner = learnerFor(ctx);
+    const { cohort, version } = courseContext(ctx.state, learner);
+    const assignment = ctx.state.remedialAssignments.find((item) => item.learnerId === learner.id);
+    const videoProgress = assignment?.videoProgress || 0;
+    return `<div class="workspace-page course-player-page"><div class="course-player-head"><div><a href="#/app/student/dashboard" class="back-link">← My learning</a><p class="eyebrow">Tiếp tục học · ${escapeHtml(version.title)}</p><h1>Unit 4 · Past experiences</h1></div><div class="course-overall"><span>Course progress</span><strong>68%</strong></div></div>
+      <div class="course-player-layout"><aside class="curriculum-sidebar"><div class="curriculum-summary">${progress(68, '12 / 18 activities')}</div>
+        <details class="course-module" open><summary><span><small>MODULE 4</small><strong>Past experiences</strong></span><span>3/5 ${icon('arrow')}</span></summary><nav><a class="done" href="#/app/student/course">${icon('check')}<span><b>Reading</b><small>A weekend to remember · 12 phút</small></span></a><a class="active" href="#/app/student/course">${icon('book')}<span><b>Video</b><small>Past Simple in context · 18 phút</small></span></a><a href="#/app/student/assessments">${icon('check')}<span><b>Quiz</b><small>Past Simple Check · 10 câu</small></span></a><a href="#/app/student/remedial">${icon('spark')}<span><b>Practice</b><small>-ed pronunciation · 15 phút</small></span></a></nav></details>
+        <details class="course-module"><summary><span><small>MODULE 5</small><strong>Stories we share</strong></span><span>0/4 ${icon('arrow')}</span></summary><nav><a href="#/app/student/course"><span>Speaking lab</span></a></nav></details></aside>
+        <main class="learning-content"><div class="video-stage"><div class="video-illustration"><span class="play-button">▶</span><div><small>LESSON VIDEO</small><strong>Past Simple in context</strong></div></div><div class="video-controls"><span>▶</span><div><i style="width:${videoProgress || 42}%"></i></div><span>${videoProgress ? `${videoProgress}%` : '07:32 / 18:00'}</span></div></div>
+          <article class="lesson-copy"><p class="eyebrow">Learning objective</p><h2>Kể lại một trải nghiệm đã xảy ra</h2><p>Nhận biết và dùng past simple trong ngữ cảnh kể chuyện. Sau video, hoàn thành knowledge check để lưu evidence.</p><div class="lesson-callout"><b>Ghi nhớ</b><p>Regular verbs thường thêm <code>-ed</code>; irregular verbs cần dùng dạng quá khứ riêng.</p></div>
+          <div class="lesson-footer"><span>${icon('clock')} 18 phút</span><span>${icon('shield')} Required evidence</span>${assignment ? button(videoProgress >= 100 ? 'Video đã hoàn thành' : 'Đánh dấu xem đủ 100%', 'complete-video', { payload: { assignmentId: assignment.id }, disabled: videoProgress >= 100 }) : link('Mở Demo Guide để tạo assignment', '/demo-guide')}</div></article>
+        </main></div></div>`;
+  }
+
+  function studentRemedial(ctx) {
+    const learner = learnerFor(ctx);
+    const assignments = ctx.state.remedialAssignments.filter((item) => item.learnerId === learner.id);
+    const body = assignments.length ? `<div class="learning-list">${assignments.map((item) => { const lesson = ctx.state.lessonTemplates.find((entry) => entry.id === item.lessonTemplateId); const completion = root.YC.selectors.completionStatus(ctx.state, item.id); return `<article><div class="learning-item-icon">${icon('spark')}</div><div><p class="eyebrow">Học bù tự động</p><h3>${escapeHtml(lesson?.title || 'Lesson recovery')}</h3><p>Được tạo từ attendance vắng. Hoàn thành video và quiz để đóng assignment.</p>${progress(item.videoProgress || 0, 'Video evidence')}<div class="inline">${badge(item.status)}${link('Mở nội dung', '/app/student/course', { small: true })}${link('Làm quiz', '/app/student/assessments', { small: true, kind: 'primary' })}</div></div><aside><small>Quiz tốt nhất</small><strong>${completion.highestScore}/100</strong><span>Cần ≥ 80</span></aside></article>`; }).join('')}</div>` : empty('Chưa có bài học bù', 'Khi một attendance vắng được finalize, hệ thống sẽ tạo đúng một assignment tại đây.', link('Chạy hành trình demo', '/demo-guide', { kind: 'primary' }));
+    return `<div class="workspace-page">${pageHeader('Learning recovery', 'Bài học bù', 'Nội dung được nối trực tiếp từ buổi học đã vắng; completion cần đủ cả video và quiz.')}${body}</div>`;
+  }
+
+  function studentAssessments(ctx) {
+    const learner = learnerFor(ctx);
+    const assignment = ctx.state.remedialAssignments.find((item) => item.learnerId === learner.id);
+    const assessment = ctx.state.assessments.find((item) => item.id === assignment?.assessmentId) || ctx.state.assessments.find((item) => item.id === 'assessment-remedial');
+    const attempts = ctx.state.attempts.filter((item) => item.learnerId === learner.id || item.assignmentId === assignment?.id);
+    return `<div class="workspace-page">${pageHeader('Assessment center', 'Kiểm tra & kết quả', 'Chỉ kết quả đã release mới đi vào progress evidence.')}
+      <div class="content-grid main-aside">${section(assessment.title, `<div class="assessment-summary"><span class="assessment-score">${attempts.length ? Math.max(...attempts.map((item) => item.score)) : '—'}<small>/100</small></span><div><p>${assessment.questionIds.length} câu · ${assessment.passingScore}% để đạt · tối đa ${assessment.maxAttempts} lượt</p>${assignment ? `${progress(assignment.videoProgress || 0, 'Điều kiện video')}${button(assignment.status === 'COMPLETED' ? 'Đã hoàn thành' : 'Nộp đáp án demo 8/10', 'submit-demo-quiz', { payload: { assignmentId: assignment.id }, disabled: assignment.status === 'COMPLETED', icon: 'check' })}` : `<p class="notice-inline">Assignment sẽ xuất hiện sau khi Teacher finalize attendance.</p>${link('Mở Demo Guide', '/demo-guide')}`}</div></div>`, { subtitle: 'Auto-graded · evidence lưu theo attempt' })}
+      ${section('Lịch sử attempt', attempts.length ? attempts.map((item, index) => `<div class="attempt-row"><span>Lượt ${index + 1}</span><strong>${item.score}/100</strong>${badge(item.status)}<small>${formatDate(item.submittedAt)}</small></div>`).join('') : '<p class="muted">Chưa có attempt nào.</p>')}</div>
+      ${section('Final portfolio', `<div class="assessment-card"><div><p class="eyebrow">Manual grading</p><h3>A2.1 Final Portfolio</h3><p>Listening, reading, speaking interaction, speaking production, writing và language.</p></div>${badge(ctx.state.gradingRecords.some((item) => item.learnerId === learner.id && item.status === 'RELEASED') ? 'RELEASED' : 'DRAFT')}</div>`)}</div>`;
+  }
+
+  function studentProgress(ctx) {
+    const learner = learnerFor(ctx);
+    const report = ctx.state.progressReports.filter((item) => item.learnerId === learner.id && item.status === 'PUBLISHED').at(-1);
+    const profile = report?.skillProfile || root.YC.selectors.skillProfile(ctx.state, learner.id);
+    return `<div class="workspace-page">${pageHeader('Learning outcomes', 'Tiến bộ của tôi', 'Skill profile đa chiều, không rút gọn thành một điểm duy nhất.')}
+      ${report ? `<div class="report-banner"><div><p class="eyebrow on-dark">Progress report đã publish</p><h2>${escapeHtml(report.narrative)}</h2><p>Academic Manager đã duyệt · ${formatDate(report.publishedAt)}</p></div><span class="report-average">${Math.round(profile.reduce((sum, item) => sum + item.score, 0) / profile.length)}<small>overall</small></span></div>` : `<div class="notice-panel panel"><b>Chưa có báo cáo được publish.</b><p>Skill evidence đang được tích lũy qua assessment và moderation.</p></div>`}
+      <div class="skill-grid">${profile.map((item) => `<article><div><span>${escapeHtml(item.skill.replaceAll('_', ' '))}</span><strong>${item.score ?? '—'}</strong></div>${progress(item.score || 0)}<small>${item.evidenceId ? 'Có released evidence' : 'Đang chờ assessment'}</small></article>`).join('')}</div>
+      ${section('Next actions', report ? `<ul class="check-list">${report.nextActions.map((item) => `<li>${icon('check')} ${escapeHtml(item)}</li>`).join('')}</ul>` : '<p class="muted">Next action sẽ được Academic Manager publish cùng báo cáo.</p>')}</div>`;
+  }
+
+  function parentData(ctx) {
+    const linked = ctx.actor?.linkedLearnerIds || [];
+    const selected = linked.includes(ctx.learnerId) ? ctx.learnerId : linked[0];
+    const learner = ctx.state.learners.find((item) => item.id === selected) || ctx.state.learners.find((item) => item.id === linked[0]);
+    return { linked, learner };
+  }
+
+  function learnerSwitcher(ctx, linked, selectedId) {
+    return `<div class="learner-switcher"><span>Đang xem</span>${linked.map((id) => { const item = ctx.state.learners.find((learner) => learner.id === id); return `<button type="button" class="${id === selectedId ? 'active' : ''}" data-action="select-learner" data-learner-id="${escapeHtml(id)}">${escapeHtml(item?.name || id)}</button>`; }).join('')}</div>`;
+  }
+
+  function parentDashboard(ctx) {
+    const { linked, learner } = parentData(ctx);
+    const report = ctx.state.progressReports.filter((item) => item.learnerId === learner.id && item.status === 'PUBLISHED').at(-1);
+    const attendance = ctx.state.attendanceRecords.filter((item) => item.learnerId === learner.id);
+    const present = attendance.filter((item) => item.status === 'PRESENT').length;
+    return `<div class="workspace-page parent-page">${learnerSwitcher(ctx, linked, learner.id)}${pageHeader('Family portal', `Tổng quan của ${learner.name}`, 'Chỉ hiển thị dữ liệu đã publish và nội dung được phép chia sẻ.')}
+      <div class="metric-grid three">${metric('Attendance', attendance.length ? `${Math.round(present / attendance.length * 100)}%` : 'Chưa có', 'Bản ghi đã finalize', 'calendar')}${metric('Homework', ctx.state.homeworkAssignments.filter((item) => item.learnerId === learner.id && item.status === 'ACCEPTED').length, 'Bài đã được giáo viên accept', 'check')}${metric('Progress report', report ? 'Đã có' : 'Đang chờ', report ? formatDate(report.publishedAt) : 'Chỉ hiện sau khi Academic publish', 'trend')}</div>
+      <div class="content-grid main-aside">${section('Điều cần biết tuần này', `<div class="parent-update"><span class="update-icon">${icon('book')}</span><div><p class="eyebrow">Học tập</p><h3>${report ? escapeHtml(report.narrative) : 'Đang tích lũy evidence'}</h3><p>${report?.nextActions?.[0] || 'Báo cáo sẽ có next action cụ thể sau khi được duyệt.'}</p>${link('Xem tiến bộ', '/app/parent/progress', { small: true })}</div></div><div class="parent-update"><span class="update-icon amber">${icon('calendar')}</span><div><p class="eyebrow">Lịch học</p><h3>Buổi tiếp theo · Thứ 5, 18:00</h3><p>English Foundation 6A · P.302 · Cơ sở Quận 3</p>${link('Xem attendance', '/app/parent/attendance', { small: true })}</div></div>`)}
+      ${section('Hỗ trợ nhanh', `<div class="quick-links"><a href="#/app/parent/services">${icon('people')}<span><strong>Dịch vụ học viên</strong><small>Yêu cầu đổi lịch, make-up</small></span></a><a href="#/app/parent/tuition">${icon('wallet')}<span><strong>Học phí</strong><small>Trạng thái mock payment</small></span></a></div>`)}</div></div>`;
+  }
+
+  function parentAttendance(ctx) {
+    const { linked, learner } = parentData(ctx);
+    const enrollment = ctx.state.enrollments.find((item) => item.learnerId === learner.id && item.status === 'ACTIVE');
+    const records = ctx.state.attendanceRecords.filter((item) => item.learnerId === learner.id).map((item) => ({ ...item, session: ctx.state.sessions.find((entry) => entry.id === item.sessionId) }));
+    return `<div class="workspace-page">${learnerSwitcher(ctx, linked, learner.id)}${pageHeader('Family portal', 'Chuyên cần & lịch học', 'Attendance đã finalize, thay đổi lịch và make-up được tách thành evidence riêng.')}${section('Lịch sử attendance', table([{ label: 'Buổi học', render: (row) => `<strong>${escapeHtml(row.session?.lessonTemplateId === 'lesson-past-simple' ? 'Past Simple' : row.session?.id || '')}</strong><small>${formatDate(row.session?.startsAt)}</small>` }, { label: 'Trạng thái', render: (row) => badge(row.status) }, { label: 'Lý do', key: 'reasonCode' }, { label: 'Cập nhật bởi', key: 'markedBy' }], records, { emptyTitle: 'Chưa có attendance', emptyBody: enrollment ? 'Bản ghi sẽ xuất hiện sau khi giáo viên finalize buổi học.' : 'Học viên chưa được xếp lớp.' }))}</div>`;
+  }
+
+  function parentProgress(ctx) {
+    const { linked, learner } = parentData(ctx);
+    const reports = linked.flatMap((learnerId) => ctx.state.progressReports.filter((item) => item.learnerId === learnerId && item.status === 'PUBLISHED'));
+    const current = reports.find((item) => item.learnerId === learner.id) || null;
+    const feedback = root.YC.policy.visibleFeedback(ctx.actor, ctx.state.feedbackRecords, ctx.state);
+    return `<div class="workspace-page">${learnerSwitcher(ctx, linked, learner.id)}${pageHeader('Family portal', 'Báo cáo tiến bộ', 'Chỉ hiển thị report đã publish và teacher feedback có visibility phù hợp.', current ? button('Xác nhận đã xem', 'acknowledge-progress', { payload: { learnerId: learner.id }, icon: 'check' }) : '')}
+      ${current ? `<div class="report-banner light"><div><p class="eyebrow">Academic summary</p><h2>${escapeHtml(current.narrative)}</h2><p>${escapeHtml(current.nextActions.join(' · '))}</p></div><span class="report-average">${Math.round(current.skillProfile.reduce((sum, item) => sum + item.score, 0) / current.skillProfile.length)}<small>overall</small></span></div><div class="skill-grid compact">${current.skillProfile.map((item) => `<article><span>${escapeHtml(item.skill.replaceAll('_', ' '))}</span><strong>${item.score}</strong>${progress(item.score)}</article>`).join('')}</div>` : empty('Chưa có report cho học viên này', 'Academic Manager sẽ publish sau khi đủ skill evidence và moderation.')}
+      ${section('Nhận xét có thể chia sẻ', feedback.length ? feedback.map((item) => { const target = ctx.state.learners.find((entry) => entry.id === item.learnerId); return `<blockquote><p>“${escapeHtml(item.body)}”</p><footer>${escapeHtml(target?.name || '')} · ${formatDate(item.createdAt)}</footer></blockquote>`; }).join('') : '<p class="muted">Chưa có nhận xét được phép chia sẻ.</p>', { subtitle: 'Ghi chú nội bộ và safeguarding bị loại bởi visibility policy' })}</div>`;
+  }
+
+  function parentServices(ctx) {
+    const { linked, learner } = parentData(ctx);
+    const cases = ctx.state.serviceCases.filter((item) => !item.learnerId || linked.includes(item.learnerId));
+    const makeups = ctx.state.makeUpBookings.filter((item) => linked.includes(item.learnerId));
+    return `<div class="workspace-page">${learnerSwitcher(ctx, linked, learner.id)}${pageHeader('Family portal', 'Dịch vụ học viên', 'Theo dõi yêu cầu và make-up theo owner, status và next action.')}
+      <div class="content-grid two">${section('Service cases', table([{ label: 'Loại', key: 'type' }, { label: 'Lý do', key: 'reason' }, { label: 'Trạng thái', render: (row) => badge(row.status) }], cases))}${section('Make-up bookings', table([{ label: 'Buổi gốc', key: 'originalSessionId' }, { label: 'Buổi bù', key: 'targetSessionId' }, { label: 'Trạng thái', render: (row) => badge(row.status) }], makeups))}</div></div>`;
+  }
+
+  function parentTuition(ctx) {
+    const { linked, learner } = parentData(ctx);
+    const invoices = ctx.state.invoices.filter((item) => linked.includes(item.learnerId));
+    const payments = ctx.state.payments.filter((item) => linked.includes(item.learnerId));
+    return `<div class="workspace-page">${learnerSwitcher(ctx, linked, learner.id)}${pageHeader('Family portal', 'Học phí & renewal', 'Thông tin tài chính trong prototype là mock, không phải chứng từ thật.')}
+      <div class="notice-panel panel"><b>MOCK FINANCE</b><p>Không có giao dịch hoặc provider thanh toán thật trong bản frontend này.</p></div>
+      <div class="content-grid two">${section('Hóa đơn', table([{ label: 'Mã', key: 'id' }, { label: 'Số tiền', render: (row) => root.YC.ui.money(row.amount, row.currency) }, { label: 'Trạng thái', render: (row) => badge(row.status) }], invoices))}${section('Thanh toán', table([{ label: 'Reference', key: 'reference' }, { label: 'Provider', key: 'provider' }, { label: 'Trạng thái', render: (row) => badge(row.status) }], payments))}</div></div>`;
+  }
+
+  function render(path, ctx) {
+    const routes = {
+      '/app/student/dashboard': studentDashboard,
+      '/app/student/course': studentCourse,
+      '/app/student/remedial': studentRemedial,
+      '/app/student/assessments': studentAssessments,
+      '/app/student/progress': studentProgress,
+      '/app/parent/dashboard': parentDashboard,
+      '/app/parent/attendance': parentAttendance,
+      '/app/parent/progress': parentProgress,
+      '/app/parent/services': parentServices,
+      '/app/parent/tuition': parentTuition,
+    };
+    return routes[path] ? routes[path](ctx) : '';
+  }
+
+  root.YC.define('learningViews', Object.freeze({ render }));
+})(globalThis);
+
+/* 10-operations-views.js */
+(function defineOperationsViews(root) {
+  'use strict';
+
+  const { badge, button, empty, icon, link, metric, money, pageHeader, person, progress, section, table } = root.YC.ui;
+  const { escapeHtml, formatDate } = root.YC.utils;
+
+  function canonicalAction(label = 'Chạy bước canonical') {
+    return button(label, 'canonical-next', { icon: 'arrow' });
+  }
+
+  function admissionsDashboard(ctx) {
+    const metrics = root.YC.selectors.metrics(ctx.state, 'ADMISSIONS');
+    const recent = ctx.state.leads.slice(0, 5);
+    return `<div class="workspace-page">${pageHeader('Admissions workspace', 'Từ nhu cầu đến offer phù hợp', 'Ưu tiên lead theo next action thay vì chỉ theo trạng thái.', canonicalAction('Xử lý next action'))}
+      <div class="metric-grid four">${metric('Lead mới', metrics.newLeads, 'Cần liên hệ trong ngày', 'people')}${metric('Chờ placement', ctx.state.leads.filter((item) => ['CONTACTED', 'PLACEMENT_BOOKED'].includes(item.status)).length, 'Booking và result review', 'calendar')}${metric('Offer mở', ctx.state.offers.filter((item) => !['ACCEPTED', 'EXPIRED'].includes(item.status)).length, 'Draft hoặc đã gửi', 'wallet')}${metric('Renewal đến hạn', metrics.renewalDue, 'Dựa trên promotion', 'trend')}</div>
+      <div class="content-grid main-aside">${section('Lead cần xử lý', table([{ label: 'Học viên / phụ huynh', render: (row) => `<a class="table-link" href="#/app/admissions/leads/${row.id}"><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.parentName || row.channel)}</small></a>` }, { label: 'Mục tiêu', key: 'goal' }, { label: 'Chi nhánh', render: (row) => escapeHtml(ctx.state.branches.find((item) => item.id === row.branchId)?.name || '') }, { label: 'Trạng thái', render: (row) => badge(row.status) }, { label: 'Next action', render: (row) => row.status === 'NEW' ? 'Liên hệ' : row.status === 'PLACED' ? 'Tạo offer' : 'Theo dõi' }], recent), { action: link('Xem tất cả', '/app/admissions/leads', { small: true }) })}
+      ${section('Funnel hôm nay', `<div class="funnel">${[['Lead', ctx.state.leads.length, 100], ['Placement', ctx.state.placementResults.length, 68], ['Offer', ctx.state.offers.length, 44], ['Won', ctx.state.leads.filter((item) => item.status === 'WON').length, 24]].map(([label, value, width]) => `<div><span>${label}</span><i style="width:${width}%"></i><b>${value}</b></div>`).join('')}</div><div class="insight-note">${icon('spark')}<p><strong>Evidence tip</strong><br>Placement phải được Academic release trước khi tạo offer.</p></div>`)}</div></div>`;
+  }
+
+  function admissionsLeads(ctx) {
+    return `<div class="workspace-page">${pageHeader('Admissions · CRM', 'Lead & consultation', 'Owner, nguồn, mục tiêu và next action được nhìn trong cùng một hàng.', canonicalAction('Tiến hành lead canonical'))}
+      ${section('Pipeline', table([{ label: 'Lead', render: (row) => `<a class="table-link" href="#/app/admissions/leads/${row.id}"><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.phone)}</small></a>` }, { label: 'Nguồn', key: 'channel' }, { label: 'Mục tiêu', key: 'goal' }, { label: 'Owner', render: (row) => escapeHtml(ctx.state.users.find((item) => item.id === row.ownerId)?.name || '') }, { label: 'Trạng thái', render: (row) => badge(row.status) }, { label: 'Ngày tạo', render: (row) => formatDate(row.createdAt) }], ctx.state.leads))}</div>`;
+  }
+
+  function leadDetail(ctx, leadId) {
+    const lead = ctx.state.leads.find((item) => item.id === leadId) || ctx.state.leads[0];
+    const consultations = ctx.state.consultations.filter((item) => item.leadId === lead.id);
+    const placement = ctx.state.placementResults.find((item) => item.leadId === lead.id);
+    const offer = ctx.state.offers.find((item) => item.leadId === lead.id);
+    const invoice = ctx.state.invoices.find((item) => item.leadId === lead.id);
+    const events = ctx.state.domainEvents.filter((item) => item.learnerId === lead.learnerId);
+    return `<div class="workspace-page">${pageHeader('Lead profile', lead.name, `${lead.parentName || 'Khách hàng'} · ${lead.phone} · ${lead.goal}`, canonicalAction('Thực hiện next action'))}
+      <div class="profile-strip"><div>${person({ name: lead.name }, 'Prospective learner')}</div><div><small>Chi nhánh</small><strong>${escapeHtml(ctx.state.branches.find((item) => item.id === lead.branchId)?.name || '')}</strong></div><div><small>Nguồn</small><strong>${escapeHtml(lead.channel)}</strong></div><div><small>Trạng thái</small>${badge(lead.status)}</div></div>
+      <div class="content-grid main-aside"><div class="stack-lg">${section('Consultation', consultations.length ? consultations.map((item) => `<div class="timeline-item"><span></span><div><strong>${escapeHtml(item.note)}</strong><small>${formatDate(item.occurredAt)} · ${escapeHtml(ctx.state.users.find((user) => user.id === item.ownerId)?.name || '')}</small></div></div>`).join('') : '<p class="muted">Chưa có consultation note.</p>')}
+      ${section('Placement recommendation', placement ? `<div class="placement-result"><span class="level-orb">${escapeHtml(placement.frameworkLevel)}</span><div><h3>${escapeHtml(placement.recommendation)}</h3><p>Đề xuất dựa trên sáu kỹ năng; Academic Manager đã review.</p><div class="mini-skills">${Object.entries(placement.skills).map(([key, value]) => `<span>${escapeHtml(key)} <b>${value}</b></span>`).join('')}</div></div>${badge(placement.status)}</div>` : empty('Chưa có placement', 'Cần booking và Academic review trước khi phát hành.'))}</div>
+      <div class="stack-lg">${section('Commercial snapshot', `<dl class="detail-list"><div><dt>Offer</dt><dd>${offer ? `${money(offer.total)} · ${badge(offer.status)}` : 'Chưa tạo'}</dd></div><div><dt>Invoice</dt><dd>${invoice ? `${money(invoice.amount)} · ${badge(invoice.status)}` : 'Chưa phát hành'}</dd></div><div><dt>Integration</dt><dd>Mock only</dd></div></dl>`)}${section('Activity', events.length ? events.slice(0, 6).map((item) => `<div class="event-row"><span>${icon('check')}</span><div><strong>${escapeHtml(item.summary)}</strong><small>${formatDate(item.occurredAt)}</small></div></div>`).join('') : '<p class="muted">Chưa có domain event.</p>')}</div></div>`;
+  }
+
+  function placementQueue(ctx) {
+    const bookings = ctx.state.placementBookings.map((item) => ({ ...item, lead: ctx.state.leads.find((lead) => lead.id === item.leadId) }));
+    return `<div class="workspace-page">${pageHeader('Admissions · Placement', 'Placement pipeline', 'Booking, review và release được tách thành các bước có owner.', canonicalAction('Hoàn thành placement canonical'))}
+      <div class="metric-grid three">${metric('Đã đặt', bookings.filter((item) => item.status === 'BOOKED').length, 'Chờ examiner', 'calendar')}${metric('Đã review', ctx.state.placementResults.filter((item) => item.status === 'REVIEWED').length, 'Chờ release', 'shield')}${metric('Đã release', ctx.state.placementResults.filter((item) => item.status === 'RELEASED').length, 'Sẵn sàng tạo offer', 'check')}</div>
+      ${section('Booking & result queue', table([{ label: 'Học viên', render: (row) => `<strong>${escapeHtml(row.lead?.name || row.learnerId)}</strong>` }, { label: 'Lịch', render: (row) => formatDate(row.startsAt) }, { label: 'Mode', key: 'mode' }, { label: 'Booking', render: (row) => badge(row.status) }, { label: 'Result', render: (row) => { const result = ctx.state.placementResults.find((item) => item.leadId === row.leadId); return result ? `${escapeHtml(result.frameworkLevel)} · ${badge(result.status)}` : 'Chưa ghi'; } }], bookings))}</div>`;
+  }
+
+  function offers(ctx) {
+    const rows = ctx.state.offers.map((item) => ({ ...item, lead: ctx.state.leads.find((lead) => lead.id === item.leadId), packageItem: ctx.state.packages.find((pkg) => pkg.id === item.packageId) }));
+    return `<div class="workspace-page">${pageHeader('Admissions · Commerce', 'Offers', 'Giá, discount, package và trạng thái gửi được lưu thành evidence.', canonicalAction('Xử lý offer canonical'))}${section('Offer register', table([{ label: 'Học viên', render: (row) => `<strong>${escapeHtml(row.lead?.name || '')}</strong><small>${escapeHtml(row.packageItem?.name || '')}</small>` }, { label: 'Giá niêm yết', render: (row) => money(row.listPrice) }, { label: 'Giảm', render: (row) => money(row.discount) }, { label: 'Tổng', render: (row) => `<strong>${money(row.total)}</strong>` }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows, { emptyTitle: 'Chưa có offer', emptyBody: 'Offer được tạo sau khi placement đã release.' }))}</div>`;
+  }
+
+  function renewals(ctx) {
+    const rows = ctx.state.renewals.map((item) => ({ ...item, learner: ctx.state.learners.find((learner) => learner.id === item.learnerId), course: ctx.state.courseVersions.find((version) => version.id === item.nextCourseVersionId) }));
+    return `<div class="workspace-page">${pageHeader('Admissions · Retention', 'Renewal', 'Kết hợp outcome, next goal, recommended course và trạng thái offer.', canonicalAction('Hoàn tất renewal canonical'))}${section('Renewal pipeline', table([{ label: 'Học viên', render: (row) => `<strong>${escapeHtml(row.learner?.name || '')}</strong><small>${escapeHtml(row.nextGoal)}</small>` }, { label: 'Outcome', key: 'outcome' }, { label: 'Khóa tiếp theo', render: (row) => escapeHtml(row.course?.title || '') }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows, { emptyTitle: 'Chưa có renewal', emptyBody: 'Chỉ tạo renewal sau promotion decision FINAL.' }))}</div>`;
+  }
+
+  function financeDashboard(ctx) {
+    const values = root.YC.selectors.metrics(ctx.state, 'FINANCE');
+    return `<div class="workspace-page">${pageHeader('Finance workspace', 'Mock ledger & financial clearance', 'Mọi bản ghi đều gắn nhãn MOCK; không gọi payment provider thật.', canonicalAction('Ghi nhận payment canonical'))}
+      <div class="notice-panel panel"><b>DEMO MODE</b><p>Hóa đơn và thanh toán bên dưới chỉ tồn tại trong localStorage của trình duyệt.</p></div><div class="metric-grid three">${metric('Invoice đã trả', values.paidInvoices, 'Financial clearance', 'check')}${metric('Mock revenue', money(values.mockRevenue), 'Không phải doanh thu thật', 'wallet')}${metric('Chờ xuất hóa đơn', ctx.state.offers.filter((item) => item.status === 'ACCEPTED').length, 'Offer accepted', 'calendar')}</div>
+      ${section('Recent finance activity', table([{ label: 'Loại', render: (row) => row.resourceType }, { label: 'Nội dung', key: 'summary' }, { label: 'Thời gian', render: (row) => formatDate(row.occurredAt) }], ctx.state.domainEvents.filter((item) => ['INVOICE', 'PAYMENT'].includes(item.resourceType)).slice(0, 8)))}</div>`;
+  }
+
+  function invoices(ctx) {
+    const rows = ctx.state.invoices.map((item) => ({ ...item, learner: ctx.state.learners.find((learner) => learner.id === item.learnerId) }));
+    return `<div class="workspace-page">${pageHeader('Finance · Billing', 'Invoices', 'Phát hành, due date và settlement status trên demo ledger.', canonicalAction('Xuất hóa đơn / payment'))}${section('Invoice register', table([{ label: 'Invoice', render: (row) => `<strong>${escapeHtml(row.id)}</strong><small>MOCK DOCUMENT</small>` }, { label: 'Học viên', render: (row) => escapeHtml(row.learner?.name || '') }, { label: 'Số tiền', render: (row) => money(row.amount, row.currency) }, { label: 'Hạn', render: (row) => formatDate(row.dueAt) }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows))}</div>`;
+  }
+
+  function payments(ctx) {
+    return `<div class="workspace-page">${pageHeader('Finance · Ledger', 'Payments', 'Reference và provider đều được mô phỏng để giữ prototype trung thực.')}${section('Mock payment ledger', table([{ label: 'Reference', key: 'reference' }, { label: 'Provider', render: (row) => `<strong>${escapeHtml(row.provider)}</strong><small>${escapeHtml(row.mode)}</small>` }, { label: 'Số tiền', render: (row) => money(row.amount, row.currency) }, { label: 'Thời gian', render: (row) => formatDate(row.paidAt) }, { label: 'Trạng thái', render: (row) => badge(row.status) }], ctx.state.payments))}</div>`;
+  }
+
+  function serviceDashboard(ctx) {
+    const noSeat = ctx.state.serviceCases.filter((item) => item.type === 'NO_SEAT' && item.status === 'OPEN').length;
+    return `<div class="workspace-page">${pageHeader('Student Service workspace', 'Giải quyết exception mà không mất lịch sử', 'Allocation, make-up, transfer và substitution đều có owner và evidence.', canonicalAction('Xếp lớp canonical'))}
+      <div class="metric-grid four">${metric('Chờ xếp lớp', ctx.state.payments.filter((item) => item.status === 'PAID' && !ctx.state.enrollments.some((enrollment) => enrollment.learnerId === item.learnerId && enrollment.status === 'ACTIVE')).length, 'Payment đã clear', 'people')}${metric('No-seat cases', noSeat, 'Cần phương án thay thế', 'shield')}${metric('Make-up', ctx.state.makeUpBookings.filter((item) => item.status !== 'ATTENDED').length, 'Eligibility → booking', 'calendar')}${metric('Substitution', ctx.state.substitutions.filter((item) => item.status !== 'CLOSED').length, 'Cần handover', 'people')}</div>
+      <div class="content-grid two">${section('Exception queue', table([{ label: 'Case', key: 'type' }, { label: 'Lý do', key: 'reason' }, { label: 'Owner', render: (row) => escapeHtml(ctx.state.users.find((item) => item.id === row.ownerId)?.name || '') }, { label: 'Trạng thái', render: (row) => badge(row.status) }], ctx.state.serviceCases))}${section('Operational guardrails', '<ul class="check-list"><li>✓ No-seat trả ranked alternatives</li><li>✓ Transfer giữ enrollment cũ</li><li>✓ Attendance correction cần reason</li><li>✓ Substitute cần handover trước close</li></ul>')}</div></div>`;
+  }
+
+  function allocation(ctx) {
+    const candidates = ctx.state.leads.filter((lead) => ctx.state.payments.some((item) => item.leadId === lead.id && item.status === 'PAID') && !ctx.state.enrollments.some((item) => item.learnerId === lead.learnerId && item.status === 'ACTIVE'));
+    const classRows = ctx.state.classes.map((cohort) => { const used = ctx.state.enrollments.filter((item) => item.classId === cohort.id && item.status === 'ACTIVE').length; return { ...cohort, used, seats: cohort.capacity - used }; });
+    return `<div class="workspace-page">${pageHeader('Student Service · Allocation', 'Class allocation', 'Match course version, branch, schedule và remaining capacity.', canonicalAction('Xếp Minh Anh vào 6A'))}
+      <div class="content-grid main-aside">${section('Lớp phù hợp', table([{ label: 'Lớp', render: (row) => `<strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.code)}</small>` }, { label: 'Lịch', key: 'scheduleLabel' }, { label: 'Mode', key: 'mode' }, { label: 'Còn chỗ', render: (row) => `<strong>${Math.max(0, row.seats)}</strong> / ${row.capacity}` }, { label: 'Trạng thái', render: (row) => badge(row.status) }], classRows))}${section('Ready to allocate', candidates.length ? candidates.map((lead) => `<div class="queue-card">${person({ name: lead.name }, lead.goal)}${badge('PAID')}</div>`).join('') : empty('Không có learner chờ', 'Ghi nhận mock payment để financial-clear learner xuất hiện.'))}</div></div>`;
+  }
+
+  function cases(ctx) {
+    const rows = [...ctx.state.serviceCases, ...ctx.state.interventionCases].map((item) => ({ ...item, learner: ctx.state.learners.find((learner) => learner.id === item.learnerId) }));
+    return `<div class="workspace-page">${pageHeader('Student Service · Case management', 'Cases & interventions', 'Mỗi case có signal, owner, plan, follow-up và outcome.')}${section('Owned work', table([{ label: 'Học viên', render: (row) => escapeHtml(row.learner?.name || row.leadId || 'Chưa tạo learner') }, { label: 'Loại / signal', render: (row) => escapeHtml(row.type || row.signal) }, { label: 'Kế hoạch / lý do', render: (row) => escapeHtml(row.plan || row.reason) }, { label: 'Follow-up', render: (row) => formatDate(row.followUpAt) }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows))}</div>`;
+  }
+
+  function makeUp(ctx) {
+    return `<div class="workspace-page">${pageHeader('Student Service · Recovery', 'Make-up bookings', 'Eligibility, target session và attendance bù không làm mất bản ghi gốc.')}${section('Booking register', table([{ label: 'Học viên', render: (row) => escapeHtml(ctx.state.learners.find((item) => item.id === row.learnerId)?.name || '') }, { label: 'Buổi gốc', key: 'originalSessionId' }, { label: 'Buổi bù', key: 'targetSessionId' }, { label: 'Lý do', key: 'reason' }, { label: 'Trạng thái', render: (row) => badge(row.status) }], ctx.state.makeUpBookings))}</div>`;
+  }
+
+  function transfers(ctx) {
+    const transferred = ctx.state.enrollments.filter((item) => item.status === 'TRANSFERRED');
+    return `<div class="workspace-page">${pageHeader('Student Service · Mobility', 'Transfers', 'Enrollment cũ được đóng, enrollment mới được tạo và roster scope đổi theo hiệu lực.')}${section('Transfer history', table([{ label: 'Học viên', render: (row) => escapeHtml(ctx.state.learners.find((item) => item.id === row.learnerId)?.name || '') }, { label: 'Lớp cũ', render: (row) => escapeHtml(ctx.state.classes.find((item) => item.id === row.classId)?.name || '') }, { label: 'Lý do', key: 'transferReason' }, { label: 'Kết thúc', render: (row) => formatDate(row.endsAt) }, { label: 'Trạng thái', render: (row) => badge(row.status) }], transferred))}</div>`;
+  }
+
+  function substitutions(ctx) {
+    const rows = ctx.state.substitutions.map((item) => ({ ...item, session: ctx.state.sessions.find((session) => session.id === item.sessionId), original: ctx.state.teacherProfiles.find((profile) => profile.id === item.originalTeacherProfileId), replacement: ctx.state.teacherProfiles.find((profile) => profile.id === item.replacementTeacherProfileId) }));
+    return `<div class="workspace-page">${pageHeader('Student Service · Continuity', 'Teacher substitutions', 'Candidate → confirmation → time-boxed access → handover → closure.')}${section('Substitution queue', table([{ label: 'Session', render: (row) => `<strong>${escapeHtml(row.session?.id || '')}</strong><small>${formatDate(row.session?.startsAt)}</small>` }, { label: 'Giáo viên chính', render: (row) => escapeHtml(ctx.state.users.find((item) => item.id === row.original?.userId)?.name || '') }, { label: 'Thay thế', render: (row) => escapeHtml(ctx.state.users.find((item) => item.id === row.replacement?.userId)?.name || 'Chưa chọn') }, { label: 'Handover', render: (row) => row.handover ? escapeHtml(row.handover.note) : 'Chưa có' }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows))}</div>`;
+  }
+
+  function teacherDashboard(ctx) {
+    const metrics = root.YC.selectors.metrics(ctx.state, 'TEACHER');
+    const profile = ctx.state.teacherProfiles.find((item) => item.userId === ctx.actor?.id) || ctx.state.teacherProfiles[0];
+    const assignments = ctx.state.teacherAssignments.filter((item) => item.teacherProfileId === profile.id);
+    return `<div class="workspace-page teacher-page">${pageHeader('Teacher workspace', `Chào ${ctx.actor?.name?.split(' ').at(-1) || 'giáo viên'}`, 'Chuẩn bị, dạy, ghi evidence và xử lý feedback trong một workbench.', canonicalAction('Thực hiện teacher step'))}
+      <div class="metric-grid four">${metric('Buổi sắp tới', metrics.upcomingSessions, 'Confirmed hoặc planned', 'calendar')}${metric('Chờ chấm', metrics.gradingBacklog, 'Manual grading queue', 'check')}${metric('Lớp đang dạy', assignments.filter((item) => item.status === 'ACTIVE').length, 'Theo effective assignment', 'people')}${metric('Open cases', metrics.openCases, 'Cần phối hợp', 'shield')}</div>
+      <section class="today-session"><div class="today-time"><b>18:00</b><span>HÔM NAY</span></div><div><p class="eyebrow on-dark">Next session</p><h2>English Foundation 6A</h2><p>Unit 4 · Past Simple · P.302 · 90 phút</p><div class="inline"><span>${icon('people')} ${root.YC.selectors.sessionWorkbench(ctx.state, 'session-canonical').roster.length} learners</span><span>${icon('book')} Lesson plan v2</span></div></div>${link('Mở session workbench', '/app/teacher/sessions/session-canonical', { kind: 'primary' })}</section>
+      <div class="content-grid two">${section('Assignments', table([{ label: 'Lớp', render: (row) => escapeHtml(ctx.state.classes.find((item) => item.id === row.classId)?.name || '') }, { label: 'Role', key: 'role' }, { label: 'Workload', render: (row) => `${row.workloadMinutes} phút` }, { label: 'Trạng thái', render: (row) => badge(row.status) }], assignments))}${section('Teaching signals', '<div class="insight-list"><div><span class="signal warning">1</span><p><strong>Coverage gap</strong><small>Pronunciation được defer sang practice.</small></p></div><div><span class="signal success">✓</span><p><strong>Visibility safe</strong><small>Parent chỉ thấy feedback được release.</small></p></div></div>')}</div></div>`;
+  }
+
+  function teacherSessions(ctx) {
+    const rows = ctx.state.sessions.map((item) => ({ ...item, cohort: ctx.state.classes.find((cohort) => cohort.id === item.classId), plan: ctx.state.lessonPlans.find((plan) => plan.sessionId === item.id) }));
+    return `<div class="workspace-page">${pageHeader('Teacher · Delivery', 'Sessions', 'Từ readiness đến delivery evidence và finalized attendance.', canonicalAction('Cập nhật session canonical'))}${section('Session list', table([{ label: 'Buổi học', render: (row) => `<a class="table-link" href="#/app/teacher/sessions/${row.id}"><strong>${escapeHtml(row.cohort?.name || '')}</strong><small>${escapeHtml(row.id)}</small></a>` }, { label: 'Lịch', render: (row) => formatDate(row.startsAt) }, { label: 'Phòng', key: 'room' }, { label: 'Readiness', render: (row) => badge(row.plan?.readiness || 'DRAFT') }, { label: 'Delivery', render: (row) => badge(row.status) }, { label: 'Attendance', render: (row) => row.attendanceFinalized ? badge('COMPLETED', 'Đã finalize') : badge('DRAFT', 'Chưa finalize') }], rows))}</div>`;
+  }
+
+  function sessionDetail(ctx, sessionId) {
+    const workbench = root.YC.selectors.sessionWorkbench(ctx.state, sessionId) || root.YC.selectors.sessionWorkbench(ctx.state, 'session-canonical');
+    const { session, plan, roster, risks, openHomework, delivery } = workbench;
+    const cohort = ctx.state.classes.find((item) => item.id === session.classId);
+    const lesson = ctx.state.lessonTemplates.find((item) => item.id === session.lessonTemplateId);
+    return `<div class="workspace-page session-workbench">${pageHeader('Session workbench', cohort.name, `${formatDate(session.startsAt)} · ${session.room} · ${session.mode}`, canonicalAction('Chạy session step'))}
+      <div class="session-tabs"><a class="active" href="#/app/teacher/sessions/${session.id}">Overview</a><a href="#/app/teacher/sessions/${session.id}">Attendance</a><a href="#/app/teacher/grading">Homework</a><a href="#/app/teacher/quality">Evidence</a></div>
+      <div class="content-grid main-aside"><div class="stack-lg">${section('Lesson plan', `<div class="lesson-plan"><div><p class="eyebrow">${escapeHtml(lesson.title)}</p><h3>${escapeHtml(lesson.objectives.join(' · '))}</h3></div>${badge(plan?.readiness || 'DRAFT')}</div><dl class="detail-list"><div><dt>Adaptations</dt><dd>${escapeHtml((plan?.adaptations || []).join(', ') || 'Chưa có')}</dd></div><div><dt>Planned items</dt><dd>${ctx.state.learningItems.filter((item) => item.lessonTemplateId === lesson.id).length} activities</dd></div><div><dt>Delivery evidence</dt><dd>${delivery ? `${delivery.taughtItemIds.length} taught · ${delivery.deferredItemIds.length} deferred` : 'Chưa ghi'}</dd></div></dl>`)}
+      ${section('Roster & attendance', table([{ label: 'Học viên', render: (row) => `<strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.code)}</small>` }, { label: 'Risk', render: (row) => risks.some((risk) => risk.learnerId === row.id) ? badge('REQUESTED', 'Cần lưu ý') : '—' }, { label: 'Attendance', render: (row) => { const record = ctx.state.attendanceRecords.find((item) => item.sessionId === session.id && item.learnerId === row.id); return record ? badge(record.status) : badge('DRAFT', 'Chưa ghi'); } }], roster))}</div>
+      <div class="stack-lg">${section('Session controls', `<div class="state-machine"><span class="done">Confirmed</span><span class="${['READY', 'IN_PROGRESS', 'COMPLETED'].includes(session.status) ? 'done' : ''}">Ready</span><span class="${['IN_PROGRESS', 'COMPLETED'].includes(session.status) ? 'done' : ''}">Live</span><span class="${session.status === 'COMPLETED' ? 'done' : ''}">Completed</span></div><p>Trạng thái hiện tại: ${badge(session.status)}</p>${canonicalAction('Thực hiện bước hợp lệ tiếp theo')}`)}${section('Open homework', openHomework.length ? openHomework.map((item) => `<div class="queue-card"><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(ctx.state.learners.find((learner) => learner.id === item.learnerId)?.name || '')}</small></div>${badge(item.status)}</div>`).join('') : '<p class="muted">Không có homework mở cho lớp này.</p>')}</div></div>`;
+  }
+
+  function grading(ctx) {
+    const homework = ctx.state.homeworkAssignments.map((item) => ({ ...item, learner: ctx.state.learners.find((learner) => learner.id === item.learnerId), submission: ctx.state.homeworkSubmissions.find((entry) => entry.id === item.currentSubmissionId) }));
+    const grades = ctx.state.gradingRecords.map((item) => ({ ...item, learner: ctx.state.learners.find((learner) => learner.id === item.learnerId) }));
+    return `<div class="workspace-page">${pageHeader('Teacher · Assessment', 'Grading queue', 'Feedback được chuẩn bị, release, revision và accept theo trạng thái rõ ràng.')}
+      <div class="content-grid two">${section('Homework', table([{ label: 'Học viên', render: (row) => escapeHtml(row.learner?.name || '') }, { label: 'Bài', key: 'title' }, { label: 'Version', render: (row) => row.submission ? `v${row.submission.version}` : '—' }, { label: 'Điểm', render: (row) => row.submission?.score ?? '—' }, { label: 'Trạng thái', render: (row) => badge(row.status) }], homework))}${section('Manual assessment', table([{ label: 'Học viên', render: (row) => escapeHtml(row.learner?.name || '') }, { label: 'Điểm', render: (row) => `<strong>${row.score}/100</strong>` }, { label: 'Feedback', key: 'feedback' }, { label: 'Trạng thái', render: (row) => badge(row.status) }], grades))}</div></div>`;
+  }
+
+  function workload(ctx) {
+    const teacherId = ctx.actor?.role === 'TEACHER' ? ctx.actor.id : 'teacher-1';
+    const value = root.YC.selectors.teacherWorkload(ctx.state, teacherId);
+    const segments = [['Teaching', value.teachingMinutes, 'blue'], ['Preparation', value.preparationMinutes, 'violet'], ['Grading', value.gradingMinutes, 'amber'], ['Administration', value.administrationMinutes, 'green']];
+    return `<div class="workspace-page">${pageHeader('Teacher · Capacity', 'Workload', 'Teaching, preparation, grading và administration cùng đóng góp vào limit.')}
+      <div class="workload-summary"><div class="workload-ring" style="--value:${Math.round(value.totalMinutes / value.limitMinutes * 100)}"><span><strong>${Math.round(value.totalMinutes / 60)}h</strong><small>/ ${Math.round(value.limitMinutes / 60)}h</small></span></div><div><p class="eyebrow">Current allocation</p><h2>${Math.round(value.totalMinutes / value.limitMinutes * 100)}% workload limit</h2><p>Eligibility gate sẽ chặn assignment làm vượt giới hạn.</p></div></div>
+      <div class="segment-grid">${segments.map(([label, minutes, color]) => `<article><span class="segment-dot ${color}"></span><div><small>${label}</small><strong>${Math.round(minutes / 60 * 10) / 10} giờ</strong></div>${progress(Math.round(minutes / value.limitMinutes * 100))}</article>`).join('')}</div></div>`;
+  }
+
+  function quality(ctx) {
+    return `<div class="workspace-page">${pageHeader('Teacher · Quality', 'Balanced teaching evidence', 'Không xếp hạng giáo viên bằng một điểm duy nhất; dùng nhiều nguồn evidence.')}
+      <div class="quality-grid">${[['Delivery completeness', 92, 'Lesson plan, taught vs deferred'], ['Feedback timeliness', 86, 'Grading và release timestamps'], ['Learner progress', 78, 'Skill evidence theo cohort'], ['Class continuity', 96, 'Attendance và substitution'], ['Observation', 82, 'Academic coaching evidence']].map(([label, value, note]) => `<article><div><span>${label}</span><strong>${value}%</strong></div>${progress(value)}<small>${note}</small></article>`).join('')}</div>${section('Evidence policy', '<p>Quality signals dùng cho coaching và capacity planning. Safeguarding, restricted note và dữ liệu không đủ context không được đưa vào score hiển thị.</p>', { className: 'notice-panel' })}</div>`;
+  }
+
+  function render(path, ctx) {
+    if (path === '/app/admissions/dashboard') return admissionsDashboard(ctx);
+    if (path === '/app/admissions/leads') return admissionsLeads(ctx);
+    if (path.startsWith('/app/admissions/leads/')) return leadDetail(ctx, path.split('/').at(-1));
+    if (path === '/app/admissions/placement') return placementQueue(ctx);
+    if (path === '/app/admissions/offers') return offers(ctx);
+    if (path === '/app/admissions/renewals') return renewals(ctx);
+    if (path === '/app/finance/dashboard') return financeDashboard(ctx);
+    if (path === '/app/finance/invoices') return invoices(ctx);
+    if (path === '/app/finance/payments') return payments(ctx);
+    if (path === '/app/service/dashboard') return serviceDashboard(ctx);
+    if (path === '/app/service/allocation') return allocation(ctx);
+    if (path === '/app/service/cases') return cases(ctx);
+    if (path === '/app/service/make-up') return makeUp(ctx);
+    if (path === '/app/service/transfers') return transfers(ctx);
+    if (path === '/app/service/substitutions') return substitutions(ctx);
+    if (path === '/app/teacher/dashboard') return teacherDashboard(ctx);
+    if (path === '/app/teacher/sessions') return teacherSessions(ctx);
+    if (path.startsWith('/app/teacher/sessions/')) return sessionDetail(ctx, path.split('/').at(-1));
+    if (path === '/app/teacher/grading') return grading(ctx);
+    if (path === '/app/teacher/workload') return workload(ctx);
+    if (path === '/app/teacher/quality') return quality(ctx);
+    return '';
+  }
+
+  root.YC.define('operationsViews', Object.freeze({ render }));
+})(globalThis);
+
+/* 11-management-views.js */
+(function defineManagementViews(root) {
+  'use strict';
+
+  const { badge, button, icon, link, metric, money, pageHeader, person, progress, section, table } = root.YC.ui;
+  const { escapeHtml, formatDate } = root.YC.utils;
+
+  function canonicalAction(label = 'Chạy academic step') {
+    return button(label, 'canonical-next', { icon: 'arrow' });
+  }
+
+  function academicDashboard(ctx) {
+    const moderation = ctx.state.moderationCases.filter((item) => item.status !== 'APPROVED').length;
+    const classesWithoutTeacher = ctx.state.classes.filter((cohort) => !ctx.state.teacherAssignments.some((item) => item.classId === cohort.id && ['PROPOSED', 'ACTIVE'].includes(item.status))).length;
+    return `<div class="workspace-page">${pageHeader('Academic Management', 'Academic evidence trước quyết định', 'Curriculum, teacher eligibility, moderation và promotion dùng cùng ruleset.', canonicalAction())}
+      <div class="metric-grid four">${metric('Lớp chưa có teacher', classesWithoutTeacher, 'Cần eligibility matching', 'people')}${metric('Moderation mở', moderation, 'Final / borderline', 'shield')}${metric('Progress chờ publish', ctx.state.skillResults.length && !ctx.state.progressReports.length ? 1 : 0, 'Đủ 6 skill evidence', 'trend')}${metric('Course versions', ctx.state.courseVersions.filter((item) => item.status === 'PUBLISHED').length, 'Published & immutable', 'book')}</div>
+      <div class="content-grid main-aside">${section('Decision queue', `<div class="decision-list"><a href="#/app/academic/assignments"><span class="decision-icon blue">${icon('people')}</span><span><strong>Teacher assignment</strong><small>Eligibility hard gates + ranking signals</small></span><b>${classesWithoutTeacher}</b></a><a href="#/app/academic/moderation"><span class="decision-icon violet">${icon('shield')}</span><span><strong>Moderation</strong><small>Rubric, variance và evidence note</small></span><b>${moderation}</b></a><a href="#/app/academic/progress-reviews"><span class="decision-icon green">${icon('trend')}</span><span><strong>Progress & promotion</strong><small>6 skills + attendance + next action</small></span><b>${ctx.state.progressReports.length}</b></a></div>`)}
+      ${section('Policy snapshot', `<dl class="detail-list"><div><dt>Attendance minimum</dt><dd>75%</dd></div><div><dt>Final score</dt><dd>≥ 70</dd></div><div><dt>Mỗi skill</dt><dd>≥ 60</dd></div><div><dt>Override</dt><dd>Reason + evidence + audit</dd></div></dl><a class="text-link" href="#/app/academic/curriculum">Mở curriculum ${icon('arrow')}</a>`)}</div></div>`;
+  }
+
+  function curriculum(ctx) {
+    const rows = ctx.state.courseVersions.map((version) => {
+      const course = ctx.state.courses.find((item) => item.id === version.courseId);
+      const level = ctx.state.levels.find((item) => item.id === course?.levelId);
+      return { ...version, course, level };
+    });
+    return `<div class="workspace-page">${pageHeader('Academic · Product design', 'Curriculum & versions', 'Class luôn tham chiếu một published snapshot; version đã publish là immutable.')}
+      <div class="curriculum-tree"><span>Product line</span>${icon('arrow')}<span>Program</span>${icon('arrow')}<span>Level</span>${icon('arrow')}<span>Course</span>${icon('arrow')}<strong>Course version</strong>${icon('arrow')}<span>Unit · Lesson · Item</span></div>
+      ${section('Version registry', table([{ label: 'Course version', render: (row) => `<strong>${escapeHtml(row.title)}</strong><small>${escapeHtml(row.course?.code || '')} · v${row.version}</small>` }, { label: 'Level', render: (row) => escapeHtml(row.level?.code || '') }, { label: 'Hours', render: (row) => `${row.totalHours}h` }, { label: 'Completion rule', render: (row) => `Attendance ${row.completionRule.attendanceMinimum}% · Final ${row.completionRule.finalScoreMinimum} · Skill ${row.completionRule.skillMinimum}` }, { label: 'Lifecycle', render: (row) => `${badge(row.status)}${row.immutable ? '<small>Immutable</small>' : ''}` }], rows))}
+      ${section('Published lesson structure', ctx.state.units.map((unit) => { const lessons = ctx.state.lessonTemplates.filter((item) => item.unitId === unit.id); return `<details class="course-module"><summary><span><small>UNIT ${unit.order}</small><strong>${escapeHtml(unit.title)}</strong></span><span>${lessons.length} lessons ${icon('arrow')}</span></summary><div>${lessons.map((lesson) => `<div class="curriculum-lesson"><div><strong>${escapeHtml(lesson.title)}</strong><small>${lesson.durationMinutes} phút · version ${lesson.version}</small></div>${badge(lesson.status)}</div>`).join('')}</div></details>`; }).join(''))}</div>`;
+  }
+
+  function teachers(ctx) {
+    const rows = ctx.state.teacherProfiles.map((profile) => {
+      const user = ctx.state.users.find((item) => item.id === profile.userId);
+      const qualification = ctx.state.qualifications.find((item) => item.teacherProfileId === profile.id);
+      const workload = root.YC.selectors.teacherWorkload(ctx.state, user.id);
+      return { ...profile, user, qualification, workload };
+    });
+    return `<div class="workspace-page">${pageHeader('Academic · Faculty', 'Teacher directory', 'Qualification, scope, capabilities và workload được kiểm tra trước assignment.')}${section('Teacher profiles', table([{ label: 'Giáo viên', render: (row) => person(row.user, row.teacherCode) }, { label: 'Qualification', render: (row) => `<strong>${escapeHtml(row.qualification?.type || '—')}</strong><small>Hạn ${formatDate(row.qualification?.expiresAt)}</small>` }, { label: 'Levels', render: (row) => escapeHtml(row.levels.join(', ')) }, { label: 'Modes', render: (row) => escapeHtml(row.modes.join(', ')) }, { label: 'Workload', render: (row) => `${Math.round(row.workload.totalMinutes / 60)} / ${Math.round(row.workload.limitMinutes / 60)}h` }, { label: 'Status', render: (row) => badge(row.status) }], rows))}</div>`;
+  }
+
+  function assignments(ctx) {
+    const candidates = ctx.state.teacherProfiles.map((profile) => ({ profile, user: ctx.state.users.find((item) => item.id === profile.userId), evidence: root.YC.selectors.teacherEligibility(ctx.state, profile.userId, 'class-6a') })).sort((a, b) => Number(b.evidence.eligible) - Number(a.evidence.eligible));
+    const active = ctx.state.teacherAssignments.map((item) => ({ ...item, user: ctx.state.users.find((user) => user.id === ctx.state.teacherProfiles.find((profile) => profile.id === item.teacherProfileId)?.userId), cohort: ctx.state.classes.find((cohort) => cohort.id === item.classId) }));
+    return `<div class="workspace-page">${pageHeader('Academic · Staffing', 'Teacher assignment', 'Hard gates loại ứng viên không phù hợp; ranking signals hỗ trợ quyết định.', canonicalAction('Gán teacher canonical'))}
+      <div class="content-grid main-aside">${section('Candidate ranking · English Foundation 6A', candidates.map((item) => `<article class="candidate-card ${item.evidence.eligible ? '' : 'muted-card'}"><div>${person(item.user, item.profile.teacherCode)}</div><div class="gate-row">${item.evidence.hardGates.map((gate) => `<span class="${gate.passed ? 'pass' : 'fail'}" title="${escapeHtml(gate.label)}">${gate.passed ? '✓' : '×'} ${escapeHtml(gate.key.replaceAll('_', ' '))}</span>`).join('')}</div><div><strong>${item.evidence.rankingSignals.reduce((sum, signal) => sum + signal.score, 0)} pts</strong>${badge(item.evidence.eligible ? 'ACTIVE' : 'REJECTED', item.evidence.eligible ? 'Eligible' : 'Not eligible')}</div></article>`).join(''), { subtitle: 'Hard gate ≠ ranking score' })}
+      ${section('Assignments', active.length ? active.map((item) => `<div class="queue-card"><div><strong>${escapeHtml(item.cohort?.name || '')}</strong><small>${escapeHtml(item.user?.name || '')}</small></div>${badge(item.status)}</div>`).join('') : '<p class="muted">Chưa có assignment cho lớp canonical.</p>')}</div></div>`;
+  }
+
+  function moderation(ctx) {
+    const rows = ctx.state.moderationCases.map((item) => {
+      const attempt = ctx.state.attempts.find((entry) => entry.id === item.attemptId);
+      const grading = ctx.state.gradingRecords.find((entry) => entry.attemptId === item.attemptId);
+      return { ...item, attempt, grading, learner: ctx.state.learners.find((entry) => entry.id === item.learnerId) };
+    });
+    return `<div class="workspace-page">${pageHeader('Academic · Quality gate', 'Assessment moderation', 'Final hoặc borderline result phải có independent review trước release.', canonicalAction('Xử lý moderation canonical'))}
+      ${section('Moderation queue', table([{ label: 'Học viên', render: (row) => `<strong>${escapeHtml(row.learner?.name || '')}</strong><small>${escapeHtml(row.attempt?.assessmentId || '')}</small>` }, { label: 'Điểm', render: (row) => `<strong>${row.attempt?.score ?? '—'}/100</strong>` }, { label: 'Variance', render: (row) => row.variance ?? '—' }, { label: 'Evidence note', render: (row) => escapeHtml(row.note || row.grading?.feedback || 'Chờ reviewer note') }, { label: 'Reviewer', render: (row) => escapeHtml(ctx.state.users.find((item) => item.id === row.reviewerId)?.name || '') }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows, { emptyTitle: 'Không có moderation case', emptyBody: 'Manual grade final sẽ tạo queue sau khi teacher submit.' }))}</div>`;
+  }
+
+  function progressReviews(ctx) {
+    const learner = ctx.state.learners.find((item) => item.id === ctx.state.demo.canonicalLearnerId);
+    const profile = root.YC.selectors.skillProfile(ctx.state, learner.id);
+    const report = ctx.state.progressReports.find((item) => item.learnerId === learner.id && item.status === 'PUBLISHED');
+    const promotion = ctx.state.promotionDecisions.find((item) => item.learnerId === learner.id);
+    return `<div class="workspace-page">${pageHeader('Academic · Outcomes', 'Progress review & promotion', 'Attendance, homework và sáu skill evidence được snapshot trước quyết định.', canonicalAction('Publish report & promotion'))}
+      <div class="profile-strip"><div>${person({ name: learner.name }, learner.code)}</div><div><small>Report</small>${badge(report?.status || 'DRAFT')}</div><div><small>Promotion</small>${promotion ? badge(promotion.status, promotion.decision) : badge('DRAFT', 'Chưa quyết định')}</div><div><small>Next course</small><strong>${escapeHtml(ctx.state.courseVersions.find((item) => item.id === promotion?.nextCourseVersionId)?.title || '—')}</strong></div></div>
+      <div class="content-grid main-aside">${section('Six-skill evidence', `<div class="skill-grid compact">${profile.map((item) => `<article><span>${escapeHtml(item.skill.replaceAll('_', ' '))}</span><strong>${item.score ?? '—'}</strong>${progress(item.score || 0)}<small>${item.evidenceId ? 'Released' : 'Missing evidence'}</small></article>`).join('')}</div>`)}
+      ${section('Decision rule', `<dl class="detail-list"><div><dt>Attendance</dt><dd>${report?.snapshot.attendanceRate ?? '—'} / 75%</dd></div><div><dt>Homework</dt><dd>${report?.snapshot.homeworkCompletion ?? '—'}%</dd></div><div><dt>Overall</dt><dd>${promotion?.evidence.overall ?? '—'} / 70</dd></div><div><dt>Override</dt><dd>${escapeHtml(promotion?.overrideReason || 'Không')}</dd></div></dl>${promotion?.overrideEvidence?.length ? `<p class="evidence-note">Evidence IDs: ${escapeHtml(promotion.overrideEvidence.join(', '))}</p>` : ''}`)}</div></div>`;
+  }
+
+  function managerDashboard(ctx) {
+    const active = ctx.state.enrollments.filter((item) => item.status === 'ACTIVE').length;
+    const capacity = ctx.state.classes.reduce((sum, item) => sum + item.capacity, 0);
+    const mockRevenue = ctx.state.payments.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    return `<div class="workspace-page">${pageHeader('Center Management', 'Operating health at a glance', 'Capacity, quality, retention và mock commerce được drill-down về evidence.')}
+      <div class="metric-grid four">${metric('Active learners', active, `${ctx.state.branches.length} chi nhánh`, 'people')}${metric('Seat utilization', `${Math.round(active / capacity * 100)}%`, `${active}/${capacity} chỗ`, 'grid')}${metric('Open risk cases', [...ctx.state.serviceCases, ...ctx.state.interventionCases].filter((item) => item.status === 'OPEN').length, 'Có owner và follow-up', 'shield')}${metric('Mock revenue', money(mockRevenue), 'Demo ledger only', 'wallet')}</div>
+      <div class="content-grid main-aside">${section('Branch performance', ctx.state.branches.map((branch, index) => { const cohorts = ctx.state.classes.filter((item) => item.branchId === branch.id); const seats = cohorts.reduce((sum, item) => sum + item.capacity, 0); const used = ctx.state.enrollments.filter((item) => item.status === 'ACTIVE' && cohorts.some((cohort) => cohort.id === item.classId)).length; return `<div class="branch-row"><div><strong>${escapeHtml(branch.name)}</strong><small>${cohorts.length} classes · ${used} active learners</small></div>${progress(seats ? Math.round(used / seats * 100) : 0, 'Utilization')}<b>${index === 0 ? 'Stable' : 'Watch'}</b></div>`; }).join(''), { action: link('Capacity', '/app/manager/capacity', { small: true }) })}
+      ${section('Management signals', `<div class="insight-list"><div><span class="signal warning">!</span><p><strong>Weekend class full</strong><small>Class-full cần alternative allocation.</small></p></div><div><span class="signal success">✓</span><p><strong>Progress traceable</strong><small>Released result → report → promotion → renewal.</small></p></div><div><span class="signal info">i</span><p><strong>Finance is mocked</strong><small>Không dùng để báo cáo doanh thu thật.</small></p></div></div>`)}</div></div>`;
+  }
+
+  function capacity(ctx) {
+    const rows = ctx.state.classes.map((cohort) => { const active = ctx.state.enrollments.filter((item) => item.classId === cohort.id && item.status === 'ACTIVE').length; return { ...cohort, active, utilization: Math.round(active / cohort.capacity * 100) }; });
+    return `<div class="workspace-page">${pageHeader('Management · Operations', 'Capacity', 'Seat utilization theo branch, class và schedule—not vanity totals.')}${section('Class capacity', table([{ label: 'Lớp', render: (row) => `<strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(ctx.state.branches.find((item) => item.id === row.branchId)?.name || '')}</small>` }, { label: 'Lịch', key: 'scheduleLabel' }, { label: 'Học viên', render: (row) => `${row.active}/${row.capacity}` }, { label: 'Utilization', render: (row) => progress(row.utilization) }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows))}</div>`;
+  }
+
+  function managerQuality(ctx) {
+    return `<div class="workspace-page">${pageHeader('Management · Academic', 'Quality signals', 'Cân bằng delivery, feedback, progress, continuity và observation.')}
+      <div class="quality-grid">${[['Delivery completeness', 91], ['Feedback turnaround', 84], ['Learner progress', 79], ['Class continuity', 94], ['Teacher observation', 82], ['Parent satisfaction', 88]].map(([label, value]) => `<article><div><span>${label}</span><strong>${value}%</strong></div>${progress(value)}<small>Demo aggregate · drill-down có evidence</small></article>`).join('')}</div></div>`;
+  }
+
+  function retention(ctx) {
+    const promotions = ctx.state.promotionDecisions;
+    const renewals = ctx.state.renewals;
+    return `<div class="workspace-page">${pageHeader('Management · Growth', 'Retention & renewal', 'Renewal bắt đầu từ outcome và next goal, không chỉ từ ngày hết hạn.')}
+      <div class="metric-grid three">${metric('Promotion final', promotions.filter((item) => item.status === 'FINAL').length, 'Academic decision', 'trend')}${metric('Renewal offered', renewals.filter((item) => item.status === 'OFFERED').length, 'Next-level package', 'wallet')}${metric('Renewal accepted', renewals.filter((item) => item.status === 'ACCEPTED').length, 'Canonical outcome', 'check')}</div>
+      ${section('Renewal evidence', table([{ label: 'Học viên', render: (row) => escapeHtml(ctx.state.learners.find((item) => item.id === row.learnerId)?.name || '') }, { label: 'Outcome', key: 'outcome' }, { label: 'Next goal', key: 'nextGoal' }, { label: 'Next course', render: (row) => escapeHtml(ctx.state.courseVersions.find((item) => item.id === row.nextCourseVersionId)?.title || '') }, { label: 'Trạng thái', render: (row) => badge(row.status) }], renewals))}</div>`;
+  }
+
+  function adminDashboard(ctx) {
+    return `<div class="workspace-page">${pageHeader('Admin console', 'System control & traceability', 'Một tổ chức Yen Center, nhiều branch, role scope và demo integrations.')}
+      <div class="metric-grid four">${metric('Active users', ctx.state.users.filter((item) => item.status === 'ACTIVE').length, '10 role types', 'people')}${metric('Domain events', ctx.state.domainEvents.length, 'Workflow handoffs', 'trend')}${metric('Audit records', ctx.state.auditLogs.length, 'High-impact trace', 'shield')}${metric('Demo integrations', 4, 'Tất cả đang MOCK', 'grid')}</div>
+      <div class="content-grid two">${section('System boundaries', '<ul class="check-list"><li>✓ One organization, multi-branch</li><li>✓ Browser localStorage only</li><li>✓ Frontend RBAC demonstration</li><li>✓ Payment, messaging, auth are mock</li></ul>')}${section('Data health', `<dl class="detail-list"><div><dt>State version</dt><dd>${escapeHtml(ctx.state.version)}</dd></div><div><dt>Seeded at</dt><dd>${formatDate(ctx.state.seededAt)}</dd></div><div><dt>Migration notice</dt><dd>${escapeHtml(ctx.state.demo.migrationNotice || 'None')}</dd></div><div><dt>Canonical learner</dt><dd>${escapeHtml(ctx.state.demo.canonicalLearnerId)}</dd></div></dl>`)}</div></div>`;
+  }
+
+  function access(ctx) {
+    const rows = ctx.state.users.map((user) => ({ ...user, scopes: ctx.state.roleScopes.filter((item) => item.userId === user.id) }));
+    return `<div class="workspace-page">${pageHeader('Admin · Access', 'Roles & scopes', 'Quyền được minh họa theo role, branch, class, assignment và effective dates.')}${section('Access register', table([{ label: 'Người dùng', render: (row) => person(row, row.id) }, { label: 'Role', render: (row) => badge('ACTIVE', row.role.replaceAll('_', ' ')) }, { label: 'Branch scope', render: (row) => escapeHtml(row.scopes.flatMap((item) => item.branchIds || []).join(', ') || 'Derived') }, { label: 'Linked learners', render: (row) => escapeHtml((row.linkedLearnerIds || []).join(', ') || '—') }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows))}<div class="notice-panel panel"><b>Frontend demonstration only</b><p>Client-side scope không thay thế server-side authorization trong sản phẩm thật.</p></div></div>`;
+  }
+
+  function auditLogs(ctx) {
+    return `<div class="workspace-page">${pageHeader('Admin · Governance', 'Audit logs', 'Ai làm gì, trên resource nào, với lý do hoặc evidence nào.')}${section('Audit trail', table([{ label: 'Thời gian', render: (row) => formatDate(row.occurredAt) }, { label: 'Actor', render: (row) => escapeHtml(ctx.state.users.find((item) => item.id === row.actorId)?.name || row.actorId) }, { label: 'Action', render: (row) => `<code>${escapeHtml(row.action)}</code>` }, { label: 'Resource', render: (row) => `${escapeHtml(row.resourceType)}<small>${escapeHtml(row.resourceId)}</small>` }, { label: 'Detail', key: 'detail' }], ctx.state.auditLogs))}</div>`;
+  }
+
+  function events(ctx) {
+    return `<div class="workspace-page">${pageHeader('Admin · Workflow', 'Domain events', 'Event nối các owner và workspace; không giả lập message provider thật.')}${section('Event stream', table([{ label: 'Thời gian', render: (row) => formatDate(row.occurredAt) }, { label: 'Event', render: (row) => `<code>${escapeHtml(row.type)}</code>` }, { label: 'Summary', key: 'summary' }, { label: 'Resource', render: (row) => `${escapeHtml(row.resourceType)} · ${escapeHtml(row.resourceId)}` }, { label: 'Actor', render: (row) => escapeHtml(ctx.state.users.find((item) => item.id === row.actorId)?.name || row.actorId) }], ctx.state.domainEvents))}</div>`;
+  }
+
+  function integrations() {
+    const rows = [['Payment gateway', 'DEMO_LEDGER', 'MOCKED', 'Không gọi provider'], ['Email / SMS / Zalo', 'OUTBOUND_PREVIEW', 'MOCKED', 'Chỉ lưu message record'], ['Video learning', 'LOCAL_PROGRESS', 'MOCKED', 'Progress trong localStorage'], ['Identity provider', 'ROLE_PICKER', 'MOCKED', 'Quick access demo']];
+    return `<div class="workspace-page">${pageHeader('Admin · Platform', 'Integrations', 'Provider boundaries được gắn nhãn rõ để demo không bị hiểu nhầm là production.')}${section('Connector registry', table([{ label: 'Capability', render: (row) => `<strong>${escapeHtml(row[0])}</strong>` }, { label: 'Adapter', render: (row) => `<code>${escapeHtml(row[1])}</code>` }, { label: 'Mode', render: (row) => badge(row[2]) }, { label: 'Boundary', render: (row) => escapeHtml(row[3]) }], rows))}</div>`;
+  }
+
+  function settings(ctx) {
+    const settings = ctx.state.settings;
+    return `<div class="workspace-page">${pageHeader('Admin · Configuration', 'Demo settings', 'Rules hiển thị là input cho command validation và selector evidence.')}
+      <div class="settings-grid">${Object.entries(settings).map(([key, value]) => `<article><label>${escapeHtml(key.replaceAll(/([A-Z])/g, ' $1'))}</label><strong>${escapeHtml(String(value))}</strong><small>Seeded configuration · resettable</small></article>`).join('')}</div>${section('Reset controls', `<p>Reset đưa toàn bộ state về checkpoint ban đầu và xóa các thao tác demo trong localStorage.</p>${button('Reset toàn bộ demo', 'reset-demo', { kind: 'secondary' })}`, { className: 'danger-zone' })}</div>`;
+  }
+
+  function render(path, ctx) {
+    const routes = {
+      '/app/academic/dashboard': academicDashboard,
+      '/app/academic/curriculum': curriculum,
+      '/app/academic/teachers': teachers,
+      '/app/academic/assignments': assignments,
+      '/app/academic/moderation': moderation,
+      '/app/academic/progress-reviews': progressReviews,
+      '/app/manager/dashboard': managerDashboard,
+      '/app/manager/capacity': capacity,
+      '/app/manager/quality': managerQuality,
+      '/app/manager/retention': retention,
+      '/app/admin/dashboard': adminDashboard,
+      '/app/admin/access': access,
+      '/app/admin/audit-logs': auditLogs,
+      '/app/admin/events': events,
+      '/app/admin/integrations': integrations,
+      '/app/admin/settings': settings,
+    };
+    return routes[path] ? routes[path](ctx) : '';
+  }
+
+  root.YC.define('managementViews', Object.freeze({ render }));
+})(globalThis);
+
+/* 12-demo-guide.js */
+(function defineDemoGuide(root) {
+  'use strict';
+
+  const { badge, button, icon, link, progress } = root.YC.ui;
+  const { escapeHtml, formatDate } = root.YC.utils;
+
+  const STEPS = Object.freeze([
+    { key: 'LEAD', label: 'Tư vấn nhu cầu', role: 'ADMISSIONS', route: '/app/admissions/leads/lead-canonical', evidence: 'Consultation + booking' },
+    { key: 'PLACEMENT', label: 'Placement đa kỹ năng', role: 'ACADEMIC_MANAGER', route: '/app/admissions/placement', evidence: '6 skill scores + recommendation' },
+    { key: 'PAID', label: 'Offer & mock payment', role: 'FINANCE', route: '/app/finance/dashboard', evidence: 'Offer + invoice + mock ledger' },
+    { key: 'ENROLLED', label: 'Xếp lớp phù hợp', role: 'STUDENT_SERVICE', route: '/app/service/allocation', evidence: 'Active enrollment' },
+    { key: 'TEACHER_ASSIGNED', label: 'Teacher eligibility', role: 'ACADEMIC_MANAGER', route: '/app/academic/assignments', evidence: 'Hard gates + workload' },
+    { key: 'SESSION_DELIVERED', label: 'Chuẩn bị & delivery', role: 'TEACHER', route: '/app/teacher/sessions/session-canonical', evidence: 'Plan vs taught + gap' },
+    { key: 'REMEDIAL_ASSIGNED', label: 'Attendance & remedial', role: 'TEACHER', route: '/app/teacher/sessions/session-canonical', evidence: 'Final attendance + one assignment' },
+    { key: 'REMEDIAL_COMPLETED', label: 'Learning recovery', role: 'STUDENT', route: '/app/student/course', evidence: 'Video + released quiz attempt' },
+    { key: 'MODERATED', label: 'Final grading & moderation', role: 'ACADEMIC_MANAGER', route: '/app/academic/moderation', evidence: 'Rubric + reviewer approval' },
+    { key: 'PROGRESS_PUBLISHED', label: 'Progress & promotion', role: 'ACADEMIC_MANAGER', route: '/app/academic/progress-reviews', evidence: 'Report snapshot + decision' },
+    { key: 'PARENT_REVIEWED', label: 'Parent review', role: 'PARENT', route: '/app/parent/progress', evidence: 'Visibility-filtered acknowledgement' },
+    { key: 'RENEWED', label: 'Next-level renewal', role: 'ADMISSIONS', route: '/app/admissions/renewals', evidence: 'A2.2 offer accepted' },
+  ]);
+
+  function command(name, payload, actorId) {
+    return { name, payload, actorId };
+  }
+
+  function nextStep(state) {
+    const learnerId = state.demo.canonicalLearnerId;
+    const lead = state.leads.find((item) => item.id === (state.demo.canonicalLeadId || 'lead-canonical'));
+    const placement = state.placementResults.find((item) => item.leadId === lead.id);
+    const offer = state.offers.find((item) => item.leadId === lead.id);
+    const invoice = state.invoices.find((item) => item.leadId === lead.id);
+    const payment = state.payments.find((item) => item.leadId === lead.id && item.status === 'PAID');
+    const enrollment = state.enrollments.find((item) => item.learnerId === learnerId && item.status === 'ACTIVE');
+    const assignment = state.teacherAssignments.find((item) => item.classId === 'class-6a' && ['PROPOSED', 'ACTIVE'].includes(item.status));
+    const session = state.sessions.find((item) => item.id === 'session-canonical');
+    const remedial = state.remedialAssignments.find((item) => item.learnerId === learnerId);
+    const attempt = state.attempts.find((item) => item.assessmentId === 'assessment-final-canonical' && item.learnerId === learnerId);
+    const moderation = state.moderationCases.find((item) => item.attemptId === attempt?.id);
+    const report = state.progressReports.find((item) => item.learnerId === learnerId && item.status === 'PUBLISHED');
+    const promotion = state.promotionDecisions.find((item) => item.learnerId === learnerId && item.status === 'FINAL');
+    const parentViewed = state.domainEvents.some((item) => item.type === 'PARENT_PROGRESS_VIEWED' && item.learnerId === learnerId);
+    const renewal = state.renewals.find((item) => item.learnerId === learnerId);
+
+    if (lead.status === 'NEW') return { ...STEPS[0], actorId: 'admissions-1', action: 'Liên hệ & đặt placement', commands: [
+      command('CONTACT_LEAD', { leadId: lead.id, note: 'Mục tiêu giao tiếp A2, lịch tối Thứ 3 & 5.' }, 'admissions-1'),
+      command('BOOK_PLACEMENT', { leadId: lead.id, startsAt: '2026-09-05T02:00:00.000Z', mode: 'OFFLINE' }, 'admissions-1'),
+    ] };
+    if (lead.status === 'CONTACTED') return { ...STEPS[0], actorId: 'admissions-1', action: 'Đặt lịch placement', commands: [command('BOOK_PLACEMENT', { leadId: lead.id, startsAt: '2026-09-05T02:00:00.000Z', mode: 'OFFLINE' }, 'admissions-1')] };
+    if (!placement) return { ...STEPS[1], actorId: 'academic-1', action: 'Ghi & release placement', commands: [
+      command('RECORD_PLACEMENT', { leadId: lead.id, frameworkLevel: 'A2', centerLevelId: 'level-a2-1', skills: { listening: 74, reading: 78, spokenInteraction: 69, spokenProduction: 66, writing: 72, language: 75 }, recommendation: 'English Foundation 6 · A2.1' }, 'academic-1'),
+      command('RELEASE_PLACEMENT', { leadId: lead.id }, 'academic-1'),
+    ] };
+    if (placement.status === 'REVIEWED') return { ...STEPS[1], actorId: 'academic-1', action: 'Release placement', commands: [command('RELEASE_PLACEMENT', { leadId: lead.id }, 'academic-1')] };
+    if (!payment) {
+      const commands = [];
+      if (!offer) commands.push(command('CREATE_OFFER', { leadId: lead.id, packageId: 'package-a2-1', discount: 300000 }, 'admissions-1'));
+      if (!offer || offer.status === 'DRAFT') commands.push(command('SEND_OFFER', { leadId: lead.id }, 'admissions-1'));
+      if (!offer || ['DRAFT', 'SENT'].includes(offer.status)) commands.push(command('ACCEPT_OFFER', { leadId: lead.id }, 'admissions-1'));
+      if (!invoice) commands.push(command('ISSUE_INVOICE', { leadId: lead.id }, 'finance-1'));
+      if (!invoice || invoice.status === 'ISSUED') commands.push(command('RECORD_MOCK_PAYMENT', { leadId: lead.id, reference: 'MOCK-CANONICAL' }, 'finance-1'));
+      return { ...STEPS[2], actorId: 'finance-1', action: 'Hoàn tất offer & payment mock', commands };
+    }
+    if (!enrollment) return { ...STEPS[3], actorId: 'service-1', action: 'Xếp vào English Foundation 6A', commands: [command('ALLOCATE_CLASS', { leadId: lead.id, classId: 'class-6a' }, 'service-1')] };
+    if (!assignment) return { ...STEPS[4], actorId: 'academic-1', action: 'Match & gán Hoàng Yến', commands: [
+      command('PROPOSE_TEACHER_ASSIGNMENT', { teacherId: 'teacher-1', classId: 'class-6a', workloadMinutes: 720 }, 'academic-1'),
+      command('ACCEPT_TEACHER_ASSIGNMENT', { classId: 'class-6a' }, 'teacher-1'),
+    ] };
+    if (assignment.status === 'PROPOSED') return { ...STEPS[4], actorId: 'teacher-1', action: 'Teacher nhận lớp', commands: [command('ACCEPT_TEACHER_ASSIGNMENT', { classId: 'class-6a' }, 'teacher-1')] };
+    if (!state.deliveryRecords.some((item) => item.sessionId === session.id)) {
+      const commands = [];
+      if (session.status === 'CONFIRMED') commands.push(command('MARK_SESSION_READY', { sessionId: session.id, adaptations: ['Thêm visual timeline cho past simple'] }, 'teacher-1'));
+      if (['CONFIRMED', 'READY'].includes(session.status)) commands.push(command('START_SESSION', { sessionId: session.id }, 'teacher-1'));
+      commands.push(command('COMPLETE_SESSION', { sessionId: session.id, taughtItemIds: ['item-past-simple-video', 'item-speaking-pairs'], deferredItemIds: ['item-pronunciation'], note: 'Pronunciation chuyển sang guided practice.' }, 'teacher-1'));
+      return { ...STEPS[5], actorId: 'teacher-1', action: 'Chuẩn bị & hoàn tất session', commands };
+    }
+    if (!remedial) return { ...STEPS[6], actorId: 'teacher-1', action: 'Finalize vắng & tạo học bù', commands: [command('FINALIZE_ATTENDANCE', { sessionId: session.id, records: [{ learnerId, status: 'ABSENT', reasonCode: 'SICK' }] }, 'teacher-1')] };
+    if (remedial.status !== 'COMPLETED') {
+      const commands = [];
+      if (Number(remedial.videoProgress || 0) < 100) commands.push(command('UPDATE_VIDEO_PROGRESS', { assignmentId: remedial.id, progress: 100 }, 'student-login-1'));
+      commands.push(command('SUBMIT_AUTO_ASSESSMENT', { assignmentId: remedial.id, answers: [1, 1, 0, 1, 1, 1, 1, 1, 0, 2] }, 'student-login-1'));
+      return { ...STEPS[7], actorId: 'student-login-1', action: 'Hoàn thành video & quiz 8/10', commands };
+    }
+    if (!attempt) return { ...STEPS[8], actorId: 'academic-1', action: 'Grade, moderate & release final', commands: [
+      command('SUBMIT_MANUAL_GRADE', { assessmentId: 'assessment-final-canonical', learnerId, skills: { listening: 76, reading: 78, spokenInteraction: 62, spokenProduction: 61, writing: 72, language: 74 }, feedback: 'Đủ evidence; speaking sát ngưỡng.' }, 'teacher-1'),
+    ], continueAfterResult: 'moderation' };
+    if (!moderation) return { ...STEPS[8], actorId: 'academic-1', action: 'Mở moderation', commands: [command('START_MODERATION', { attemptId: attempt.id }, 'academic-1')] };
+    if (moderation.status !== 'APPROVED') return { ...STEPS[8], actorId: 'academic-1', action: 'Approve moderation', commands: [command('APPROVE_MODERATION', { attemptId: attempt.id, note: 'Rubric và speaking sample nhất quán.' }, 'academic-1')] };
+    if (attempt.status !== 'RELEASED') return { ...STEPS[8], actorId: 'academic-1', action: 'Release final result', commands: [command('RELEASE_RESULT', { attemptId: attempt.id }, 'academic-1')] };
+    if (!report) return { ...STEPS[9], actorId: 'academic-1', action: 'Publish progress report', commands: [command('PUBLISH_PROGRESS_REPORT', { learnerId, narrative: 'Đã đạt chuẩn đầu ra A2.1.', nextActions: ['Tăng speaking fluency ở A2.2'] }, 'academic-1')] };
+    if (!promotion) return { ...STEPS[9], actorId: 'academic-1', action: 'Chốt promotion có evidence', commands: [command('DECIDE_PROMOTION', { learnerId, decision: 'PROMOTE', nextCourseVersionId: 'course-v7', overrideReason: 'Demo tăng tốc: absence đã hoàn tất bằng remedial có evidence.', overrideEvidence: [remedial.id] }, 'academic-1')] };
+    if (!parentViewed) return { ...STEPS[10], actorId: 'parent-1', action: 'Phụ huynh xem & xác nhận', commands: [command('ACKNOWLEDGE_PARENT_PROGRESS', { learnerId }, 'parent-1')] };
+    if (!renewal) return { ...STEPS[11], actorId: 'admissions-1', action: 'Tạo renewal A2.2', commands: [command('CREATE_RENEWAL', { learnerId, packageId: 'package-a2-2' }, 'admissions-1')] };
+    if (renewal.status !== 'ACCEPTED') return { ...STEPS[11], actorId: 'admissions-1', action: 'Chấp nhận renewal', commands: [command('ACCEPT_RENEWAL', { learnerId }, 'admissions-1')] };
+    return { key: 'DONE', label: 'Hành trình đã hoàn tất', role: 'ADMISSIONS', route: '/app/admissions/renewals', actorId: 'admissions-1', action: 'Đã hoàn tất', commands: [] };
+  }
+
+  function render(ctx) {
+    const journey = root.YC.selectors.journey(ctx.state);
+    const next = nextStep(ctx.state);
+    const learner = ctx.state.learners.find((item) => item.id === ctx.state.demo.canonicalLearnerId);
+    const events = ctx.state.domainEvents.filter((item) => item.learnerId === learner.id).slice(0, 8);
+    return `<main id="main-content" class="demo-guide-page"><section class="demo-hero"><div class="container"><div><p class="eyebrow on-dark">Full-journey frontend demo</p><h1>Theo dấu Nguyễn Minh Anh từ lead đến renewal.</h1><p>Một state, nhiều workspace, mỗi quyết định có evidence, event và audit. Các tích hợp ngoài đều là mock.</p><div class="hero-actions">${next.commands.length ? button(next.action, 'canonical-next', { icon: 'arrow' }) : link('Xem kết quả renewal', next.route, { kind: 'primary' })}${button('Chạy tự động đến cuối', 'canonical-run-all', { kind: 'secondary' })}${button('Reset demo', 'reset-demo', { kind: 'ghost' })}</div></div><aside><span class="journey-count">${Math.min(journey.index + 1, journey.total)}<small>/ ${journey.total}</small></span><div><small>Current milestone</small><strong>${escapeHtml(next.label)}</strong><span>Owner · ${escapeHtml(next.role.replaceAll('_', ' '))}</span></div></aside></div></section>
+      <section class="container demo-progress-section">${progress(journey.status === 'RENEWED' ? 100 : Math.round(journey.index / journey.total * 100), 'Toàn hành trình')}<div class="demo-layout"><div class="journey-rail">${STEPS.map((step, index) => { const done = journey.status === 'RENEWED' || index < journey.index; const active = !done && step.key === journey.status; return `<article class="journey-step ${done ? 'done' : ''} ${active ? 'active' : ''}"><div class="step-marker">${done ? icon('check') : index + 1}</div><div><p>${escapeHtml(step.role.replaceAll('_', ' '))}</p><h2>${escapeHtml(step.label)}</h2><span>${escapeHtml(step.evidence)}</span></div><div>${done ? badge('COMPLETED') : active ? badge('IN_PROGRESS') : badge('DRAFT', 'Chưa đến')}<a href="#${escapeHtml(step.route)}">Mở workspace ${icon('arrow')}</a></div></article>`; }).join('')}</div>
+      <aside class="demo-aside"><section class="panel sticky-panel"><p class="eyebrow">Next valid action</p><h2>${escapeHtml(next.action)}</h2><p>Hệ thống sẽ dùng đúng actor <strong>${escapeHtml(next.role.replaceAll('_', ' '))}</strong> và chạy qua command validation.</p>${next.commands.length ? button(next.action, 'canonical-next', { icon: 'arrow' }) : link('Xem kết quả', next.route, { kind: 'primary' })}<small>Mỗi command tự ghi event/audit phù hợp.</small></section>
+      <section class="panel"><div class="panel-heading"><div><h2>Evidence mới nhất</h2><p>Domain event của canonical learner</p></div></div>${events.length ? events.map((event) => `<div class="event-row"><span>${icon('check')}</span><div><strong>${escapeHtml(event.summary)}</strong><small>${formatDate(event.occurredAt)} · ${escapeHtml(event.type)}</small></div></div>`).join('') : '<p class="muted">Bắt đầu bước đầu tiên để tạo event.</p>'}</section></aside></div></section></main>`;
+  }
+
+  root.YC.define('demoGuide', Object.freeze({ STEPS, nextStep, render }));
+})(globalThis);
+
+/* 13-router.js */
+(function defineRouter(root) {
+  'use strict';
+
+  const { icon } = root.YC.ui;
+  const { escapeHtml } = root.YC.utils;
+
+  const NAV = Object.freeze({
+    ADMISSIONS: [['Tổng quan', '/app/admissions/dashboard', 'grid'], ['Leads', '/app/admissions/leads', 'people'], ['Placement', '/app/admissions/placement', 'check'], ['Offers', '/app/admissions/offers', 'wallet'], ['Renewal', '/app/admissions/renewals', 'trend']],
+    FINANCE: [['Tổng quan', '/app/finance/dashboard', 'grid'], ['Hóa đơn', '/app/finance/invoices', 'wallet'], ['Thanh toán', '/app/finance/payments', 'check']],
+    ACADEMIC_MANAGER: [['Tổng quan', '/app/academic/dashboard', 'grid'], ['Curriculum', '/app/academic/curriculum', 'book'], ['Teachers', '/app/academic/teachers', 'people'], ['Assignments', '/app/academic/assignments', 'calendar'], ['Moderation', '/app/academic/moderation', 'shield'], ['Progress review', '/app/academic/progress-reviews', 'trend']],
+    STUDENT_SERVICE: [['Tổng quan', '/app/service/dashboard', 'grid'], ['Xếp lớp', '/app/service/allocation', 'people'], ['Cases', '/app/service/cases', 'shield'], ['Make-up', '/app/service/make-up', 'calendar'], ['Transfers', '/app/service/transfers', 'trend'], ['Substitutions', '/app/service/substitutions', 'people']],
+    TEACHER: [['Tổng quan', '/app/teacher/dashboard', 'grid'], ['Sessions', '/app/teacher/sessions', 'calendar'], ['Grading', '/app/teacher/grading', 'check'], ['Workload', '/app/teacher/workload', 'clock'], ['Quality', '/app/teacher/quality', 'trend']],
+    TA: [['Tổng quan', '/app/teacher/dashboard', 'grid'], ['Sessions', '/app/teacher/sessions', 'calendar'], ['Workload', '/app/teacher/workload', 'clock']],
+    STUDENT: [['My learning', '/app/student/dashboard', 'grid'], ['Khóa học', '/app/student/course', 'book'], ['Học bù', '/app/student/remedial', 'spark'], ['Kiểm tra', '/app/student/assessments', 'check'], ['Tiến bộ', '/app/student/progress', 'trend']],
+    PARENT: [['Tổng quan', '/app/parent/dashboard', 'grid'], ['Attendance', '/app/parent/attendance', 'calendar'], ['Tiến bộ', '/app/parent/progress', 'trend'], ['Dịch vụ', '/app/parent/services', 'people'], ['Học phí', '/app/parent/tuition', 'wallet']],
+    CENTER_MANAGER: [['Tổng quan', '/app/manager/dashboard', 'grid'], ['Capacity', '/app/manager/capacity', 'people'], ['Quality', '/app/manager/quality', 'shield'], ['Retention', '/app/manager/retention', 'trend']],
+    ADMIN: [['Tổng quan', '/app/admin/dashboard', 'grid'], ['Access', '/app/admin/access', 'people'], ['Audit logs', '/app/admin/audit-logs', 'shield'], ['Events', '/app/admin/events', 'trend'], ['Integrations', '/app/admin/integrations', 'grid'], ['Settings', '/app/admin/settings', 'book']],
+  });
+
+  const ROLE_LABELS = Object.freeze({
+    ADMISSIONS: 'Admissions', FINANCE: 'Finance', ACADEMIC_MANAGER: 'Academic Manager', STUDENT_SERVICE: 'Student Service', TEACHER: 'Teacher', TA: 'Teaching Assistant', STUDENT: 'Learner', PARENT: 'Parent', CENTER_MANAGER: 'Center Manager', ADMIN: 'Admin',
+  });
+
+  function normalize(path) {
+    const clean = String(path || '/').split('?')[0].replace(/\/{2,}/g, '/');
+    return clean.length > 1 ? clean.replace(/\/$/, '') : '/';
+  }
+
+  function render(path, ctx) {
+    const clean = normalize(path);
+    if (clean === '/demo-guide') return root.YC.demoGuide.render({ ...ctx, path: clean });
+    const renderers = [root.YC.publicViews, root.YC.learningViews, root.YC.operationsViews, root.YC.managementViews];
+    for (const renderer of renderers) {
+      const html = renderer.render(clean, { ...ctx, path: clean });
+      if (html) return html;
+    }
+    return `<main id="main-content" class="not-found"><div class="not-found-code">404</div><p class="eyebrow">Route not found</p><h1>Không tìm thấy trang</h1><p>Đường dẫn <code>${escapeHtml(clean)}</code> không thuộc bản demo. Bạn có thể quay về trang chủ hoặc mở hành trình có hướng dẫn.</p><div class="inline"><a class="btn btn-primary" href="#/">Về trang chủ</a><a class="btn btn-secondary" href="#/demo-guide">Mở Demo Guide</a></div></main>`;
+  }
+
+  function brand(light = false) {
+    return `<a class="brand ${light ? 'brand-light' : ''}" href="#/"><span class="brand-mark"></span><span class="brand-copy"><strong>Yen Center</strong><small>LEARNING OPERATING SYSTEM</small></span></a>`;
+  }
+
+  function publicHeader(ctx) {
+    const actorLink = ctx.actor ? root.YC.selectors.roleHome(ctx.actor.role) : '/login';
+    return `<header class="public-header"><div class="container">${brand()}<nav aria-label="Điều hướng chính"><a href="#/chuong-trinh">Chương trình</a><a href="#/lich-hoc">Lịch khai giảng</a><a href="#/phu-huynh-hoc-sinh">Phụ huynh & học viên</a><a href="#/giai-phap-trung-tam">Giải pháp trung tâm</a></nav><div class="public-actions"><a class="header-search" href="#/chuong-trinh" aria-label="Tìm kiếm">${icon('search')}</a><a class="btn btn-ghost" href="#${actorLink}">${ctx.actor ? 'Workspace' : 'Đăng nhập'}</a><a class="btn btn-primary" href="#/demo-guide">Demo Guide</a></div><button class="mobile-menu" type="button" data-action="toggle-mobile-nav" aria-label="Mở menu">☰</button></div></header>`;
+  }
+
+  function publicFooter() {
+    return `<footer class="public-footer"><div class="container"><div>${brand(true)}<p>Hành trình ngoại ngữ dựa trên evidence.</p><small>Frontend demonstrator · Dữ liệu và integrations đều là mock.</small></div><div><strong>Khám phá</strong><a href="#/chuong-trinh">Chương trình</a><a href="#/lich-hoc">Lịch học</a><a href="#/demo-guide">Full journey</a></div><div><strong>Cổng học tập</strong><a href="#/login">Learner</a><a href="#/login">Parent</a><a href="#/login">Staff</a></div><div><strong>Thông tin</strong><a href="#/giai-phap-trung-tam">Operating model</a><a href="#/lien-he">Liên hệ</a><span>© 2026 Yen Center Demo</span></div></div></footer>`;
+  }
+
+  function notifications(ctx) {
+    if (!ctx.actor) return '';
+    const count = ctx.state.notifications.filter((item) => item.userId === ctx.actor.id && !item.read).length;
+    return `<button class="icon-btn notification-button" type="button" data-action="show-notifications" aria-label="Thông báo">${icon('spark')}${count ? `<b>${count}</b>` : ''}</button>`;
+  }
+
+  function appShell(content, path, ctx) {
+    const actor = ctx.actor;
+    if (!actor) return `<main class="auth-required">${brand()}<h1>Cần chọn vai trò demo</h1><p>Mở role picker để vào đúng workspace và scope.</p><a class="btn btn-primary" href="#/login">Chọn vai trò</a></main>`;
+    const nav = NAV[actor.role] || NAV.ADMIN;
+    const unread = ctx.state.notifications.filter((item) => item.userId === actor.id && !item.read).length;
+    const initials = actor.name.split(' ').slice(-2).map((part) => part[0]).join('').toUpperCase();
+    return `<div class="app-shell" data-role="${escapeHtml(actor.role)}"><aside class="app-sidebar">${brand(true)}<div class="workspace-label"><span>${escapeHtml(ROLE_LABELS[actor.role] || actor.role)}</span><small>Yen Center · Demo</small></div><nav aria-label="Workspace navigation">${nav.map(([label, href, iconName]) => `<a class="${path === href || (href.endsWith('/sessions') && path.startsWith(`${href}/`)) ? 'active' : ''}" href="#${href}">${icon(iconName)}<span>${escapeHtml(label)}</span></a>`).join('')}</nav><div class="sidebar-guide"><span>${icon('spark')}</span><p><strong>Full Journey</strong><small>Lead → Renewal</small></p><a href="#/demo-guide">Mở guide</a></div><button class="sidebar-collapse" type="button" data-action="toggle-sidebar">‹ <span>Thu gọn</span></button></aside>
+      <div class="app-main"><header class="app-topbar"><button class="mobile-menu dark-menu" type="button" data-action="toggle-sidebar" aria-label="Mở sidebar">☰</button><div class="context-crumb"><span>Yen Center</span><b>/</b><strong>${escapeHtml(ROLE_LABELS[actor.role] || actor.role)}</strong></div><div class="topbar-search">${icon('search')}<input type="search" placeholder="Tìm learner, class, case…" aria-label="Tìm trong workspace"></div><div class="topbar-actions">${notifications(ctx)}<a class="topbar-guide" href="#/demo-guide">${icon('spark')} Guide</a><button type="button" class="user-menu" data-action="open-role-switcher"><span class="avatar">${escapeHtml(initials)}</span><span><strong>${escapeHtml(actor.name)}</strong><small>${escapeHtml(ROLE_LABELS[actor.role] || actor.role)}</small></span><span>⌄</span></button></div></header><main id="main-content" class="app-content">${content}</main></div>
+      <div class="role-switcher" data-role-switcher hidden><div class="role-switcher-backdrop" data-action="close-role-switcher"></div><section><div class="panel-heading"><div><h2>Chuyển workspace</h2><p>Quick access demo, không phải authentication thật.</p></div><button class="icon-btn" data-action="close-role-switcher">×</button></div>${ctx.state.users.filter((user) => ['ADMISSIONS', 'ACADEMIC_MANAGER', 'STUDENT_SERVICE', 'FINANCE', 'TEACHER', 'STUDENT', 'PARENT', 'CENTER_MANAGER', 'ADMIN'].includes(user.role)).map((user) => `<button type="button" class="role-option ${user.id === actor.id ? 'active' : ''}" data-action="login" data-actor-id="${escapeHtml(user.id)}"><span class="avatar">${escapeHtml(user.name.split(' ').slice(-2).map((part) => part[0]).join(''))}</span><span><strong>${escapeHtml(user.name)}</strong><small>${escapeHtml(ROLE_LABELS[user.role] || user.role)}</small></span>${user.id === actor.id ? '✓' : icon('arrow')}</button>`).join('')}<a class="text-link" href="#/login">Xem role picker đầy đủ</a></section></div>
+      <div class="notification-drawer" data-notification-drawer hidden><div class="role-switcher-backdrop" data-action="close-notifications"></div><section><div class="panel-heading"><div><h2>Thông báo</h2><p>${unread} chưa đọc</p></div><button class="icon-btn" data-action="close-notifications">×</button></div>${ctx.state.notifications.filter((item) => item.userId === actor.id).slice(0, 8).map((item) => `<a href="#${escapeHtml(item.link || path)}" class="notification-item ${item.read ? '' : 'unread'}"><span>${icon('spark')}</span><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.body)}</p><small>${escapeHtml(item.createdAt)}</small></div></a>`).join('') || '<p class="muted">Chưa có thông báo.</p>'}</section></div></div>`;
+  }
+
+  function frame(path, ctx) {
+    const clean = normalize(path);
+    const content = render(clean, ctx);
+    if (clean.startsWith('/app/')) return appShell(content, clean, ctx);
+    if (clean === '/login') return content;
+    return `<div class="public-page">${publicHeader(ctx)}${content}${publicFooter()}</div>`;
+  }
+
+  root.YC.define('router', Object.freeze({ NAV, ROLE_LABELS, frame, normalize, render }));
+})(globalThis);
+
+/* 14-actions.js */
+(function defineActions(root) {
+  'use strict';
+
+  const ACTOR_KEY = 'yc.demo.actorId';
+  const LEARNER_KEY = 'yc.demo.learnerId';
+
+  function create({ store, bus, storage, location, onChange = () => {}, onToast = () => {} }) {
+    function state() {
+      return store.getState();
+    }
+
+    function persistActor(actorId) {
+      if (storage) storage.setItem(ACTOR_KEY, actorId);
+    }
+
+    function runCommands(commands) {
+      const completed = [];
+      for (const item of commands) {
+        const result = bus.dispatch(item.name, item.payload, item.actorId);
+        if (!result.ok) {
+          onToast(result.message, 'error');
+          onChange();
+          return { ...result, completed };
+        }
+        completed.push({ name: item.name, result });
+      }
+      return { ok: true, completed };
+    }
+
+    function runCanonicalNext({ navigate = true } = {}) {
+      const step = root.YC.demoGuide.nextStep(state());
+      if (!step.commands.length) {
+        onToast('Hành trình canonical đã hoàn tất.', 'success');
+        onChange();
+        return { ok: true, done: true, message: 'Hành trình canonical đã hoàn tất.' };
+      }
+      const result = runCommands(step.commands);
+      if (!result.ok) return result;
+      persistActor(step.actorId);
+      if (navigate && location && !String(location.hash || '').includes('/demo-guide')) location.hash = `#${step.route}`;
+      onToast(`${step.label}: đã lưu evidence.`, 'success');
+      onChange();
+      return { ok: true, message: `${step.label}: đã lưu evidence.`, step, completed: result.completed };
+    }
+
+    function runCanonicalAll() {
+      const completed = [];
+      for (let index = 0; index < 32; index += 1) {
+        const step = root.YC.demoGuide.nextStep(state());
+        if (!step.commands.length) {
+          onToast('Hành trình canonical đã hoàn tất từ lead đến renewal.', 'success');
+          onChange();
+          return { ok: true, done: true, completed, message: 'Hành trình canonical đã hoàn tất từ lead đến renewal.' };
+        }
+        const result = runCommands(step.commands);
+        if (!result.ok) return result;
+        completed.push(...result.completed);
+        persistActor(step.actorId);
+      }
+      const result = { ok: false, code: 'DEMO_LOOP_GUARD', message: 'Demo dừng vì vượt quá số bước an toàn.' };
+      onToast(result.message, 'error');
+      return result;
+    }
+
+    function execute(action, data = {}) {
+      if (action === 'canonical-next') return runCanonicalNext({ navigate: true });
+      if (action === 'canonical-run-all') return runCanonicalAll();
+      if (action === 'login') {
+        const actor = state().users.find((item) => item.id === data.actorId);
+        if (!actor) return { ok: false, code: 'ACTOR_NOT_FOUND', message: 'Không tìm thấy vai trò demo.' };
+        persistActor(actor.id);
+        if (location) location.hash = `#${root.YC.selectors.roleHome(actor.role)}`;
+        onToast(`Đang mở workspace ${root.YC.router.ROLE_LABELS[actor.role] || actor.role}.`, 'success');
+        onChange();
+        return { ok: true, actorId: actor.id };
+      }
+      if (action === 'reset-demo') {
+        store.reset();
+        if (storage) storage.removeItem(LEARNER_KEY);
+        onToast('Đã reset toàn bộ dữ liệu demo.', 'success');
+        onChange();
+        return { ok: true };
+      }
+      if (action === 'select-learner') {
+        if (storage) storage.setItem(LEARNER_KEY, data.learnerId);
+        onChange();
+        return { ok: true };
+      }
+      if (action === 'complete-video') {
+        const result = bus.dispatch('UPDATE_VIDEO_PROGRESS', { assignmentId: data.assignmentId, progress: 100 }, 'student-login-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'submit-demo-quiz') {
+        const result = bus.dispatch('SUBMIT_AUTO_ASSESSMENT', { assignmentId: data.assignmentId, answers: [1, 1, 0, 1, 1, 1, 1, 1, 0, 2] }, 'student-login-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'acknowledge-progress') {
+        const result = bus.dispatch('ACKNOWLEDGE_PARENT_PROGRESS', { learnerId: data.learnerId }, 'parent-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'submit-demo-contact') {
+        onToast('Đã mô phỏng gửi yêu cầu. Không có dữ liệu nào rời trình duyệt.', 'success');
+        return { ok: true, mocked: true };
+      }
+      return { ok: false, code: 'UNKNOWN_UI_ACTION', message: `UI action không tồn tại: ${action}` };
+    }
+
+    return Object.freeze({ execute, runCanonicalAll, runCanonicalNext });
+  }
+
+  root.YC.define('actions', Object.freeze({ ACTOR_KEY, LEARNER_KEY, create }));
+})(globalThis);
+
+/* 15-bootstrap.js */
+(function defineBootstrap(root) {
+  'use strict';
+
+  function start() {
+    const document = root.document;
+    const app = document?.getElementById('app');
+    if (!app) return null;
+    const storage = root.localStorage;
+    const store = root.YC.store.create({ storage });
+    const bus = root.YC.commands.create(store);
+    const toastRoot = document.getElementById('toast-root');
+    let toastTimer = null;
+
+    function toast(message, kind = 'info') {
+      if (!toastRoot) return;
+      root.clearTimeout(toastTimer);
+      toastRoot.innerHTML = `<div class="toast toast-${kind}" role="status"><span>${kind === 'error' ? '!' : '✓'}</span><p>${root.YC.utils.escapeHtml(message)}</p><button type="button" aria-label="Đóng" data-action="dismiss-toast">×</button></div>`;
+      toastTimer = root.setTimeout(() => { toastRoot.innerHTML = ''; }, 4200);
+    }
+
+    function path() {
+      const hash = String(root.location.hash || '').replace(/^#/, '');
+      return root.YC.router.normalize(hash || '/');
+    }
+
+    function actor() {
+      const actorId = storage.getItem(root.YC.actions.ACTOR_KEY);
+      return store.getState().users.find((item) => item.id === actorId) || null;
+    }
+
+    function context() {
+      const state = store.getState();
+      const currentActor = actor();
+      const selectedLearner = storage.getItem(root.YC.actions.LEARNER_KEY);
+      return {
+        state,
+        actor: currentActor,
+        learnerId: selectedLearner || currentActor?.linkedLearnerIds?.[0] || state.demo.canonicalLearnerId,
+        path: path(),
+      };
+    }
+
+    function render() {
+      const currentPath = path();
+      app.innerHTML = root.YC.router.frame(currentPath, context());
+      document.title = currentPath.startsWith('/app/') ? 'Yen Center · Workspace Demo' : 'Yen Center · Learning Journey Demo';
+      document.body.classList.toggle('is-app', currentPath.startsWith('/app/'));
+    }
+
+    const controller = root.YC.actions.create({ store, bus, storage, location: root.location, onChange: render, onToast: toast });
+
+    function payloadFrom(element) {
+      if (!element.dataset.payload) return {};
+      try { return JSON.parse(decodeURIComponent(element.dataset.payload)); } catch (_error) { return {}; }
+    }
+
+    function hide(selector) {
+      const element = document.querySelector(selector);
+      if (element) element.hidden = true;
+    }
+
+    document.addEventListener('click', (event) => {
+      const trigger = event.target.closest('[data-action]');
+      if (!trigger) return;
+      const action = trigger.dataset.action;
+      if (action === 'dismiss-toast') { toastRoot.innerHTML = ''; return; }
+      if (action === 'toggle-sidebar') { document.body.classList.toggle('sidebar-collapsed'); return; }
+      if (action === 'toggle-mobile-nav') { document.body.classList.toggle('mobile-nav-open'); return; }
+      if (action === 'open-role-switcher') { const element = document.querySelector('[data-role-switcher]'); if (element) element.hidden = false; return; }
+      if (action === 'close-role-switcher') { hide('[data-role-switcher]'); return; }
+      if (action === 'show-notifications') { const element = document.querySelector('[data-notification-drawer]'); if (element) element.hidden = false; return; }
+      if (action === 'close-notifications') { hide('[data-notification-drawer]'); return; }
+      const data = { ...payloadFrom(trigger), actorId: trigger.dataset.actorId, learnerId: trigger.dataset.learnerId };
+      trigger.disabled = true;
+      const result = controller.execute(action, data);
+      if (result?.ok === false) toast(result.message, 'error');
+    });
+
+    root.addEventListener('hashchange', () => {
+      document.body.classList.remove('mobile-nav-open');
+      if (root.scrollTo) root.scrollTo({ top: 0, behavior: 'instant' });
+      render();
+    });
+
+    if (!root.location.hash) root.location.hash = '#/';
+    render();
+    return Object.freeze({ store, bus, controller, render });
+  }
+
+  root.YC.define('bootstrap', Object.freeze({ start }));
+  if (root.document) start();
 })(globalThis);

@@ -742,13 +742,18 @@
         const skillThresholds = report.skillProfile.map((item) => ({ skill: item.skill, score: item.score, minimum, passed: item.score >= minimum }));
         const overall = Math.round(report.skillProfile.reduce((sum, item) => sum + item.score, 0) / report.skillProfile.length);
         const evidence = { skillThresholds, attendanceRate: report.snapshot.attendanceRate, overall, rule: courseVersion.completionRule };
-        if (payload.decision === 'PROMOTE' && (!skillThresholds.every((item) => item.passed) || report.snapshot.attendanceRate < courseVersion.completionRule.attendanceMinimum || overall < courseVersion.completionRule.finalScoreMinimum)) {
-          throw new CommandError('PROMOTION_THRESHOLDS_NOT_MET', 'Evidence chưa đạt đủ promotion rule.', { evidence });
+        const thresholdsPassed = skillThresholds.every((item) => item.passed)
+          && report.snapshot.attendanceRate >= courseVersion.completionRule.attendanceMinimum
+          && overall >= courseVersion.completionRule.finalScoreMinimum;
+        const overrideReason = String(payload.overrideReason || '').trim();
+        const overrideEvidence = Array.isArray(payload.overrideEvidence) ? payload.overrideEvidence.filter(Boolean) : [];
+        if (payload.decision === 'PROMOTE' && !thresholdsPassed && (!overrideReason || overrideEvidence.length === 0)) {
+          throw new CommandError('PROMOTION_THRESHOLDS_NOT_MET', 'Evidence chưa đạt đủ promotion rule; override cần lý do và evidence.', { evidence });
         }
-        const decision = { id: uid('promotion'), learnerId: learner.id, progressReportId: report.id, decision: payload.decision, nextCourseVersionId: payload.nextCourseVersionId || null, evidence, status: 'FINAL', decidedBy: context.actor.id, decidedAt: nowIso(), overrideReason: payload.overrideReason || null };
+        const decision = { id: uid('promotion'), learnerId: learner.id, progressReportId: report.id, decision: payload.decision, nextCourseVersionId: payload.nextCourseVersionId || null, evidence, status: 'FINAL', decidedBy: context.actor.id, decidedAt: nowIso(), overrideReason: overrideReason || null, overrideEvidence };
         draft.promotionDecisions.unshift(decision);
         appendEvent(draft, context, 'PROMOTION_DECIDED', 'PROMOTION', decision.id, `${learner.name}: ${decision.decision}.`, { learnerId: learner.id });
-        appendAudit(draft, context, 'PROMOTION_DECIDED', 'PROMOTION', decision.id, `${decision.decision} · overall ${overall}.`);
+        appendAudit(draft, context, 'PROMOTION_DECIDED', 'PROMOTION', decision.id, `${decision.decision} · overall ${overall}${overrideReason ? ` · override: ${overrideReason}` : ''}.`);
         notifyRole(draft, 'ADMISSIONS', 'Học viên sẵn sàng renewal', `${learner.name}: ${decision.decision}.`, '/app/admissions/renewals');
         return { message: 'Đã chốt promotion decision.', evidence };
       },

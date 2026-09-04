@@ -30,10 +30,12 @@
   }
 
   function formatDate(value, includeTime = false) {
+    const date = new Date(value);
+    if (!value || Number.isNaN(date.getTime())) return '—';
     const options = includeTime
       ? { dateStyle: 'short', timeStyle: 'short' }
       : { day: '2-digit', month: '2-digit', year: 'numeric' };
-    return new Intl.DateTimeFormat('vi-VN', options).format(new Date(value));
+    return new Intl.DateTimeFormat('vi-VN', options).format(date);
   }
 
   function percent(part, total) {
