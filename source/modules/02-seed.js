@@ -271,6 +271,7 @@
       articles: [
         { ...publicMeta('article-confidence', 'article-confidence', 1), categoryId: 'category-method', slug: 'giup-con-tu-tin-noi-tieng-anh', title: '5 cách giúp con tự tin nói tiếng Anh mỗi ngày', summary: 'Những hoạt động ngắn, dễ thực hiện để biến tiếng Anh thành phản xạ tự nhiên.', body: 'Sự tự tin đến từ những lần thực hành nhỏ và đều đặn, trong môi trường không sợ mắc lỗi.', featured: true },
         { ...publicMeta('article-progress', 'article-progress', 2), categoryId: 'category-parent', slug: 'doc-bao-cao-tien-bo', title: 'Hiểu đúng báo cáo tiến bộ của học viên', summary: 'Cách đọc chuyên cần, kỹ năng và việc cần làm tiếp theo.', body: 'Báo cáo tốt cần cho thấy bằng chứng, xu hướng và hành động cụ thể cho giai đoạn tiếp theo.', featured: false },
+        { ...publicMeta('article-draft-seed', 'article-draft-seed', 3), slug: 'thoi-quen-hoc-moi-ngay', title: 'Xây thói quen học tiếng Anh mỗi ngày', summary: 'Bản nháp đang chờ hoàn thiện trước khi công khai.', body: 'Nội dung đang được biên tập.', status: 'DRAFT', publishedBy: null, publishedAt: null },
       ],
       publicEvents: [
         { ...publicMeta('public-event-placement', 'event-placement', 1), slug: 'kiem-tra-dau-vao-thang-9', title: 'Kiểm tra đầu vào và tư vấn lộ trình', summary: 'Đánh giá năng lực, trao đổi mục tiêu và nhận khuyến nghị lớp phù hợp.', startsAt: at(4, 9), endsAt: at(4, 11), branchId: 'branch-q3', location: 'Cơ sở Quận 3', registrationHref: '/lien-he' },

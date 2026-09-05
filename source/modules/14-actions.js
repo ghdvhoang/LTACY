@@ -373,6 +373,36 @@
         onChange();
         return result;
       }
+      if (action === 'create-site-content-draft' || action === 'clone-site-content') {
+        const result = bus.dispatch('CREATE_SITE_CONTENT_DRAFT', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'submit-site-content') {
+        const result = bus.dispatch('SUBMIT_SITE_CONTENT', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'publish-site-content') {
+        const result = bus.dispatch('PUBLISH_SITE_CONTENT', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'archive-site-content') {
+        const result = bus.dispatch('ARCHIVE_SITE_CONTENT', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'save-site-settings') {
+        const result = bus.dispatch('SAVE_SITE_SETTINGS', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
       if (action === 'export-csv') {
         const output = exportDataset(state(), data.type);
         if (!output) return { ok: false, code: 'EXPORT_NOT_FOUND', message: 'Chưa có dữ liệu xuất phù hợp.' };

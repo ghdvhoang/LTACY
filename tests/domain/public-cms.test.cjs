@@ -110,3 +110,32 @@ test('site settings require configuration permission and write audit history', (
   assert.equal(state().siteSettings[0].tagline, 'Học chắc, nói tự tin');
   assert.equal(state().auditLogs[0].action, 'SITE_SETTINGS_SAVED');
 });
+
+test('Admin CMS routes expose content, settings and real lifecycle controls', () => {
+  const { YC, state } = runtime();
+  const actor = state().users.find((item) => item.id === 'admin-1');
+  const context = (path) => ({ state: state(), actor, learnerId: 'student-canonical', path });
+  const overview = YC.router.render('/app/admin/site-content', context('/app/admin/site-content'));
+  assert.match(overview, /Quản trị website/);
+  assert.match(overview, /Banner|Chương trình/);
+  assert.match(overview, /Tin tức/);
+  assert.match(overview, /Sự kiện/);
+  assert.match(overview, /data-action="publish-site-content"/);
+  const articles = YC.router.render('/app/admin/site-content/articles', context('/app/admin/site-content/articles'));
+  assert.match(articles, /data-form="site-content-draft"/);
+  assert.match(articles, /Phiên bản/);
+  const settings = YC.router.render('/app/admin/site-settings', context('/app/admin/site-settings'));
+  assert.match(settings, /data-form="site-settings"/);
+  assert.match(settings, /Lớp Tiếng Anh Cô Yến/);
+});
+
+test('CMS UI actions dispatch as the signed-in Admin', () => {
+  const YC = loadYC(['seed', 'store', 'commands', 'actions']);
+  const storage = memoryStorage({ [YC.actions.ACTOR_KEY]: 'admin-1' });
+  const store = YC.store.create({ storage, clock: () => FIXED_NOW });
+  const controller = YC.actions.create({ store, bus: YC.commands.create(store), storage });
+  const created = controller.execute('create-site-content-draft', { collection: 'articles', contentKey: 'action-news', title: 'Tin từ thao tác UI', slug: 'tin-ui', effectiveFrom: FIXED_NOW });
+  assert.equal(created.ok, true);
+  assert.equal(controller.execute('publish-site-content', { collection: 'articles', contentId: created.contentId }).ok, true);
+  assert.equal(store.getState().articles.find((item) => item.id === created.contentId).status, 'PUBLISHED');
+});

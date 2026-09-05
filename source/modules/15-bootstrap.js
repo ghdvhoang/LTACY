@@ -180,6 +180,12 @@
       if (form.dataset.form === 'user-permissions') { action = 'set-user-permission'; data = { userId: values.get('userId'), permissionId: values.get('permissionId'), effect: values.get('effect'), scopeType: values.get('scopeType'), scopeIds: String(values.get('scopeIds') || '').split(',').map((item) => item.trim()).filter(Boolean), reason: values.get('reason') }; }
       if (form.dataset.form === 'review-change-request') { action = 'review-change-request'; data = { requestId: values.get('requestId'), decision: values.get('decision'), note: values.get('note') }; }
       if (form.dataset.form === 'withdraw-change-request') { action = 'withdraw-change-request'; data = { requestId: values.get('requestId'), reason: values.get('reason') }; }
+      if (form.dataset.form === 'site-content-draft') {
+        const toIso = (value) => value ? new Date(value).toISOString() : null;
+        action = 'create-site-content-draft';
+        data = { collection: values.get('collection'), title: values.get('title'), slug: values.get('slug'), summary: values.get('summary'), body: values.get('body'), effectiveFrom: toIso(values.get('effectiveFrom')), effectiveTo: toIso(values.get('effectiveTo')) };
+      }
+      if (form.dataset.form === 'site-settings') { action = 'save-site-settings'; data = { centerName: values.get('centerName'), shortName: values.get('shortName'), tagline: values.get('tagline'), description: values.get('description'), primaryColor: values.get('primaryColor'), accentColor: values.get('accentColor') }; }
       if (!action) return;
       const result = controller.execute(action, data);
       if (result?.ok === false) toast(result.message, 'error');

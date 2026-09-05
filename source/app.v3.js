@@ -469,6 +469,7 @@
       articles: [
         { ...publicMeta('article-confidence', 'article-confidence', 1), categoryId: 'category-method', slug: 'giup-con-tu-tin-noi-tieng-anh', title: '5 cách giúp con tự tin nói tiếng Anh mỗi ngày', summary: 'Những hoạt động ngắn, dễ thực hiện để biến tiếng Anh thành phản xạ tự nhiên.', body: 'Sự tự tin đến từ những lần thực hành nhỏ và đều đặn, trong môi trường không sợ mắc lỗi.', featured: true },
         { ...publicMeta('article-progress', 'article-progress', 2), categoryId: 'category-parent', slug: 'doc-bao-cao-tien-bo', title: 'Hiểu đúng báo cáo tiến bộ của học viên', summary: 'Cách đọc chuyên cần, kỹ năng và việc cần làm tiếp theo.', body: 'Báo cáo tốt cần cho thấy bằng chứng, xu hướng và hành động cụ thể cho giai đoạn tiếp theo.', featured: false },
+        { ...publicMeta('article-draft-seed', 'article-draft-seed', 3), slug: 'thoi-quen-hoc-moi-ngay', title: 'Xây thói quen học tiếng Anh mỗi ngày', summary: 'Bản nháp đang chờ hoàn thiện trước khi công khai.', body: 'Nội dung đang được biên tập.', status: 'DRAFT', publishedBy: null, publishedAt: null },
       ],
       publicEvents: [
         { ...publicMeta('public-event-placement', 'event-placement', 1), slug: 'kiem-tra-dau-vao-thang-9', title: 'Kiểm tra đầu vào và tư vấn lộ trình', summary: 'Đánh giá năng lực, trao đổi mục tiêu và nhận khuyến nghị lớp phù hợp.', startsAt: at(4, 9), endsAt: at(4, 11), branchId: 'branch-q3', location: 'Cơ sở Quận 3', registrationHref: '/lien-he' },
@@ -4177,6 +4178,120 @@
   root.YC.define('operationsViews', Object.freeze({ render }));
 })(globalThis);
 
+/* 11-cms-views.js */
+(function defineCmsViews(root) {
+  'use strict';
+
+  const { badge, button, icon, link, metric, pageHeader, section, table } = root.YC.ui;
+  const { escapeHtml, formatDate } = root.YC.utils;
+
+  const TYPES = Object.freeze([
+    { key: 'heroBanners', label: 'Banner trang chủ', singular: 'banner', icon: 'spark' },
+    { key: 'publicProgramProfiles', label: 'Chương trình', singular: 'chương trình', icon: 'book' },
+    { key: 'publicBranchProfiles', label: 'Cơ sở', singular: 'cơ sở', icon: 'grid' },
+    { key: 'publicTeacherProfiles', label: 'Giáo viên công khai', singular: 'hồ sơ giáo viên', icon: 'people' },
+    { key: 'articles', label: 'Tin tức', singular: 'bài viết', icon: 'book' },
+    { key: 'publicEvents', label: 'Sự kiện', singular: 'sự kiện', icon: 'calendar' },
+    { key: 'staticPages', label: 'Trang nội dung', singular: 'trang', icon: 'book' },
+    { key: 'navigationGroups', label: 'Nhóm menu', singular: 'nhóm menu', icon: 'grid' },
+    { key: 'navigationItems', label: 'Mục menu', singular: 'mục menu', icon: 'grid' },
+    { key: 'contactChannels', label: 'Kênh liên hệ', singular: 'kênh liên hệ', icon: 'people' },
+    { key: 'articleCategories', label: 'Danh mục bài viết', singular: 'danh mục', icon: 'grid' },
+  ]);
+
+  function typeOf(key) { return TYPES.find((item) => item.key === key) || null; }
+  function can(ctx, permissionId) { return root.YC.policy.can(ctx.actor, permissionId, { organizationId: ctx.state.settings.organizationId }, ctx.state); }
+  function labelOf(item, fallback) { return item.title || item.name || item.label || item.eyebrow || fallback; }
+  function hrefFor(collection, item) {
+    if (collection === 'articles') return `/tin-tuc/${item.slug || item.id}`;
+    if (collection === 'publicEvents') return `/su-kien/${item.slug || item.id}`;
+    if (collection === 'publicProgramProfiles') return `/chuong-trinh/${item.slug || item.id}`;
+    if (collection === 'publicBranchProfiles') return `/co-so/${item.slug || item.id}`;
+    if (collection === 'staticPages') return `/${item.slug || ''}`;
+    return '/';
+  }
+
+  function lifecycleActions(ctx, collection, item) {
+    const payload = { collection, contentId: item.id };
+    const actions = [];
+    if (['DRAFT', 'SUBMITTED'].includes(item.status) && can(ctx, 'site.publish')) actions.push(button(item.effectiveFrom && item.effectiveFrom > ctx.state.currentAt ? 'Duyệt & lên lịch' : 'Xuất bản', 'publish-site-content', { small: true, payload }));
+    if (item.status === 'DRAFT' && can(ctx, 'site.submit') && !can(ctx, 'site.publish')) actions.push(button('Gửi Admin duyệt', 'submit-site-content', { small: true, payload: { ...payload, reason: 'Đã hoàn tất nội dung và gửi Admin duyệt.' } }));
+    if (item.status === 'PUBLISHED' && can(ctx, 'site.archive')) actions.push(button('Lưu trữ', 'archive-site-content', { kind: 'secondary', small: true, payload: { ...payload, reason: 'Lưu trữ từ khu vực quản trị website.' } }));
+    if (['PUBLISHED', 'ARCHIVED'].includes(item.status) && can(ctx, 'site.edit')) actions.push(button('Tạo bản chỉnh sửa', 'clone-site-content', { kind: 'secondary', small: true, payload: { collection, sourceContentId: item.id } }));
+    if (item.status === 'PUBLISHED') actions.push(`<a class="text-link" href="#${escapeHtml(hrefFor(collection, item))}" target="_self">Xem trên website ${icon('arrow')}</a>`);
+    return `<div class="cms-row-actions">${actions.join('')}</div>`;
+  }
+
+  function overview(ctx) {
+    const records = TYPES.flatMap((type) => (ctx.state[type.key] || []).map((item) => ({ ...item, collection: type.key, typeLabel: type.label })));
+    const pending = records.filter((item) => item.status === 'SUBMITTED');
+    const drafts = records.filter((item) => item.status === 'DRAFT');
+    const published = records.filter((item) => item.status === 'PUBLISHED');
+    return `<div class="workspace-page cms-page">${pageHeader('Quản trị website', 'Nội dung công khai', 'Quản lý bản nháp, duyệt, hẹn giờ xuất bản và lịch sử phiên bản trên cùng dữ liệu.', link('Cấu hình website', '/app/admin/site-settings', { kind: 'primary' }))}
+      <div class="metric-grid four">${metric('Đã công bố', published.length, 'Đang hoặc sắp có hiệu lực', 'check')}${metric('Bản nháp', drafts.length, 'Chưa xuất hiện công khai', 'book')}${metric('Chờ duyệt', pending.length, 'Cần Admin quyết định', 'shield')}${metric('Nhóm nội dung', TYPES.length, 'Mỗi nhóm có lịch sử riêng', 'grid')}</div>
+      <div class="cms-type-grid">${TYPES.map((type) => { const items = ctx.state[type.key] || []; return `<a class="cms-type-card" href="#/app/admin/site-content/${escapeHtml(type.key)}"><span>${icon(type.icon)}</span><div><strong>${escapeHtml(type.label)}</strong><small>${items.filter((item) => item.status === 'PUBLISHED').length} công bố · ${items.filter((item) => item.status === 'DRAFT').length} nháp</small></div>${icon('arrow')}</a>`; }).join('')}</div>
+      ${section('Cần xử lý', table([
+        { label: 'Nội dung', render: (row) => `<strong>${escapeHtml(labelOf(row, row.typeLabel))}</strong><small>${escapeHtml(row.typeLabel)} · phiên bản ${row.revision || 1}</small>` },
+        { label: 'Trạng thái', render: (row) => badge(row.status) },
+        { label: 'Hiệu lực', render: (row) => formatDate(row.effectiveFrom, true) },
+        { label: 'Thao tác', render: (row) => lifecycleActions(ctx, row.collection, row) },
+      ], [...pending, ...drafts], { emptyTitle: 'Không có nội dung chờ xử lý', emptyBody: 'Mọi nội dung đã được duyệt hoặc lưu trữ.' }))}</div>`;
+  }
+
+  function draftForm(ctx, type) {
+    if (!can(ctx, 'site.edit')) return '<p class="muted">Tài khoản chưa được cấp quyền sửa nội dung website.</p>';
+    return `<form class="cms-editor-form" data-form="site-content-draft">
+      <input type="hidden" name="collection" value="${escapeHtml(type.key)}">
+      <label>Tiêu đề / tên hiển thị<input class="input" name="title" required placeholder="Nhập tên ${escapeHtml(type.singular)}"></label>
+      <label>Đường dẫn ngắn<input class="input" name="slug" placeholder="duong-dan-khong-dau"></label>
+      <label class="span-two">Mô tả ngắn<textarea class="input" name="summary" rows="2" placeholder="Nội dung xuất hiện trên thẻ giới thiệu"></textarea></label>
+      <label class="span-two">Nội dung chi tiết<textarea class="input" name="body" rows="4" placeholder="Nội dung tiếng Việt đã được biên tập"></textarea></label>
+      <label>Bắt đầu hiệu lực<input class="input" name="effectiveFrom" type="datetime-local"></label>
+      <label>Kết thúc hiệu lực<input class="input" name="effectiveTo" type="datetime-local"></label>
+      <button class="btn btn-primary" type="submit">Lưu bản nháp</button>
+    </form>`;
+  }
+
+  function contentList(ctx, collection) {
+    const type = typeOf(collection);
+    if (!type) return '';
+    const rows = (ctx.state[collection] || []).slice().sort((a, b) => Number(b.revision || 0) - Number(a.revision || 0));
+    return `<div class="workspace-page cms-page">${pageHeader('Quản trị website', type.label, `Tạo và quản lý từng phiên bản ${type.singular}; chỉ bản đã công bố trong thời hạn hiệu lực mới xuất hiện ngoài website.`, link('Về tổng quan', '/app/admin/site-content'))}
+      <div class="content-grid main-aside">${section('Phiên bản nội dung', table([
+        { label: 'Nội dung', render: (row) => `<strong>${escapeHtml(labelOf(row, type.label))}</strong><small>${escapeHtml(row.contentKey || row.id)}</small>` },
+        { label: 'Phiên bản', render: (row) => `<strong>v${row.revision || 1}</strong><small>${row.sourceRevisionId ? `Từ ${escapeHtml(row.sourceRevisionId)}` : 'Bản gốc'}</small>` },
+        { label: 'Hiệu lực', render: (row) => `<span>${formatDate(row.effectiveFrom, true)}</span><small>${row.effectiveTo ? `đến ${formatDate(row.effectiveTo, true)}` : 'Không giới hạn'}</small>` },
+        { label: 'Trạng thái', render: (row) => badge(row.status) },
+        { label: 'Thao tác', render: (row) => lifecycleActions(ctx, collection, row) },
+      ], rows))}${section(`Tạo ${type.singular}`, draftForm(ctx, type), { subtitle: 'Bản mới luôn bắt đầu ở trạng thái Bản nháp.' })}</div></div>`;
+  }
+
+  function settings(ctx) {
+    const settings = ctx.state.siteSettings[0];
+    const contacts = ctx.state.contactChannels || [];
+    const editable = can(ctx, 'site.configure_contact');
+    return `<div class="workspace-page cms-page">${pageHeader('Quản trị website', 'Cấu hình thương hiệu & liên hệ', 'Tên trung tâm, thông điệp và kênh liên hệ được dùng thống nhất trên website.', link('Quản lý nội dung', '/app/admin/site-content'))}
+      <div class="content-grid main-aside">${section('Nhận diện website', `<form class="cms-editor-form" data-form="site-settings">
+        <label>Tên trung tâm<input class="input" name="centerName" required value="${escapeHtml(settings.centerName)}" ${editable ? '' : 'disabled'}></label>
+        <label>Tên rút gọn<input class="input" name="shortName" value="${escapeHtml(settings.shortName)}" ${editable ? '' : 'disabled'}></label>
+        <label class="span-two">Thông điệp chính<input class="input" name="tagline" value="${escapeHtml(settings.tagline)}" ${editable ? '' : 'disabled'}></label>
+        <label class="span-two">Mô tả<textarea class="input" name="description" rows="3" ${editable ? '' : 'disabled'}>${escapeHtml(settings.description)}</textarea></label>
+        <label>Màu chính<input class="input" name="primaryColor" type="color" value="${escapeHtml(settings.primaryColor)}" ${editable ? '' : 'disabled'}></label>
+        <label>Màu nhấn<input class="input" name="accentColor" type="color" value="${escapeHtml(settings.accentColor)}" ${editable ? '' : 'disabled'}></label>
+        ${editable ? '<button class="btn btn-primary" type="submit">Lưu cấu hình</button>' : ''}
+      </form>`)}${section('Kênh liên hệ công khai', contacts.map((item) => `<article class="contact-config-row"><div><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.type)} · ${escapeHtml(item.value || 'Đang để trống')}</small></div>${badge(item.status)}</article>`).join(''), { subtitle: 'Kênh rỗng hoặc chưa công bố sẽ tự ẩn khỏi website.' })}</div></div>`;
+  }
+
+  function render(path, ctx) {
+    if (path === '/app/admin/site-content') return overview(ctx);
+    if (path === '/app/admin/site-settings') return settings(ctx);
+    const match = /^\/app\/admin\/site-content\/([^/]+)$/.exec(path);
+    return match ? contentList(ctx, decodeURIComponent(match[1])) : '';
+  }
+
+  root.YC.define('cmsViews', Object.freeze({ TYPES, render }));
+})(globalThis);
+
 /* 11-governance-views.js */
 (function defineGovernanceViews(root) {
   'use strict';
@@ -4661,7 +4776,7 @@
     STUDENT: [['Học tập', '/app/student/dashboard', 'grid'], ['Khóa học', '/app/student/course', 'book'], ['Học bù', '/app/student/remedial', 'spark'], ['Kiểm tra', '/app/student/assessments', 'check'], ['Kết quả', '/app/student/results', 'check'], ['Tiến bộ', '/app/student/progress', 'trend']],
     PARENT: [['Tổng quan', '/app/parent/dashboard', 'grid'], ['Chuyên cần', '/app/parent/attendance', 'calendar'], ['Tiến bộ', '/app/parent/progress', 'trend'], ['Dịch vụ', '/app/parent/services', 'people'], ['Học phí', '/app/parent/tuition', 'wallet']],
     CENTER_MANAGER: [['Tổng quan', '/app/manager/dashboard', 'grid'], ['Sức chứa', '/app/manager/capacity', 'people'], ['Chất lượng', '/app/manager/quality', 'shield'], ['Duy trì học viên', '/app/manager/retention', 'trend']],
-    ADMIN: [['Tổng quan', '/app/admin/dashboard', 'grid'], ['Tài khoản', '/app/admin/users', 'people'], ['Phân quyền', '/app/admin/roles', 'shield'], ['Phê duyệt', '/app/admin/approvals', 'check'], ['Học viên', '/app/admin/students', 'people'], ['Lớp học', '/app/admin/classes', 'calendar'], ['Khóa học', '/app/admin/courses', 'book'], ['Học bù', '/app/admin/remedial', 'spark'], ['Liên hệ', '/app/admin/contacts', 'people'], ['Báo cáo', '/app/admin/reports', 'trend'], ['Nhật ký', '/app/admin/audit-logs', 'shield'], ['Tích hợp', '/app/admin/integrations', 'grid'], ['Cấu hình', '/app/admin/settings', 'book']],
+    ADMIN: [['Tổng quan', '/app/admin/dashboard', 'grid'], ['Tài khoản', '/app/admin/users', 'people'], ['Phân quyền', '/app/admin/roles', 'shield'], ['Phê duyệt', '/app/admin/approvals', 'check'], ['Website', '/app/admin/site-content', 'spark'], ['Học viên', '/app/admin/students', 'people'], ['Lớp học', '/app/admin/classes', 'calendar'], ['Khóa học', '/app/admin/courses', 'book'], ['Học bù', '/app/admin/remedial', 'spark'], ['Liên hệ', '/app/admin/contacts', 'people'], ['Báo cáo', '/app/admin/reports', 'trend'], ['Nhật ký', '/app/admin/audit-logs', 'shield'], ['Tích hợp', '/app/admin/integrations', 'grid'], ['Cấu hình', '/app/admin/settings', 'book']],
   });
 
   const ROLE_LABELS = Object.freeze({
@@ -4675,7 +4790,7 @@
 
   function render(path, ctx) {
     const clean = normalize(path);
-    const renderers = [root.YC.publicViews, root.YC.learningViews, root.YC.operationsViews, root.YC.governanceViews, root.YC.managementViews];
+    const renderers = [root.YC.publicViews, root.YC.learningViews, root.YC.operationsViews, root.YC.cmsViews, root.YC.governanceViews, root.YC.managementViews];
     for (const renderer of renderers) {
       const html = renderer.render(clean, { ...ctx, path: clean });
       if (html) return html;
@@ -5129,6 +5244,36 @@
         onChange();
         return result;
       }
+      if (action === 'create-site-content-draft' || action === 'clone-site-content') {
+        const result = bus.dispatch('CREATE_SITE_CONTENT_DRAFT', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'submit-site-content') {
+        const result = bus.dispatch('SUBMIT_SITE_CONTENT', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'publish-site-content') {
+        const result = bus.dispatch('PUBLISH_SITE_CONTENT', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'archive-site-content') {
+        const result = bus.dispatch('ARCHIVE_SITE_CONTENT', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'save-site-settings') {
+        const result = bus.dispatch('SAVE_SITE_SETTINGS', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
       if (action === 'export-csv') {
         const output = exportDataset(state(), data.type);
         if (!output) return { ok: false, code: 'EXPORT_NOT_FOUND', message: 'Chưa có dữ liệu xuất phù hợp.' };
@@ -5339,6 +5484,12 @@
       if (form.dataset.form === 'user-permissions') { action = 'set-user-permission'; data = { userId: values.get('userId'), permissionId: values.get('permissionId'), effect: values.get('effect'), scopeType: values.get('scopeType'), scopeIds: String(values.get('scopeIds') || '').split(',').map((item) => item.trim()).filter(Boolean), reason: values.get('reason') }; }
       if (form.dataset.form === 'review-change-request') { action = 'review-change-request'; data = { requestId: values.get('requestId'), decision: values.get('decision'), note: values.get('note') }; }
       if (form.dataset.form === 'withdraw-change-request') { action = 'withdraw-change-request'; data = { requestId: values.get('requestId'), reason: values.get('reason') }; }
+      if (form.dataset.form === 'site-content-draft') {
+        const toIso = (value) => value ? new Date(value).toISOString() : null;
+        action = 'create-site-content-draft';
+        data = { collection: values.get('collection'), title: values.get('title'), slug: values.get('slug'), summary: values.get('summary'), body: values.get('body'), effectiveFrom: toIso(values.get('effectiveFrom')), effectiveTo: toIso(values.get('effectiveTo')) };
+      }
+      if (form.dataset.form === 'site-settings') { action = 'save-site-settings'; data = { centerName: values.get('centerName'), shortName: values.get('shortName'), tagline: values.get('tagline'), description: values.get('description'), primaryColor: values.get('primaryColor'), accentColor: values.get('accentColor') }; }
       if (!action) return;
       const result = controller.execute(action, data);
       if (result?.ok === false) toast(result.message, 'error');

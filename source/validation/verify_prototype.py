@@ -32,7 +32,7 @@ def verify_static() -> dict[str, object]:
     required_modules = {
         "00-namespace.js", "01-utils.js", "02-permissions.js", "02-seed.js", "03-store.js", "04-policy.js",
         "05-approval.js", "05-commands.js", "06-public-content.js", "06-remedial.js", "06-selectors.js", "07-ui-kit.js", "08-public-views.js",
-        "09-learning-views.js", "10-operations-views.js", "11-governance-views.js", "11-management-views.js",
+        "09-learning-views.js", "10-operations-views.js", "11-cms-views.js", "11-governance-views.js", "11-management-views.js",
         "13-router.js", "14-actions.js", "15-bootstrap.js",
     }
     require(required_modules.issubset(module_names), f"Runtime modules are missing: {sorted(required_modules - set(module_names))}")

@@ -41,6 +41,7 @@ source/modules/07-ui-kit.js
 source/modules/08-public-views.js
 source/modules/09-learning-views.js
 source/modules/10-operations-views.js
+source/modules/11-cms-views.js
 source/modules/11-governance-views.js
 source/modules/11-management-views.js
 source/modules/13-router.js
