@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
+import mimetypes
 import re
 import sys
 from pathlib import Path
@@ -28,6 +30,23 @@ def render_bundle(root: Path) -> str:
     return "".join(sections)
 
 
+def inline_asset_urls(root: Path, html: str) -> str:
+    """Embed local source/assets references so the release stays one portable file."""
+    pattern = re.compile(r"(?P<quote>['\"])(?P<url>\./assets/[A-Za-z0-9_./-]+)(?P=quote)")
+
+    def replace(match: re.Match[str]) -> str:
+        relative = match.group("url").removeprefix("./")
+        asset = root / "source" / relative
+        if not asset.is_file():
+            return match.group(0)
+        mime = mimetypes.guess_type(asset.name)[0] or "application/octet-stream"
+        encoded = base64.b64encode(asset.read_bytes()).decode("ascii")
+        quote = match.group("quote")
+        return f"{quote}data:{mime};base64,{encoded}{quote}"
+
+    return pattern.sub(replace, html)
+
+
 def render_standalone(root: Path, bundle: str) -> str:
     source_dir = root / "source"
     html = (source_dir / "index.html").read_text(encoding="utf-8")
@@ -45,7 +64,7 @@ def render_standalone(root: Path, bundle: str) -> str:
         html,
         count=1,
     )
-    return html
+    return inline_asset_urls(root, html)
 
 
 def expected_outputs(root: Path, release: bool) -> dict[Path, str]:

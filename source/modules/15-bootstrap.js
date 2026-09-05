@@ -48,7 +48,7 @@
     function render() {
       const currentPath = path();
       app.innerHTML = root.YC.router.frame(currentPath, context());
-      document.title = currentPath.startsWith('/app/') ? 'Yen Center · Khu vực làm việc' : 'Yen Center · Hành trình học tập';
+      document.title = currentPath.startsWith('/app/') ? 'Cô Yến · Khu vực làm việc' : 'Lớp Tiếng Anh Cô Yến';
       document.body.classList.toggle('is-app', currentPath.startsWith('/app/'));
       root.clearInterval(quizTimer);
       const timer = document.querySelector('[data-quiz-timer]');

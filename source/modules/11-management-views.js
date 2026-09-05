@@ -97,7 +97,7 @@
   }
 
   function adminDashboard(ctx) {
-    return `<div class="workspace-page">${pageHeader('Bảng điều khiển quản trị', 'Kiểm soát và truy vết hệ thống', 'Một tổ chức Yen Center, nhiều chi nhánh, phạm vi vai trò và tích hợp mô phỏng.')}
+    return `<div class="workspace-page">${pageHeader('Bảng điều khiển quản trị', 'Kiểm soát và truy vết hệ thống', 'Một tổ chức Lớp Tiếng Anh Cô Yến, nhiều chi nhánh, phạm vi vai trò và tích hợp mô phỏng.')}
       <div class="metric-grid four">${metric('Người dùng hoạt động', ctx.state.users.filter((item) => item.status === 'ACTIVE').length, '10 loại vai trò', 'people')}${metric('Sự kiện nghiệp vụ', ctx.state.domainEvents.length, 'Bàn giao giữa các luồng', 'trend')}${metric('Bản ghi kiểm toán', ctx.state.auditLogs.length, 'Truy vết thao tác quan trọng', 'shield')}${metric('Tích hợp mô phỏng', 4, 'Tất cả đang MÔ PHỎNG', 'grid')}</div>
       <div class="content-grid two">${section('Ranh giới hệ thống', '<ul class="check-list"><li>✓ Một tổ chức, nhiều chi nhánh</li><li>✓ Chỉ lưu trên trình duyệt</li><li>✓ Minh họa phân quyền giao diện</li><li>✓ Thanh toán, nhắn tin và xác thực đều mô phỏng</li></ul>')}${section('Tình trạng dữ liệu', `<dl class="detail-list"><div><dt>Phiên bản dữ liệu</dt><dd>${escapeHtml(ctx.state.schemaVersion)}</dd></div><div><dt>Thời điểm khởi tạo</dt><dd>${formatDate(ctx.state.seededAt)}</dd></div><div><dt>Thông báo chuyển đổi</dt><dd>${escapeHtml(ctx.state.migrationNotice?.message || 'Không có')}</dd></div><div><dt>Học viên mẫu</dt><dd>${escapeHtml(ctx.state.demo.canonicalLearnerId)}</dd></div></dl>`)}</div></div>`;
   }

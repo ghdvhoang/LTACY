@@ -71,6 +71,7 @@ tests/domain/v2-route-parity.test.cjs
 tests/domain/vietnamese-ui.test.cjs
 tests/domain/visitor-auth.test.cjs
 tests/domain/views-router.test.cjs
+tests/domain/yen-homepage.test.cjs
 tests/helpers/load-runtime.cjs
 tests/static/test_build.py
 tests/static/test_release_docs.py

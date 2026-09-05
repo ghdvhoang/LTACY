@@ -488,7 +488,7 @@
           savedProgramIds: [], registeredEventIds: [], createdAt: nowIso(),
         };
         draft.users.push(visitor);
-        draft.notifications.unshift({ id: uid('notification'), userId: visitor.id, title: 'Chào mừng đến Yen Center', body: 'Bạn có thể lưu chương trình, đăng ký sự kiện và theo dõi yêu cầu tư vấn tại đây.', link: '/tai-khoan', read: false, createdAt: nowIso() });
+        draft.notifications.unshift({ id: uid('notification'), userId: visitor.id, title: 'Chào mừng đến Lớp Tiếng Anh Cô Yến', body: 'Bạn có thể lưu chương trình, đăng ký sự kiện và theo dõi yêu cầu tư vấn tại đây.', link: '/tai-khoan', read: false, createdAt: nowIso() });
         appendEvent(draft, context, 'VISITOR_REGISTERED', 'USER', visitor.id, `${visitor.name} đã tạo tài khoản khách.`);
         appendAudit(draft, context, 'VISITOR_REGISTERED', 'USER', visitor.id, 'Tài khoản được tạo trong bộ nhớ trình duyệt.');
         return { message: 'Đăng ký tài khoản thành công.', actorId: visitor.id };

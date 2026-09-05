@@ -3,6 +3,7 @@ import sys
 import tempfile
 import unittest
 import hashlib
+import base64
 from pathlib import Path
 
 
@@ -69,6 +70,24 @@ class StandaloneBuildTests(unittest.TestCase):
             self.assertIn("window.order.push('second')", standalone)
             self.assertNotIn('styles.css', standalone)
             self.assertNotIn('app.js', standalone)
+
+    def test_release_embeds_project_png_assets(self):
+        with tempfile.TemporaryDirectory() as temp:
+            fixture = Path(temp)
+            self.make_fixture(fixture)
+            assets = fixture / "source" / "assets"
+            assets.mkdir()
+            png = b"\x89PNG\r\n\x1a\nfixture"
+            (assets / "yen-logo-horizontal.png").write_bytes(png)
+            index = fixture / "source" / "index.html"
+            index.write_text(index.read_text(encoding="utf-8").replace('<div id="app"></div>', '<img src="./assets/yen-logo-horizontal.png"><div id="app"></div>'), encoding="utf-8")
+
+            result = self.run_builder(fixture, "--release")
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            html = (fixture / "OPEN-DEMO.html").read_text(encoding="utf-8")
+            self.assertIn(f"data:image/png;base64,{base64.b64encode(png).decode('ascii')}", html)
+            self.assertNotIn("./assets/yen-logo-horizontal.png", html)
 
     def test_release_refreshes_checksums_for_every_manifest_file(self):
         with tempfile.TemporaryDirectory() as temp:
