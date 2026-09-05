@@ -192,5 +192,40 @@
     });
   }
 
-  root.YC.define('selectors', Object.freeze({ byId, completionStatus, journey, metrics, progressReportEvidence, riskSignals, roleHome, scheduleConflicts, sessionWorkbench, skillProfile, teacherEligibility, teacherWorkload }));
+  function coursePublishValidation(state, courseVersionId) {
+    const version = byId(state, 'courseVersions', courseVersionId);
+    const errors = [];
+    const warnings = [];
+    if (!version) return { valid: false, errors: [{ code: 'COURSE_VERSION_NOT_FOUND', message: 'Không tìm thấy phiên bản khóa học.' }], warnings };
+    const course = byId(state, 'courses', version.courseId);
+    if (!course) errors.push({ code: 'COURSE_REQUIRED', message: 'Phiên bản chưa gắn với khóa học.' });
+    else {
+      if (!byId(state, 'programs', course.programId)) errors.push({ code: 'PROGRAM_REQUIRED', message: 'Khóa học chưa có chương trình.' });
+      if (!byId(state, 'levels', course.levelId)) errors.push({ code: 'LEVEL_REQUIRED', message: 'Khóa học chưa có cấp độ.' });
+      if (!String(course.description || '').trim()) warnings.push({ code: 'DESCRIPTION_RECOMMENDED', message: 'Nên bổ sung mô tả khóa học.' });
+    }
+    const units = state.units.filter((item) => item.courseVersionId === version.id);
+    if (!units.length) errors.push({ code: 'UNIT_REQUIRED', message: 'Cần ít nhất một học phần.' });
+    const unitIds = units.map((item) => item.id);
+    const lessons = state.lessonTemplates.filter((item) => unitIds.includes(item.unitId));
+    if (units.length && !lessons.length) errors.push({ code: 'LESSON_REQUIRED', message: 'Cần ít nhất một bài học.' });
+    for (const lesson of lessons) {
+      if (!Array.isArray(lesson.objectives) || !lesson.objectives.filter(Boolean).length) errors.push({ code: 'LESSON_OBJECTIVE_REQUIRED', lessonId: lesson.id, message: `${lesson.title}: thiếu mục tiêu.` });
+      if (!Number(lesson.durationMinutes) || Number(lesson.durationMinutes) < 1) errors.push({ code: 'LESSON_DURATION_REQUIRED', lessonId: lesson.id, message: `${lesson.title}: thiếu thời lượng.` });
+      if (!state.learningItems.some((item) => item.lessonTemplateId === lesson.id && item.status !== 'ARCHIVED')) warnings.push({ code: 'LEARNING_ITEM_RECOMMENDED', lessonId: lesson.id, message: `${lesson.title}: chưa có học liệu.` });
+    }
+    const lessonIds = lessons.map((item) => item.id);
+    const assessments = state.assessments.filter((item) => item.courseVersionId === version.id || lessonIds.includes(item.lessonTemplateId));
+    if (!assessments.length) errors.push({ code: 'ASSESSMENT_REQUIRED', message: 'Cần ít nhất một bài đánh giá.' });
+    for (const assessment of assessments) {
+      const invalidQuestion = (assessment.questionIds || []).find((id) => !state.questions.some((item) => item.id === id));
+      if (invalidQuestion) errors.push({ code: 'ASSESSMENT_QUESTION_INVALID', assessmentId: assessment.id, message: `${assessment.title}: câu hỏi không tồn tại.` });
+    }
+    if (!version.completionRule) errors.push({ code: 'COMPLETION_RULE_REQUIRED', message: 'Thiếu quy tắc hoàn thành.' });
+    if (!version.remedialPolicy) errors.push({ code: 'REMEDIAL_POLICY_REQUIRED', message: 'Thiếu chính sách học bù.' });
+    if (!Number(version.totalHours)) errors.push({ code: 'TOTAL_HOURS_REQUIRED', message: 'Thiếu tổng số giờ học.' });
+    return { valid: errors.length === 0, errors, warnings };
+  }
+
+  root.YC.define('selectors', Object.freeze({ byId, completionStatus, coursePublishValidation, journey, metrics, progressReportEvidence, riskSignals, roleHome, scheduleConflicts, sessionWorkbench, skillProfile, teacherEligibility, teacherWorkload }));
 })(globalThis);

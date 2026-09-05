@@ -109,9 +109,9 @@
         { id: 'course-5', programId: 'program-foundation', levelId: 'level-a1', code: 'ENG-FND-5', name: 'Tiếng Anh nền tảng 5', status: 'PUBLISHED', version: 1 },
       ],
       courseVersions: [
-        { id: 'course-v6', courseId: 'course-6', version: 3, recordVersion: 1, title: 'Tiếng Anh nền tảng 6 · A2.1', status: 'PUBLISHED', immutable: true, totalHours: 48, completionRule: { attendanceMinimum: 75, finalScoreMinimum: 70, skillMinimum: 60 }, publishedAt: at(-90) },
-        { id: 'course-v7', courseId: 'course-7', version: 2, recordVersion: 1, title: 'Tiếng Anh nền tảng 7 · A2.2', status: 'PUBLISHED', immutable: true, totalHours: 48, completionRule: { attendanceMinimum: 75, finalScoreMinimum: 72, skillMinimum: 62 }, publishedAt: at(-80) },
-        { id: 'course-v5', courseId: 'course-5', version: 4, recordVersion: 1, title: 'Tiếng Anh nền tảng 5 · A1', status: 'PUBLISHED', immutable: true, totalHours: 42, completionRule: { attendanceMinimum: 70, finalScoreMinimum: 65, skillMinimum: 55 }, publishedAt: at(-75) },
+        { id: 'course-v6', courseId: 'course-6', version: 3, recordVersion: 1, title: 'Tiếng Anh nền tảng 6 · A2.1', status: 'PUBLISHED', immutable: true, totalHours: 48, completionRule: { attendanceMinimum: 75, finalScoreMinimum: 70, skillMinimum: 60 }, remedialPolicy: { triggerStatuses: ['ABSENT'], requiredModes: ['ONLINE'], deadlineDays: 7, passingScore: 80, minimumVideoProgress: 80 }, publishedAt: at(-90) },
+        { id: 'course-v7', courseId: 'course-7', version: 2, recordVersion: 1, title: 'Tiếng Anh nền tảng 7 · A2.2', status: 'PUBLISHED', immutable: true, totalHours: 48, completionRule: { attendanceMinimum: 75, finalScoreMinimum: 72, skillMinimum: 62 }, remedialPolicy: { triggerStatuses: ['ABSENT'], requiredModes: ['ONLINE'], deadlineDays: 7, passingScore: 80, minimumVideoProgress: 80 }, publishedAt: at(-80) },
+        { id: 'course-v5', courseId: 'course-5', version: 4, recordVersion: 1, title: 'Tiếng Anh nền tảng 5 · A1', status: 'PUBLISHED', immutable: true, totalHours: 42, completionRule: { attendanceMinimum: 70, finalScoreMinimum: 65, skillMinimum: 55 }, remedialPolicy: { triggerStatuses: ['ABSENT'], requiredModes: ['ONLINE'], deadlineDays: 7, passingScore: 75, minimumVideoProgress: 80 }, publishedAt: at(-75) },
       ],
       units: [
         { id: 'unit-v6-4', courseVersionId: 'course-v6', order: 4, title: 'Trải nghiệm trong quá khứ', outcome: 'Kể lại trải nghiệm đã xảy ra' },

@@ -1,7 +1,7 @@
 (function defineCommands(root) {
   'use strict';
 
-  const { uid } = root.YC.utils;
+  const { clone, uid } = root.YC.utils;
 
   class CommandError extends Error {
     constructor(code, message, details = {}) {
@@ -624,6 +624,115 @@
         return { message: 'Đã hoàn tất gia hạn.' };
       },
 
+      REQUEST_CREATE_COURSE(draft, payload, context) {
+        const branchId = payload.branchId || context.actor.branchIds?.[0];
+        const proposal = {
+          provisionalId: payload.provisionalId || uid('course-proposed'),
+          code: String(payload.code || '').trim().toUpperCase(),
+          name: String(payload.name || '').trim(),
+          programId: payload.programId,
+          levelId: payload.levelId,
+          ageBand: payload.ageBand,
+          modes: Array.isArray(payload.modes) ? payload.modes : [payload.mode || 'OFFLINE'],
+          description: String(payload.description || '').trim(),
+          branchId,
+          branchIds: Array.isArray(payload.branchIds) ? payload.branchIds : branchId ? [branchId] : [],
+          status: 'DRAFT',
+          version: 1,
+        };
+        return handlers.SUBMIT_CHANGE_REQUEST(draft, {
+          resourceType: 'COURSE', operation: 'CREATE', baseVersion: 0,
+          proposedSnapshot: proposal, reason: payload.reason,
+        }, context);
+      },
+
+      REQUEST_UPDATE_COURSE(draft, payload, context) {
+        const course = required(draft.courses.find((item) => item.id === payload.courseId), 'COURSE_NOT_FOUND', 'Không tìm thấy khóa học.');
+        const branchId = payload.branchId || course.branchIds?.[0] || context.actor.branchIds?.[0];
+        const proposal = { ...payload, branchId };
+        delete proposal.courseId;
+        delete proposal.reason;
+        return handlers.SUBMIT_CHANGE_REQUEST(draft, {
+          resourceType: 'COURSE', operation: 'UPDATE', resourceId: course.id, baseVersion: course.version,
+          proposedSnapshot: proposal, reason: payload.reason,
+        }, context);
+      },
+
+      CREATE_COURSE_VERSION(draft, payload, context) {
+        requirePermission(draft, context, 'course.review');
+        const course = required(draft.courses.find((item) => item.id === payload.courseId), 'COURSE_NOT_FOUND', 'Không tìm thấy khóa học.');
+        const base = required(draft.courseVersions.find((item) => item.id === payload.baseVersionId && item.courseId === course.id), 'BASE_VERSION_NOT_FOUND', 'Không tìm thấy phiên bản gốc của khóa học.');
+        const nextNumber = Math.max(0, ...draft.courseVersions.filter((item) => item.courseId === course.id).map((item) => Number(item.version || 0))) + 1;
+        const version = {
+          ...clone(base), id: uid('course-version'), version: nextNumber, recordVersion: 1,
+          title: String(payload.title || `${course.name} · v${nextNumber}`).trim(),
+          baseVersionId: base.id, changeSummary: String(payload.changeSummary || '').trim(),
+          status: 'DRAFT', immutable: false, publishedAt: null, publishedBy: null,
+          createdAt: nowIso(), createdBy: context.actor.id,
+        };
+        draft.courseVersions.push(version);
+
+        const unitMap = new Map();
+        const lessonMap = new Map();
+        draft.units.filter((item) => item.courseVersionId === base.id).forEach((item) => {
+          const cloned = { ...clone(item), id: uid('unit'), courseVersionId: version.id };
+          unitMap.set(item.id, cloned.id);
+          draft.units.push(cloned);
+        });
+        const baseUnitIds = [...unitMap.keys()];
+        draft.lessonTemplates.filter((item) => baseUnitIds.includes(item.unitId)).forEach((item) => {
+          const cloned = { ...clone(item), id: uid('lesson'), unitId: unitMap.get(item.unitId), version: 1, status: 'DRAFT' };
+          lessonMap.set(item.id, cloned.id);
+          draft.lessonTemplates.push(cloned);
+        });
+        const baseLessonIds = [...lessonMap.keys()];
+        draft.learningItems.filter((item) => baseLessonIds.includes(item.lessonTemplateId)).forEach((item) => {
+          draft.learningItems.push({ ...clone(item), id: uid('learning-item'), lessonTemplateId: lessonMap.get(item.lessonTemplateId), status: 'DRAFT' });
+        });
+        draft.assessments.filter((item) => item.courseVersionId === base.id || baseLessonIds.includes(item.lessonTemplateId)).forEach((item) => {
+          draft.assessments.push({
+            ...clone(item), id: uid('assessment'),
+            courseVersionId: item.courseVersionId === base.id ? version.id : item.courseVersionId,
+            lessonTemplateId: lessonMap.get(item.lessonTemplateId) || item.lessonTemplateId,
+            status: 'DRAFT',
+          });
+        });
+        appendEvent(draft, context, 'COURSE_VERSION_FORKED', 'COURSE_VERSION', version.id, `${base.title} → v${nextNumber}.`);
+        appendAudit(draft, context, 'COURSE_VERSION_FORKED', 'COURSE_VERSION', version.id, version.changeSummary || 'Tạo bản nháp từ phiên bản đã công bố.');
+        return { message: 'Đã tạo phiên bản khóa học mới để chỉnh sửa.', courseVersionId: version.id };
+      },
+
+      SUBMIT_COURSE_VERSION(draft, payload, context) {
+        requirePermission(draft, context, 'course.review');
+        const version = required(draft.courseVersions.find((item) => item.id === payload.courseVersionId), 'COURSE_VERSION_NOT_FOUND', 'Không tìm thấy phiên bản khóa học.');
+        if (version.immutable || version.status !== 'DRAFT') throw new CommandError('INVALID_COURSE_VERSION_STATE', 'Chỉ bản nháp chưa khóa mới có thể gửi duyệt.');
+        const validation = root.YC.selectors.coursePublishValidation(draft, version.id);
+        if (!validation.valid) throw new CommandError('COURSE_VERSION_INVALID', 'Phiên bản khóa học chưa đủ điều kiện gửi duyệt.', { evidence: validation });
+        version.status = 'SUBMITTED';
+        version.submittedAt = nowIso();
+        version.submittedBy = context.actor.id;
+        version.submitReason = String(payload.reason || '').trim();
+        appendEvent(draft, context, 'COURSE_VERSION_SUBMITTED', 'COURSE_VERSION', version.id, `${version.title} đang chờ phát hành.`);
+        appendAudit(draft, context, 'COURSE_VERSION_SUBMITTED', 'COURSE_VERSION', version.id, version.submitReason || 'Đã vượt qua kiểm tra cấu trúc.');
+        return { message: 'Đã gửi phiên bản khóa học để phát hành.', validation };
+      },
+
+      ARCHIVE_COURSE(draft, payload, context) {
+        requirePermission(draft, context, 'course.request_archive');
+        const course = required(draft.courses.find((item) => item.id === payload.courseId), 'COURSE_NOT_FOUND', 'Không tìm thấy khóa học.');
+        const reason = String(payload.reason || '').trim();
+        if (!reason) throw new CommandError('REASON_REQUIRED', 'Lưu trữ khóa học cần có lý do.');
+        const versionIds = draft.courseVersions.filter((item) => item.courseId === course.id).map((item) => item.id);
+        const inUse = draft.classes.some((item) => versionIds.includes(item.courseVersionId));
+        course.status = inUse ? 'RETIRED' : 'ARCHIVED';
+        course.version = Number(course.version || 0) + 1;
+        course.archivedAt = nowIso();
+        course.archivedBy = context.actor.id;
+        appendEvent(draft, context, 'COURSE_ARCHIVED', 'COURSE', course.id, `${course.name} → ${course.status}.`);
+        appendAudit(draft, context, 'COURSE_ARCHIVED', 'COURSE', course.id, reason);
+        return { message: inUse ? 'Đã ngừng mở mới; lịch sử lớp vẫn được giữ.' : 'Đã lưu trữ khóa học.', status: course.status };
+      },
+
       CREATE_CONTENT_DRAFT(draft, payload, context) {
         requireRole(context.actor, ['TEACHER', 'ACADEMIC_MANAGER']);
         const version = required(draft.courseVersions.find((item) => item.id === payload.courseVersionId), 'COURSE_VERSION_NOT_FOUND', 'Không tìm thấy phiên bản khóa học.');
@@ -650,15 +759,19 @@
       },
 
       PUBLISH_COURSE_VERSION(draft, payload, context) {
-        requireRole(context.actor, ['ACADEMIC_MANAGER']);
         const version = required(draft.courseVersions.find((item) => item.id === payload.courseVersionId), 'COURSE_VERSION_NOT_FOUND', 'Không tìm thấy phiên bản khóa học.');
         if (version.status === 'PUBLISHED' && version.immutable) throw new CommandError('COURSE_VERSION_IMMUTABLE', 'Phiên bản khóa học đã công bố thì không thể sửa.');
-        if (!['DRAFT', 'APPROVED'].includes(version.status)) throw new CommandError('INVALID_COURSE_VERSION_STATE', 'Phiên bản khóa học chưa sẵn sàng để công bố.');
+        requirePermission(draft, context, 'course.publish');
+        if (!['SUBMITTED', 'APPROVED'].includes(version.status)) throw new CommandError('INVALID_COURSE_VERSION_STATE', 'Phiên bản khóa học chưa sẵn sàng để công bố.');
+        const validation = root.YC.selectors.coursePublishValidation(draft, version.id);
+        if (!validation.valid) throw new CommandError('COURSE_VERSION_INVALID', 'Phiên bản khóa học chưa đủ điều kiện công bố.', { evidence: validation });
         version.status = 'PUBLISHED';
         version.immutable = true;
         version.publishedAt = nowIso();
+        version.publishedBy = context.actor.id;
+        version.recordVersion = Number(version.recordVersion || 0) + 1;
         appendEvent(draft, context, 'COURSE_VERSION_PUBLISHED', 'COURSE_VERSION', version.id, `${version.title} đã được công bố.`);
-        appendAudit(draft, context, 'COURSE_VERSION_PUBLISHED', 'COURSE_VERSION', version.id, 'Đã khóa bản chụp chương trình học.');
+        appendAudit(draft, context, 'COURSE_VERSION_PUBLISHED', 'COURSE_VERSION', version.id, String(payload.reason || 'Đã khóa bản chụp chương trình học.'));
         return { message: 'Đã công bố phiên bản khóa học.' };
       },
 

@@ -77,6 +77,14 @@
     }
   }
 
+  function validateCourse(snapshot, state, excludeId = null) {
+    const code = String(snapshot.code || '').trim().toUpperCase();
+    if (!code || !String(snapshot.name || '').trim()) throw approvalError('COURSE_REQUIRED', 'Cần mã và tên khóa học.');
+    if (!state.programs.some((item) => item.id === snapshot.programId)) throw approvalError('PROGRAM_NOT_FOUND', 'Không tìm thấy chương trình.');
+    if (!state.levels.some((item) => item.id === snapshot.levelId && item.programId === snapshot.programId)) throw approvalError('LEVEL_PROGRAM_MISMATCH', 'Cấp độ không thuộc chương trình đã chọn.');
+    if (state.courses.some((item) => item.id !== excludeId && String(item.code).toUpperCase() === code)) throw approvalError('COURSE_CODE_EXISTS', 'Mã khóa học đã tồn tại.');
+  }
+
   function buildRequest(input, context) {
     const resourceType = String(input.resourceType || '').toUpperCase();
     const operation = String(input.operation || '').toUpperCase();
@@ -91,6 +99,7 @@
       throw approvalError('PROPOSAL_REQUIRED', 'Cần có nội dung thay đổi được đề xuất.');
     }
     if (resourceType === 'SESSION') validateSession({ ...(before || {}), ...proposedSnapshot }, context.state, operation);
+    if (resourceType === 'COURSE' && !['ARCHIVE'].includes(operation)) validateCourse({ ...(before || {}), ...proposedSnapshot }, context.state, resourceId);
     const provisionalResourceId = operation === 'CREATE'
       ? proposedSnapshot.provisionalId || proposedSnapshot.id || uid(resourceType.toLowerCase())
       : null;
@@ -156,12 +165,14 @@
         changeRequestId: request.id,
       };
       if (request.resourceType === 'SESSION') validateSession(record, state, request.operation);
+      if (request.resourceType === 'COURSE') validateCourse(record, state);
       collection.push(record);
       return record;
     }
 
     const canonical = collection.find((item) => item.id === request.resourceId);
     if (!canonical) throw approvalError('RESOURCE_NOT_FOUND', 'Không tìm thấy dữ liệu gốc cần áp dụng.');
+    if (request.resourceType === 'COURSE' && !['ARCHIVE'].includes(request.operation)) validateCourse({ ...canonical, ...request.proposedSnapshot }, state, canonical.id);
     if (request.operation === 'ARCHIVE') canonical.status = 'ARCHIVED';
     else if (request.operation === 'CANCEL') canonical.status = 'CANCELLED';
     else Object.assign(canonical, clone(request.proposedSnapshot));
