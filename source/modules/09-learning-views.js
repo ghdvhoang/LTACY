@@ -66,16 +66,22 @@
     return `<div class="workspace-page">${pageHeader('Học bù', 'Bài học bù', 'Nội dung được nối trực tiếp từ buổi học đã vắng; để hoàn thành cần đủ cả video và bài kiểm tra.')}${body}</div>`;
   }
 
-  function studentRemedialDetail(ctx, assignmentId) {
+  function studentRemedialDetail(ctx, resourceId) {
     const learner = learnerFor(ctx);
-    const assignment = ctx.state.remedialAssignments.find((item) => (item.id === assignmentId || item.assessmentId === assignmentId) && item.learnerId === learner.id);
+    const directCase = ctx.state.remedialCases.find((item) => item.id === resourceId && item.learnerId === learner.id);
+    const assignment = ctx.state.remedialAssignments.find((item) => (item.id === resourceId || item.assessmentId === resourceId || item.remedialCaseId === directCase?.id) && item.learnerId === learner.id);
     if (!assignment) return empty('Không tìm thấy bài học bù', 'Nhiệm vụ không tồn tại hoặc không thuộc tài khoản học viên này.', link('Về danh sách học bù', '/app/student/remedial'));
+    const remedialCase = directCase || ctx.state.remedialCases.find((item) => item.id === assignment.remedialCaseId);
     const lesson = ctx.state.lessonTemplates.find((item) => item.id === assignment.lessonTemplateId);
     const assessment = ctx.state.assessments.find((item) => item.id === assignment.assessmentId);
+    const attendance = ctx.state.attendanceRecords.find((item) => item.id === remedialCase?.sourceAttendanceId);
+    const trace = remedialCase && attendance ? root.YC.remedial.sourceTrace(ctx.state, attendance) : null;
+    const bookings = ctx.state.makeUpBookings.filter((item) => item.remedialCaseId === remedialCase?.id);
     return `<div class="workspace-page">${pageHeader('Học viên · Học bù', 'Chi tiết bài học bù', `${lesson?.title || ''} · Hạn ${formatDate(assignment.dueAt)}`, link('Về danh sách', '/app/student/remedial'))}
       <div class="content-grid main-aside"><section class="panel remedial-player"><div class="video-stage"><div class="video-illustration"><button class="play-button" type="button" data-action="toggle-video" data-assignment-id="${escapeHtml(assignment.id)}" aria-label="Phát video">▶</button><div><small>VIDEO BÀI HỌC</small><strong>Thì quá khứ đơn trong ngữ cảnh</strong></div></div><div class="video-controls"><span>${assignment.videoProgress >= 100 ? '✓' : '▶'}</span><div><i style="width:${assignment.videoProgress || 0}%"></i></div><strong>${assignment.videoProgress || 0}%</strong></div></div>
       <div class="panel-body"><p>${escapeHtml(lesson?.objectives?.join(' · ') || '')}</p><div class="progress-presets">${[25, 50, 75, 100].map((value) => `<button class="btn btn-secondary btn-sm" type="button" data-action="video-progress" data-assignment-id="${escapeHtml(assignment.id)}" data-progress="${value}">Lưu ${value}%</button>`).join('')}</div></div></section>
-      ${section('Điều kiện hoàn thành', `<dl class="detail-list"><div><dt>Video tối thiểu</dt><dd>${ctx.state.settings.minimumVideoProgress}%</dd></div><div><dt>Điểm đạt</dt><dd>${assessment?.passingScore || 80}%</dd></div><div><dt>Số lượt làm</dt><dd>${ctx.state.attempts.filter((item) => item.assignmentId === assignment.id).length}/${assessment?.maxAttempts || 3}</dd></div><div><dt>Trạng thái</dt><dd>${badge(assignment.status)}</dd></div></dl>${link('Làm bài kiểm tra', `/app/student/quiz/${assignment.id}`, { kind: 'primary' })}`)}</div></div>`;
+      ${section('Điều kiện hoàn thành', `<dl class="detail-list"><div><dt>Video tối thiểu</dt><dd>${assignment.policySnapshot?.minimumVideoProgress || ctx.state.settings.minimumVideoProgress}%</dd></div><div><dt>Điểm đạt</dt><dd>${assignment.policySnapshot?.passingScore || assessment?.passingScore || 80}%</dd></div><div><dt>Số lượt làm</dt><dd>${ctx.state.attempts.filter((item) => item.assignmentId === assignment.id).length}/${assessment?.maxAttempts || 3}</dd></div><div><dt>Trạng thái</dt><dd>${badge(assignment.status)}</dd></div></dl>${link('Làm bài kiểm tra', `/app/student/quiz/${assignment.id}`, { kind: 'primary' })}`)}</div>
+      <div class="content-grid two">${section('Nguồn bài học bù', trace ? `<dl class="detail-list"><div><dt>Khóa học</dt><dd>${escapeHtml(trace.courseVersion?.title || '')}</dd></div><div><dt>Lớp đã vắng</dt><dd>${escapeHtml(trace.cohort?.name || '')}</dd></div><div><dt>Buổi học</dt><dd>${formatDate(trace.session?.startsAt, true)}</dd></div><div><dt>Điểm danh</dt><dd>${badge(attendance?.status || 'DRAFT')}</dd></div></dl>` : '<p class="muted">Nguồn cũ chưa có đủ liên kết.</p>')}${section('Lịch học bù tại lớp', bookings.length ? bookings.map((booking) => `<article class="queue-card"><div><strong>${escapeHtml(ctx.state.classes.find((item) => item.id === booking.targetClassId)?.name || '')}</strong><small>${formatDate(ctx.state.sessions.find((item) => item.id === booking.targetSessionId)?.startsAt, true)} · Khách học bù</small></div>${badge(booking.status)}</article>`).join('') : '<p class="muted">Chưa đặt lịch tại lớp.</p>')}</div></div>`;
   }
 
   function studentQuiz(ctx, assignmentId) {

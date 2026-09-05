@@ -1,9 +1,9 @@
 {
   "status": "PASS",
   "version": "3.0.0",
-  "runtime_modules": 18,
-  "bundle_bytes": 384318,
-  "standalone_bytes": 519418,
+  "runtime_modules": 19,
+  "bundle_bytes": 490241,
+  "standalone_bytes": 627200,
   "standalone_inline": true,
   "bundle_parity": true,
   "handbook_coverage": true

@@ -31,7 +31,7 @@ def verify_static() -> dict[str, object]:
     module_names = [item.name for item in module_files]
     required_modules = {
         "00-namespace.js", "01-utils.js", "02-permissions.js", "02-seed.js", "03-store.js", "04-policy.js",
-        "05-approval.js", "05-commands.js", "06-selectors.js", "07-ui-kit.js", "08-public-views.js",
+        "05-approval.js", "05-commands.js", "06-remedial.js", "06-selectors.js", "07-ui-kit.js", "08-public-views.js",
         "09-learning-views.js", "10-operations-views.js", "11-governance-views.js", "11-management-views.js",
         "13-router.js", "14-actions.js", "15-bootstrap.js",
     }
@@ -46,6 +46,7 @@ def verify_static() -> dict[str, object]:
     for token in [
         "schemaVersion: 4", "REGISTER_VISITOR", "register-visitor", "/dang-ky", "/tai-khoan", "export-csv", "print-view",
         "SUBMIT_CHANGE_REQUEST", "SET_ROLE_PERMISSION", "/app/admin/approvals", "LEAD_CONTACTED",
+        "CONFIRM_MAKE_UP_BOOKING", "/app/admin/course-versions/", "data-form=\"request-course\"",
         "PARENT_PROGRESS_VIEWED", "RENEWAL_ACCEPTED", "Không có quyền vào khu vực này",
     ]:
         require(token in bundle, f"Runtime token missing: {token}")

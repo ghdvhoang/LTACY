@@ -34,6 +34,7 @@ source/modules/03-store.js
 source/modules/04-policy.js
 source/modules/05-approval.js
 source/modules/05-commands.js
+source/modules/06-remedial.js
 source/modules/06-selectors.js
 source/modules/07-ui-kit.js
 source/modules/08-public-views.js
@@ -51,16 +52,19 @@ source/validation/verification-result.json
 source/validation/verify_prototype.py
 source/yen-center-lms-demo.html
 tests/domain/academic-teacher-ops.test.cjs
+tests/domain/academic-operations-ui.test.cjs
 tests/domain/admissions-commerce.test.cjs
 tests/domain/attendance-ui.test.cjs
 tests/domain/auth-ui.test.cjs
 tests/domain/canonical-journey.test.cjs
 tests/domain/course-superset.test.cjs
+tests/domain/course-class-session-crud.test.cjs
 tests/domain/demo-controller.test.cjs
 tests/domain/foundation.test.cjs
 tests/domain/governance-ui.test.cjs
 tests/domain/learning-outcomes.test.cjs
 tests/domain/rbac-approval.test.cjs
+tests/domain/remedial-case.test.cjs
 tests/domain/remedial-ui.test.cjs
 tests/domain/store-policy.test.cjs
 tests/domain/v2-route-parity.test.cjs

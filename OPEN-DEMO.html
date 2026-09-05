@@ -2094,6 +2094,30 @@ fieldset.question-card { margin:0; }
 .settings-form .settings-grid label { padding:14px; border:1px solid var(--line-200); border-radius:7px; background:#fbfcfe; }
 .settings-form .settings-grid label .input { margin-top:4px; font-size:14px; font-weight:600; }
 
+/* Chuỗi Course → Class → Session → Remedial */
+.trace-breadcrumb { display:flex; align-items:center; flex-wrap:wrap; gap:7px; margin:0 0 14px; color:var(--ink-500); font-size:10px; }
+.trace-breadcrumb a { color:var(--v3-cobalt); font-weight:700; text-decoration:none; }
+.trace-breadcrumb strong { color:var(--ink-700); }
+.trace-breadcrumb span { color:var(--line-400); }
+.operations-form { display:grid; gap:17px; margin-top:18px; padding:20px; }
+.operations-form .form-grid { margin:0; }
+.operations-form label { display:grid; gap:6px; color:var(--ink-700); font-size:11px; font-weight:700; }
+.operations-form .span-two { grid-column:1 / -1; }
+.operations-form > .btn { justify-self:start; }
+.trace-card { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 16px; border:1px solid var(--line-200); border-radius:9px; background:#fff; color:var(--ink-900); text-decoration:none; }
+.trace-card + .trace-card { margin-top:8px; }
+.trace-card strong,.trace-card small { display:block; }
+.trace-card small { margin-top:4px; color:var(--ink-500); }
+.ranking-card { display:grid; gap:14px; padding:18px; border-top:1px solid var(--line-100); }
+.ranking-card:first-child { border-top:0; }
+.ranking-card h3 { margin:3px 0 0; }
+.ranking-card details summary { cursor:pointer; color:var(--v3-cobalt); font-size:11px; font-weight:750; }
+.candidate-list { display:grid; gap:8px; margin-top:12px; }
+.ranking-card .candidate-card { grid-template-columns:minmax(140px,.5fr) 70px 1.5fr; padding:11px; }
+.ranking-card .gate-row { justify-content:flex-start; }
+.ranking-card .notice-panel { padding:12px 14px; }
+.ranking-card .notice-panel p { margin:4px 0 0; }
+
 @media (max-width: 1160px) {
   .public-header nav { display:none; }.public-header .mobile-menu { display:block; margin-left:auto; }.public-actions { margin-left:auto; }.public-actions .header-search { display:none; }.public-actions .auth-action { display:inline-flex; }
   .hero-grid { grid-template-columns:1fr; }.hero-visual { min-height:400px; }.learning-window { width:min(90%,600px); }.floating-stat { right:6%; }
@@ -2114,7 +2138,7 @@ fieldset.question-card { margin:0; }
   .hero-grid { min-height:auto; padding:55px 0; }.hero-copy h1 { font-size:42px; }.hero-copy > p { font-size:15px; }.hero-visual { min-height:330px; }.hero-visual::before { width:300px; height:300px; }.window-content { padding:20px; }.window-content h2 { font-size:19px; }.floating-stat { display:none; }.trust-strip .container { overflow-x:auto; justify-content:flex-start; white-space:nowrap; }
   .public-section { padding-top:60px; padding-bottom:60px; }.section-intro h2,.feature-split h2 { font-size:31px; }.program-grid,.solution-grid { grid-template-columns:1fr; }.public-cta .container,.visitor-account .account-hero { align-items:flex-start; flex-direction:column; }.public-footer > .container { grid-template-columns:1fr 1fr; }.public-footer > .container > div:first-child { grid-column:1/-1; }
   .login-page { grid-template-columns:1fr; }.login-intro { min-height:330px; padding:30px 25px; }.login-intro h1 { font-size:38px; }.login-intro > small { display:none; }.role-picker { padding:40px 22px; }.role-card-grid { grid-template-columns:1fr; }
-  .page-heading { display:grid; }.page-heading h1 { font-size:25px; }.page-actions .btn { width:100%; }.metric-grid.four,.metric-grid.three { grid-template-columns:1fr; }.metric-card { min-height:92px; }.profile-strip { grid-template-columns:1fr; }.today-session { grid-template-columns:1fr; }.today-time { width:60px;height:60px; }.today-session .btn { width:100%; }.continue-card { grid-template-columns:1fr; }.continue-cover { min-height:150px; }.continue-body { padding:24px; }.course-player-head { align-items:flex-start; }.course-overall { display:none; }.video-illustration { min-height:250px; }.lesson-footer { align-items:flex-start; flex-direction:column; }.lesson-footer .btn { width:100%; margin-left:0; }.learning-list article { grid-template-columns:auto 1fr; }.learning-list aside { grid-column:1/-1; grid-template-columns:1fr 1fr 1fr; align-items:center; text-align:left; }.assessment-summary { grid-template-columns:1fr; }.report-banner { align-items:flex-start; }.skill-grid,.skill-grid.compact,.segment-grid,.quality-grid,.settings-grid { grid-template-columns:1fr; }.schedule-row { grid-template-columns:1fr; }.course-facts .container { grid-template-columns:1fr; }.fact { border-left:1px solid var(--line-200); border-bottom:1px solid var(--line-200); }.course-hero h1,.catalog-hero h1,.simple-hero h1 { font-size:38px; }.branch-row { grid-template-columns:1fr; gap:8px; }.topbar-actions .icon-btn { display:none; }.toast-root { left:12px; right:12px; bottom:12px; }.toast { min-width:0; }.attendance-row { grid-template-columns:1fr; }.attendance-options { width:100%; }.attendance-options button { min-width:0; flex:1; }.attendance-save,.quiz-toolbar,.quiz-submit { align-items:stretch; flex-direction:column; }
+  .page-heading { display:grid; }.page-heading h1 { font-size:25px; }.page-actions .btn { width:100%; }.metric-grid.four,.metric-grid.three { grid-template-columns:1fr; }.metric-card { min-height:92px; }.profile-strip { grid-template-columns:1fr; }.today-session { grid-template-columns:1fr; }.today-time { width:60px;height:60px; }.today-session .btn { width:100%; }.continue-card { grid-template-columns:1fr; }.continue-cover { min-height:150px; }.continue-body { padding:24px; }.course-player-head { align-items:flex-start; }.course-overall { display:none; }.video-illustration { min-height:250px; }.lesson-footer { align-items:flex-start; flex-direction:column; }.lesson-footer .btn { width:100%; margin-left:0; }.learning-list article { grid-template-columns:auto 1fr; }.learning-list aside { grid-column:1/-1; grid-template-columns:1fr 1fr 1fr; align-items:center; text-align:left; }.assessment-summary { grid-template-columns:1fr; }.report-banner { align-items:flex-start; }.skill-grid,.skill-grid.compact,.segment-grid,.quality-grid,.settings-grid { grid-template-columns:1fr; }.schedule-row { grid-template-columns:1fr; }.course-facts .container { grid-template-columns:1fr; }.fact { border-left:1px solid var(--line-200); border-bottom:1px solid var(--line-200); }.course-hero h1,.catalog-hero h1,.simple-hero h1 { font-size:38px; }.branch-row { grid-template-columns:1fr; gap:8px; }.topbar-actions .icon-btn { display:none; }.toast-root { left:12px; right:12px; bottom:12px; }.toast { min-width:0; }.attendance-row { grid-template-columns:1fr; }.attendance-options { width:100%; }.attendance-options button { min-width:0; flex:1; }.attendance-save,.quiz-toolbar,.quiz-submit { align-items:stretch; flex-direction:column; }.operations-form .span-two { grid-column:auto; }.ranking-card .candidate-card { grid-template-columns:1fr; }.trace-card { align-items:flex-start; flex-direction:column; }
 }
 
 @media print {
@@ -2297,7 +2321,8 @@ fieldset.question-card { margin:0; }
     ...['class.view', 'class.manage_roster', 'allocation.edit', 'service.case_edit', 'attendance.correct_after_window', 'substitution.edit', 'remedial.view', 'remedial.book_live'].map((id) => grant('STUDENT_SERVICE', id, 'BRANCH')),
     ...['invoice.edit', 'payment.edit', 'refund.edit', 'tuition.view', 'report.view', 'report.export'].map((id) => grant('FINANCE', id)),
     ...['course.view', 'course.request_create', 'course.request_update', 'course.request_archive', 'content.view', 'content.request_create', 'content.request_update'].map((id) => grant('TEACHER', id, 'BRANCH')),
-    ...['class.view', 'session.view', 'session.request_create', 'session.request_reschedule', 'session.request_cancel', 'session.prepare', 'session.start', 'session.complete', 'attendance.view', 'attendance.edit', 'attendance.finalize', 'remedial.view', 'remedial.propose', 'remedial.manage_link', 'remedial.extend', 'learner.view', 'homework.edit', 'grade.edit', 'report.view'].map((id) => grant('TEACHER', id, 'ASSIGNED_CLASS')),
+    grant('TEACHER', 'class.request_create', 'BRANCH'),
+    ...['class.view', 'class.request_update', 'class.request_archive', 'session.view', 'session.request_create', 'session.request_reschedule', 'session.request_cancel', 'session.prepare', 'session.start', 'session.complete', 'attendance.view', 'attendance.edit', 'attendance.finalize', 'remedial.view', 'remedial.propose', 'remedial.manage_link', 'remedial.extend', 'learner.view', 'homework.edit', 'grade.edit', 'report.view'].map((id) => grant('TEACHER', id, 'ASSIGNED_CLASS')),
     ...['class.view', 'session.view', 'attendance.view', 'attendance.edit', 'attendance.finalize', 'remedial.view', 'learner.view'].map((id) => grant('TA', id, 'ASSIGNED_CLASS')),
     grant('STUDENT', 'learning.own_view', 'OWN_LEARNER'),
     grant('STUDENT', 'learning.own_edit', 'OWN_LEARNER'),
@@ -2433,9 +2458,9 @@ fieldset.question-card { margin:0; }
         { id: 'course-5', programId: 'program-foundation', levelId: 'level-a1', code: 'ENG-FND-5', name: 'Tiếng Anh nền tảng 5', status: 'PUBLISHED', version: 1 },
       ],
       courseVersions: [
-        { id: 'course-v6', courseId: 'course-6', version: 3, recordVersion: 1, title: 'Tiếng Anh nền tảng 6 · A2.1', status: 'PUBLISHED', immutable: true, totalHours: 48, completionRule: { attendanceMinimum: 75, finalScoreMinimum: 70, skillMinimum: 60 }, publishedAt: at(-90) },
-        { id: 'course-v7', courseId: 'course-7', version: 2, recordVersion: 1, title: 'Tiếng Anh nền tảng 7 · A2.2', status: 'PUBLISHED', immutable: true, totalHours: 48, completionRule: { attendanceMinimum: 75, finalScoreMinimum: 72, skillMinimum: 62 }, publishedAt: at(-80) },
-        { id: 'course-v5', courseId: 'course-5', version: 4, recordVersion: 1, title: 'Tiếng Anh nền tảng 5 · A1', status: 'PUBLISHED', immutable: true, totalHours: 42, completionRule: { attendanceMinimum: 70, finalScoreMinimum: 65, skillMinimum: 55 }, publishedAt: at(-75) },
+        { id: 'course-v6', courseId: 'course-6', version: 3, recordVersion: 1, title: 'Tiếng Anh nền tảng 6 · A2.1', status: 'PUBLISHED', immutable: true, totalHours: 48, completionRule: { attendanceMinimum: 75, finalScoreMinimum: 70, skillMinimum: 60 }, remedialPolicy: { triggerStatuses: ['ABSENT'], requiredModes: ['ONLINE'], deadlineDays: 7, passingScore: 80, minimumVideoProgress: 80 }, publishedAt: at(-90) },
+        { id: 'course-v7', courseId: 'course-7', version: 2, recordVersion: 1, title: 'Tiếng Anh nền tảng 7 · A2.2', status: 'PUBLISHED', immutable: true, totalHours: 48, completionRule: { attendanceMinimum: 75, finalScoreMinimum: 72, skillMinimum: 62 }, remedialPolicy: { triggerStatuses: ['ABSENT'], requiredModes: ['ONLINE'], deadlineDays: 7, passingScore: 80, minimumVideoProgress: 80 }, publishedAt: at(-80) },
+        { id: 'course-v5', courseId: 'course-5', version: 4, recordVersion: 1, title: 'Tiếng Anh nền tảng 5 · A1', status: 'PUBLISHED', immutable: true, totalHours: 42, completionRule: { attendanceMinimum: 70, finalScoreMinimum: 65, skillMinimum: 55 }, remedialPolicy: { triggerStatuses: ['ABSENT'], requiredModes: ['ONLINE'], deadlineDays: 7, passingScore: 75, minimumVideoProgress: 80 }, publishedAt: at(-75) },
       ],
       units: [
         { id: 'unit-v6-4', courseVersionId: 'course-v6', order: 4, title: 'Trải nghiệm trong quá khứ', outcome: 'Kể lại trải nghiệm đã xảy ra' },
@@ -2515,6 +2540,7 @@ fieldset.question-card { margin:0; }
       payments: [],
       refunds: [],
       renewals: [],
+      remedialCases: [],
       remedialAssignments: [],
       videoProgressRecords: [],
       progressReports: [],
@@ -2568,12 +2594,35 @@ fieldset.question-card { margin:0; }
     next.rolePermissions = baseline.rolePermissions;
     next.userPermissionOverrides = Array.isArray(next.userPermissionOverrides) ? next.userPermissionOverrides : [];
     next.changeRequests = Array.isArray(next.changeRequests) ? next.changeRequests : [];
+    next.remedialCases = Array.isArray(next.remedialCases) ? next.remedialCases : [];
     next.settings = { ...baseline.settings, ...(next.settings || {}) };
     next.organizations = (next.organizations || baseline.organizations).map((item) => ({ version: 1, ...item }));
     next.courses = (next.courses || []).map((item) => ({ version: 1, ...item }));
     next.courseVersions = (next.courseVersions || []).map((item) => ({ recordVersion: 1, ...item }));
     next.classes = (next.classes || []).map((item) => ({ version: 1, ...item }));
     next.sessions = (next.sessions || []).map((item) => ({ version: 1, ...item }));
+    (next.remedialAssignments || []).forEach((assignment, index) => {
+      if (assignment.remedialCaseId) return;
+      const attendance = (next.attendanceRecords || []).find((item) => item.sessionId === assignment.sessionId && item.learnerId === assignment.learnerId) || null;
+      const session = (next.sessions || []).find((item) => item.id === assignment.sessionId) || null;
+      const cohort = (next.classes || []).find((item) => item.id === session?.classId) || null;
+      const courseVersion = (next.courseVersions || []).find((item) => item.id === cohort?.courseVersionId) || null;
+      let remedialCase = next.remedialCases.find((item) => attendance && item.sourceAttendanceId === attendance.id);
+      if (!remedialCase) {
+        remedialCase = {
+          id: `remedial-case-migrated-${index + 1}`, learnerId: assignment.learnerId,
+          sourceAttendanceId: attendance?.id || null, sourceSessionId: assignment.sessionId,
+          sourceClassId: cohort?.id || null, sourceCourseVersionId: courseVersion?.id || null,
+          sourceCourseId: courseVersion?.courseId || null, sourceLessonTemplateId: assignment.lessonTemplateId || session?.lessonTemplateId || null,
+          policySnapshot: clone(courseVersion?.remedialPolicy || { triggerStatuses: ['ABSENT'], requiredModes: ['ONLINE'], deadlineDays: next.settings?.remedialDeadlineDays || baseline.settings.remedialDeadlineDays, passingScore: next.settings?.defaultPassingScore || baseline.settings.defaultPassingScore, minimumVideoProgress: next.settings?.minimumVideoProgress || baseline.settings.minimumVideoProgress }),
+          requiredModes: ['ONLINE'], openedAt: assignment.assignedAt || next.seededAt, openedBy: assignment.assignedBy || 'migration-v3', resolution: null,
+          reconciliationHistory: [{ fromStatus: null, toStatus: attendance?.status || 'ABSENT', occurredAt: next.seededAt, actorId: 'migration-v3' }],
+        };
+        next.remedialCases.push(remedialCase);
+      }
+      assignment.remedialCaseId = remedialCase.id;
+      (next.makeUpBookings || []).filter((item) => item.sourceAttendanceId === remedialCase.sourceAttendanceId).forEach((item) => { item.remedialCaseId = remedialCase.id; });
+    });
     next.migrationNotice = { code: 'V3_MIGRATED', message: 'Đã nâng dữ liệu v3 lên schema v4 và giữ nguyên hành trình học tập.' };
     return next;
   }
@@ -2850,7 +2899,7 @@ fieldset.question-card { margin:0; }
     )).map((field) => ({ field, before: clone(left[field] ?? null), after: clone(right[field] ?? null) }));
   }
 
-  function validateSession(snapshot, state, operation) {
+  function validateSession(snapshot, state, operation, excludeSessionId = null) {
     if (operation === 'CREATE') {
       if (!state.classes.some((item) => item.id === snapshot.classId)) throw approvalError('CLASS_NOT_FOUND', 'Không tìm thấy lớp của buổi học.');
       if (!state.lessonTemplates.some((item) => item.id === snapshot.lessonTemplateId)) throw approvalError('LESSON_NOT_FOUND', 'Không tìm thấy bài học mẫu.');
@@ -2862,6 +2911,31 @@ fieldset.question-card { margin:0; }
         throw approvalError('INVALID_SESSION_TIME', 'Thời gian kết thúc phải sau thời gian bắt đầu.');
       }
     }
+    if (['CREATE', 'RESCHEDULE', 'UPDATE'].includes(operation) && root.YC.selectors?.sessionValidation) {
+      const validation = root.YC.selectors.sessionValidation(state, { ...snapshot, excludeSessionId });
+      if (!validation.valid) throw approvalError(validation.errors[0].code, validation.errors[0].message);
+    }
+  }
+
+  function validateCourse(snapshot, state, excludeId = null) {
+    const code = String(snapshot.code || '').trim().toUpperCase();
+    if (!code || !String(snapshot.name || '').trim()) throw approvalError('COURSE_REQUIRED', 'Cần mã và tên khóa học.');
+    if (!state.programs.some((item) => item.id === snapshot.programId)) throw approvalError('PROGRAM_NOT_FOUND', 'Không tìm thấy chương trình.');
+    if (!state.levels.some((item) => item.id === snapshot.levelId && item.programId === snapshot.programId)) throw approvalError('LEVEL_PROGRAM_MISMATCH', 'Cấp độ không thuộc chương trình đã chọn.');
+    if (state.courses.some((item) => item.id !== excludeId && String(item.code).toUpperCase() === code)) throw approvalError('COURSE_CODE_EXISTS', 'Mã khóa học đã tồn tại.');
+  }
+
+  function validateClass(snapshot, state, excludeId = null) {
+    const code = String(snapshot.code || '').trim().toUpperCase();
+    if (!code || !String(snapshot.name || '').trim()) throw approvalError('CLASS_REQUIRED', 'Cần mã và tên lớp học.');
+    if (!state.branches.some((item) => item.id === snapshot.branchId && item.status === 'ACTIVE')) throw approvalError('BRANCH_NOT_FOUND', 'Không tìm thấy chi nhánh đang hoạt động.');
+    const version = state.courseVersions.find((item) => item.id === snapshot.courseVersionId);
+    if (!version || version.status !== 'PUBLISHED' || !version.immutable) throw approvalError('COURSE_VERSION_NOT_PUBLISHED', 'Lớp chỉ được gắn với phiên bản khóa học đã công bố.');
+    const capacity = Number(snapshot.capacity || 0);
+    const minimum = Number(snapshot.minCapacity || 1);
+    if (!Number.isInteger(capacity) || capacity < 1 || !Number.isInteger(minimum) || minimum < 1 || minimum > capacity) throw approvalError('INVALID_CLASS_CAPACITY', 'Sức chứa tối thiểu và tối đa của lớp không hợp lệ.');
+    if (state.classes.some((item) => item.id !== excludeId && String(item.code).toUpperCase() === code)) throw approvalError('CLASS_CODE_EXISTS', 'Mã lớp đã tồn tại.');
+    if (snapshot.startDate && snapshot.endDate && new Date(snapshot.endDate).getTime() < new Date(snapshot.startDate).getTime()) throw approvalError('INVALID_CLASS_DATES', 'Ngày kết thúc phải sau ngày bắt đầu.');
   }
 
   function buildRequest(input, context) {
@@ -2877,7 +2951,9 @@ fieldset.question-card { margin:0; }
     if (!Object.keys(proposedSnapshot).length && !['ARCHIVE', 'CANCEL'].includes(operation)) {
       throw approvalError('PROPOSAL_REQUIRED', 'Cần có nội dung thay đổi được đề xuất.');
     }
-    if (resourceType === 'SESSION') validateSession({ ...(before || {}), ...proposedSnapshot }, context.state, operation);
+    if (resourceType === 'SESSION') validateSession({ ...(before || {}), ...proposedSnapshot }, context.state, operation, resourceId);
+    if (resourceType === 'COURSE' && !['ARCHIVE'].includes(operation)) validateCourse({ ...(before || {}), ...proposedSnapshot }, context.state, resourceId);
+    if (resourceType === 'CLASS' && !['ARCHIVE'].includes(operation)) validateClass({ ...(before || {}), ...proposedSnapshot }, context.state, resourceId);
     const provisionalResourceId = operation === 'CREATE'
       ? proposedSnapshot.provisionalId || proposedSnapshot.id || uid(resourceType.toLowerCase())
       : null;
@@ -2943,12 +3019,36 @@ fieldset.question-card { margin:0; }
         changeRequestId: request.id,
       };
       if (request.resourceType === 'SESSION') validateSession(record, state, request.operation);
+      if (request.resourceType === 'COURSE') validateCourse(record, state);
+      if (request.resourceType === 'CLASS') validateClass(record, state);
       collection.push(record);
+      if (request.resourceType === 'CLASS' && Array.isArray(record.recurrence) && record.recurrence.length) {
+        state.timetableRules.push({
+          id: uid('timetable'), classId: record.id, recurrence: clone(record.recurrence),
+          durationMinutes: Number(record.durationMinutes || 90), room: record.room,
+          branchId: record.branchId, timezone: record.timezone || 'Asia/Ho_Chi_Minh', status: 'ACTIVE',
+        });
+      }
+      if (request.resourceType === 'SESSION') {
+        state.lessonPlans.push({ id: uid('lesson-plan'), sessionId: record.id, lessonTemplateId: record.lessonTemplateId, adaptations: [], readiness: 'DRAFT', ownerId: request.submittedBy });
+        const assignments = state.teacherAssignments.filter((item) => item.classId === record.classId && ['ACCEPTED', 'ACTIVE'].includes(item.status));
+        assignments.forEach((assignment) => state.sessionAssignments.push({ id: uid('session-assignment'), sessionId: record.id, teacherProfileId: assignment.teacherProfileId, role: assignment.role, status: 'ACTIVE', startsAt: record.startsAt, endsAt: record.endsAt }));
+      }
       return record;
     }
 
     const canonical = collection.find((item) => item.id === request.resourceId);
     if (!canonical) throw approvalError('RESOURCE_NOT_FOUND', 'Không tìm thấy dữ liệu gốc cần áp dụng.');
+    if (request.resourceType === 'COURSE' && !['ARCHIVE'].includes(request.operation)) validateCourse({ ...canonical, ...request.proposedSnapshot }, state, canonical.id);
+    if (request.resourceType === 'CLASS' && !['ARCHIVE'].includes(request.operation)) validateClass({ ...canonical, ...request.proposedSnapshot }, state, canonical.id);
+    if (request.resourceType === 'SESSION' && ['RESCHEDULE', 'UPDATE'].includes(request.operation)) {
+      validateSession({ ...canonical, ...request.proposedSnapshot }, state, request.operation, canonical.id);
+      canonical.scheduleRevisions ||= [];
+      canonical.scheduleRevisions.push({
+        startsAt: canonical.startsAt, endsAt: canonical.endsAt, room: canonical.room, mode: canonical.mode,
+        version: canonical[config.versionKey], changedByRequestId: request.id, changedAt: request.reviewedAt,
+      });
+    }
     if (request.operation === 'ARCHIVE') canonical.status = 'ARCHIVED';
     else if (request.operation === 'CANCEL') canonical.status = 'CANCELLED';
     else Object.assign(canonical, clone(request.proposedSnapshot));
@@ -2988,7 +3088,7 @@ fieldset.question-card { margin:0; }
 (function defineCommands(root) {
   'use strict';
 
-  const { uid } = root.YC.utils;
+  const { clone, uid } = root.YC.utils;
 
   class CommandError extends Error {
     constructor(code, message, details = {}) {
@@ -3098,12 +3198,108 @@ fieldset.question-card { margin:0; }
       draft.notifications.unshift({ id: uid('notification'), userId, title, body, link, read: false, createdAt: nowIso() });
     }
 
+    function generateClassSessions(draft, cohort) {
+      const rules = draft.timetableRules.filter((item) => item.classId === cohort.id && item.status !== 'INACTIVE');
+      const unitIds = draft.units.filter((item) => item.courseVersionId === cohort.courseVersionId).sort((a, b) => a.order - b.order).map((item) => item.id);
+      const lessons = draft.lessonTemplates.filter((item) => unitIds.includes(item.unitId)).sort((a, b) => unitIds.indexOf(a.unitId) - unitIds.indexOf(b.unitId));
+      if (!lessons.length) throw new CommandError('CLASS_LESSON_REQUIRED', 'Phiên bản khóa học chưa có bài học để sinh lịch.');
+      const dayIndexes = { SUN: 0, MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6 };
+      const start = new Date(`${cohort.startDate || nowIso().slice(0, 10)}T00:00:00Z`);
+      const fallbackEnd = new Date(start.getTime() + 28 * 86400000);
+      const end = cohort.endDate ? new Date(`${cohort.endDate}T23:59:59Z`) : fallbackEnd;
+      let created = 0;
+      for (let cursor = new Date(start); cursor <= end && created < 48; cursor = new Date(cursor.getTime() + 86400000)) {
+        const date = cursor.toISOString().slice(0, 10);
+        for (const rule of rules) {
+          for (const slot of rule.recurrence || []) {
+            const match = /^(SUN|MON|TUE|WED|THU|FRI|SAT)_(\d{2})(\d{2})$/.exec(slot);
+            if (!match || dayIndexes[match[1]] !== cursor.getUTCDay()) continue;
+            const startsAt = new Date(`${date}T${match[2]}:${match[3]}:00+07:00`);
+            const endsAt = new Date(startsAt.getTime() + Number(rule.durationMinutes || cohort.durationMinutes || 90) * 60000);
+            const startIso = startsAt.toISOString();
+            if (draft.sessions.some((item) => item.classId === cohort.id && item.startsAt === startIso)) continue;
+            const lesson = lessons[created % lessons.length];
+            draft.sessions.push({
+              id: uid('session'), classId: cohort.id, lessonTemplateId: lesson.id,
+              startsAt: startIso, endsAt: endsAt.toISOString(), room: rule.room || cohort.room,
+              mode: cohort.mode, status: 'PLANNED', attendanceFinalized: false, version: 1,
+              generatedFromTimetableId: rule.id,
+            });
+            created += 1;
+          }
+        }
+      }
+      return created;
+    }
+
     function findLead(draft, leadId) {
       return required(draft.leads.find((item) => item.id === leadId), 'LEAD_NOT_FOUND', 'Không tìm thấy khách hàng.');
     }
 
     function latestForLead(collection, leadId) {
       return collection.filter((item) => item.leadId === leadId).at(-1) || null;
+    }
+
+    function activeMakeUpBooking(draft, caseId) {
+      return draft.makeUpBookings.find((item) => item.remedialCaseId === caseId && ['HELD', 'BOOKED', 'NOTIFIED'].includes(item.status)) || null;
+    }
+
+    function validateMakeUpTarget(draft, payload, context) {
+      const remedialCase = required(draft.remedialCases.find((item) => item.id === payload.caseId), 'REMEDIAL_CASE_NOT_FOUND', 'Không tìm thấy hồ sơ học bù.');
+      const targetSession = required(draft.sessions.find((item) => item.id === payload.targetSessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học đích.');
+      const candidate = required(root.YC.remedial.rankMakeUpTargets(draft, remedialCase.id).find((item) => item.sessionId === targetSession.id), 'MAKE_UP_TARGET_INELIGIBLE', 'Buổi học này không thể dùng làm lịch học bù.');
+      const failures = candidate.hardGates.filter((item) => !item.passed);
+      const nonMappingFailures = failures.filter((item) => item.key !== 'LESSON_TEMPLATE');
+      if (nonMappingFailures.length) {
+        throw new CommandError('MAKE_UP_TARGET_INELIGIBLE', nonMappingFailures.map((item) => item.label).join(' · '), {
+          alternatives: root.YC.remedial.rankMakeUpTargets(draft, remedialCase.id).filter((item) => item.eligible).slice(0, 3),
+        });
+      }
+      let contentMapping = { type: 'EXACT', sourceLessonTemplateId: remedialCase.sourceLessonTemplateId, targetLessonTemplateId: targetSession.lessonTemplateId, coverageNote: null, approvedBy: null, approvedAt: null };
+      if (failures.some((item) => item.key === 'LESSON_TEMPLATE')) {
+        if (context.actor.role !== 'ADMIN') throw new CommandError('CONTENT_MAPPING_APPROVAL_REQUIRED', 'Nội dung khác bài học gốc; cần Admin duyệt mapping.');
+        const overrideNote = String(payload.overrideNote || '').trim();
+        if (!overrideNote) throw new CommandError('OVERRIDE_NOTE_REQUIRED', 'Admin cần ghi rõ phạm vi nội dung tương đương.');
+        contentMapping = { ...contentMapping, type: 'ADMIN_EQUIVALENT', coverageNote: overrideNote, approvedBy: context.actor.id, approvedAt: nowIso() };
+      }
+      return { remedialCase, targetSession, targetClass: draft.classes.find((item) => item.id === targetSession.classId), candidate, contentMapping };
+    }
+
+    function makeUpBookingRecord(draft, validated, context, status) {
+      const confirmationDeadline = new Date(new Date(nowIso()).getTime() + 24 * 60 * 60 * 1000).toISOString();
+      const booking = {
+        id: uid('make-up'), remedialCaseId: validated.remedialCase.id, learnerId: validated.remedialCase.learnerId,
+        sourceAttendanceId: validated.remedialCase.sourceAttendanceId,
+        originalSessionId: validated.remedialCase.sourceSessionId, originalClassId: validated.remedialCase.sourceClassId,
+        targetSessionId: validated.targetSession.id, targetClassId: validated.targetSession.classId,
+        sessionId: validated.targetSession.id, reservedSeats: 1, rosterRole: 'MAKE_UP_GUEST',
+        contentMapping: validated.contentMapping, status, bookedBy: status === 'BOOKED' ? context.actor.id : null,
+        bookedAt: status === 'BOOKED' ? nowIso() : null, heldBy: status === 'HELD' ? context.actor.id : null,
+        heldAt: status === 'HELD' ? nowIso() : null, confirmationDeadline,
+        history: [{ fromStatus: 'CANDIDATE', toStatus: status, occurredAt: nowIso(), actorId: context.actor.id }],
+      };
+      draft.makeUpBookings.push(booking);
+      return booking;
+    }
+
+    function applyAdminDirectChange(draft, input, context) {
+      const permissionId = approvalCall(() => root.YC.approval.permissionFor(input.resourceType, input.operation));
+      const scope = root.YC.approval.resourceScope(input, draft);
+      if (!root.YC.policy.can(context.actor, permissionId, scope, draft)) throw new CommandError('FORBIDDEN', 'Tài khoản hiện tại không có quyền tạo dữ liệu này.');
+      const request = approvalCall(() => root.YC.approval.buildRequest(input, { actorId: context.actor.id, now: nowIso(), state: draft }));
+      request.direct = true;
+      request.reviewerId = context.actor.id;
+      request.reviewNote = 'Quản trị viên tạo trực tiếp theo quyền được cấp.';
+      request.reviewedAt = nowIso();
+      const canonical = approvalCall(() => root.YC.approval.applyChange(request, draft));
+      root.YC.approval.transition(request, 'APPROVED');
+      request.resourceId = canonical.id;
+      request.appliedAt = nowIso();
+      draft.changeRequests.push(request);
+      const event = appendEvent(draft, context, 'ADMIN_DIRECT_CHANGE_APPLIED', 'CHANGE_REQUEST', request.id, `${request.resourceType} · ${request.operation} · ${input.reason}.`);
+      request.eventIds.push(event.id);
+      appendAudit(draft, context, 'ADMIN_DIRECT_CHANGE_APPLIED', request.resourceType, canonical.id, input.reason);
+      return { message: 'Đã tạo dữ liệu chính thức và lưu đầy đủ nhật ký.', requestId: request.id, resourceId: canonical.id, status: request.status, applied: true };
     }
 
     const handlers = {
@@ -3611,6 +3807,203 @@ fieldset.question-card { margin:0; }
         return { message: 'Đã hoàn tất gia hạn.' };
       },
 
+      REQUEST_CREATE_COURSE(draft, payload, context) {
+        const branchId = payload.branchId || context.actor.branchIds?.[0];
+        const proposal = {
+          provisionalId: payload.provisionalId || uid('course-proposed'),
+          code: String(payload.code || '').trim().toUpperCase(),
+          name: String(payload.name || '').trim(),
+          programId: payload.programId,
+          levelId: payload.levelId,
+          ageBand: payload.ageBand,
+          modes: Array.isArray(payload.modes) ? payload.modes : [payload.mode || 'OFFLINE'],
+          description: String(payload.description || '').trim(),
+          branchId,
+          branchIds: Array.isArray(payload.branchIds) ? payload.branchIds : branchId ? [branchId] : [],
+          status: 'DRAFT',
+          version: 1,
+        };
+        const input = {
+          resourceType: 'COURSE', operation: 'CREATE', baseVersion: 0,
+          proposedSnapshot: proposal, reason: payload.reason,
+        };
+        if (context.actor.role === 'ADMIN') return applyAdminDirectChange(draft, input, context);
+        return handlers.SUBMIT_CHANGE_REQUEST(draft, input, context);
+      },
+
+      REQUEST_UPDATE_COURSE(draft, payload, context) {
+        const course = required(draft.courses.find((item) => item.id === payload.courseId), 'COURSE_NOT_FOUND', 'Không tìm thấy khóa học.');
+        const branchId = payload.branchId || course.branchIds?.[0] || context.actor.branchIds?.[0];
+        const proposal = { ...payload, branchId };
+        delete proposal.courseId;
+        delete proposal.reason;
+        return handlers.SUBMIT_CHANGE_REQUEST(draft, {
+          resourceType: 'COURSE', operation: 'UPDATE', resourceId: course.id, baseVersion: course.version,
+          proposedSnapshot: proposal, reason: payload.reason,
+        }, context);
+      },
+
+      CREATE_COURSE_VERSION(draft, payload, context) {
+        requirePermission(draft, context, 'course.review');
+        const course = required(draft.courses.find((item) => item.id === payload.courseId), 'COURSE_NOT_FOUND', 'Không tìm thấy khóa học.');
+        const base = required(draft.courseVersions.find((item) => item.id === payload.baseVersionId && item.courseId === course.id), 'BASE_VERSION_NOT_FOUND', 'Không tìm thấy phiên bản gốc của khóa học.');
+        const nextNumber = Math.max(0, ...draft.courseVersions.filter((item) => item.courseId === course.id).map((item) => Number(item.version || 0))) + 1;
+        const version = {
+          ...clone(base), id: uid('course-version'), version: nextNumber, recordVersion: 1,
+          title: String(payload.title || `${course.name} · v${nextNumber}`).trim(),
+          baseVersionId: base.id, changeSummary: String(payload.changeSummary || '').trim(),
+          status: 'DRAFT', immutable: false, publishedAt: null, publishedBy: null,
+          createdAt: nowIso(), createdBy: context.actor.id,
+        };
+        draft.courseVersions.push(version);
+
+        const unitMap = new Map();
+        const lessonMap = new Map();
+        draft.units.filter((item) => item.courseVersionId === base.id).forEach((item) => {
+          const cloned = { ...clone(item), id: uid('unit'), courseVersionId: version.id };
+          unitMap.set(item.id, cloned.id);
+          draft.units.push(cloned);
+        });
+        const baseUnitIds = [...unitMap.keys()];
+        draft.lessonTemplates.filter((item) => baseUnitIds.includes(item.unitId)).forEach((item) => {
+          const cloned = { ...clone(item), id: uid('lesson'), unitId: unitMap.get(item.unitId), version: 1, status: 'DRAFT' };
+          lessonMap.set(item.id, cloned.id);
+          draft.lessonTemplates.push(cloned);
+        });
+        const baseLessonIds = [...lessonMap.keys()];
+        draft.learningItems.filter((item) => baseLessonIds.includes(item.lessonTemplateId)).forEach((item) => {
+          draft.learningItems.push({ ...clone(item), id: uid('learning-item'), lessonTemplateId: lessonMap.get(item.lessonTemplateId), status: 'DRAFT' });
+        });
+        draft.assessments.filter((item) => item.courseVersionId === base.id || baseLessonIds.includes(item.lessonTemplateId)).forEach((item) => {
+          draft.assessments.push({
+            ...clone(item), id: uid('assessment'),
+            courseVersionId: item.courseVersionId === base.id ? version.id : item.courseVersionId,
+            lessonTemplateId: lessonMap.get(item.lessonTemplateId) || item.lessonTemplateId,
+            status: 'DRAFT',
+          });
+        });
+        appendEvent(draft, context, 'COURSE_VERSION_FORKED', 'COURSE_VERSION', version.id, `${base.title} → v${nextNumber}.`);
+        appendAudit(draft, context, 'COURSE_VERSION_FORKED', 'COURSE_VERSION', version.id, version.changeSummary || 'Tạo bản nháp từ phiên bản đã công bố.');
+        return { message: 'Đã tạo phiên bản khóa học mới để chỉnh sửa.', courseVersionId: version.id };
+      },
+
+      SUBMIT_COURSE_VERSION(draft, payload, context) {
+        requirePermission(draft, context, 'course.review');
+        const version = required(draft.courseVersions.find((item) => item.id === payload.courseVersionId), 'COURSE_VERSION_NOT_FOUND', 'Không tìm thấy phiên bản khóa học.');
+        if (version.immutable || version.status !== 'DRAFT') throw new CommandError('INVALID_COURSE_VERSION_STATE', 'Chỉ bản nháp chưa khóa mới có thể gửi duyệt.');
+        const validation = root.YC.selectors.coursePublishValidation(draft, version.id);
+        if (!validation.valid) throw new CommandError('COURSE_VERSION_INVALID', 'Phiên bản khóa học chưa đủ điều kiện gửi duyệt.', { evidence: validation });
+        version.status = 'SUBMITTED';
+        version.submittedAt = nowIso();
+        version.submittedBy = context.actor.id;
+        version.submitReason = String(payload.reason || '').trim();
+        appendEvent(draft, context, 'COURSE_VERSION_SUBMITTED', 'COURSE_VERSION', version.id, `${version.title} đang chờ phát hành.`);
+        appendAudit(draft, context, 'COURSE_VERSION_SUBMITTED', 'COURSE_VERSION', version.id, version.submitReason || 'Đã vượt qua kiểm tra cấu trúc.');
+        return { message: 'Đã gửi phiên bản khóa học để phát hành.', validation };
+      },
+
+      ARCHIVE_COURSE(draft, payload, context) {
+        requirePermission(draft, context, 'course.request_archive');
+        const course = required(draft.courses.find((item) => item.id === payload.courseId), 'COURSE_NOT_FOUND', 'Không tìm thấy khóa học.');
+        const reason = String(payload.reason || '').trim();
+        if (!reason) throw new CommandError('REASON_REQUIRED', 'Lưu trữ khóa học cần có lý do.');
+        const versionIds = draft.courseVersions.filter((item) => item.courseId === course.id).map((item) => item.id);
+        const inUse = draft.classes.some((item) => versionIds.includes(item.courseVersionId));
+        course.status = inUse ? 'RETIRED' : 'ARCHIVED';
+        course.version = Number(course.version || 0) + 1;
+        course.archivedAt = nowIso();
+        course.archivedBy = context.actor.id;
+        appendEvent(draft, context, 'COURSE_ARCHIVED', 'COURSE', course.id, `${course.name} → ${course.status}.`);
+        appendAudit(draft, context, 'COURSE_ARCHIVED', 'COURSE', course.id, reason);
+        return { message: inUse ? 'Đã ngừng mở mới; lịch sử lớp vẫn được giữ.' : 'Đã lưu trữ khóa học.', status: course.status };
+      },
+
+      REQUEST_CREATE_CLASS(draft, payload, context) {
+        const proposal = {
+          provisionalId: payload.provisionalId || uid('class-proposed'),
+          code: String(payload.code || '').trim().toUpperCase(), name: String(payload.name || '').trim(),
+          branchId: payload.branchId, courseVersionId: payload.courseVersionId,
+          ageBand: payload.ageBand, mode: payload.mode || 'OFFLINE',
+          capacity: Number(payload.capacity || 0), minCapacity: Number(payload.minCapacity || 1),
+          room: String(payload.room || '').trim(), meetingUrl: String(payload.meetingUrl || '').trim(),
+          startDate: payload.startDate, endDate: payload.endDate,
+          enrollmentStartsAt: payload.enrollmentStartsAt || null, enrollmentEndsAt: payload.enrollmentEndsAt || payload.startDate || null,
+          timezone: payload.timezone || 'Asia/Ho_Chi_Minh', recurrence: Array.isArray(payload.recurrence) ? payload.recurrence : [],
+          durationMinutes: Number(payload.durationMinutes || 90), waitlistPolicy: payload.waitlistPolicy || 'QUEUE',
+          remedialPolicySnapshot: clone(draft.courseVersions.find((item) => item.id === payload.courseVersionId)?.remedialPolicy || {}),
+          status: 'DRAFT', version: 1,
+        };
+        const input = {
+          resourceType: 'CLASS', operation: 'CREATE', baseVersion: 0,
+          proposedSnapshot: proposal, reason: payload.reason,
+        };
+        if (context.actor.role === 'ADMIN') return applyAdminDirectChange(draft, input, context);
+        return handlers.SUBMIT_CHANGE_REQUEST(draft, input, context);
+      },
+
+      REQUEST_UPDATE_CLASS(draft, payload, context) {
+        const cohort = required(draft.classes.find((item) => item.id === payload.classId), 'CLASS_NOT_FOUND', 'Không tìm thấy lớp.');
+        if (payload.courseVersionId && payload.courseVersionId !== cohort.courseVersionId && draft.sessions.some((item) => item.classId === cohort.id)) {
+          throw new CommandError('COURSE_VERSION_PINNED', 'Không thể đổi phiên bản khóa học sau khi lớp đã có buổi học.');
+        }
+        const proposal = { ...payload };
+        delete proposal.classId;
+        delete proposal.reason;
+        return handlers.SUBMIT_CHANGE_REQUEST(draft, {
+          resourceType: 'CLASS', operation: 'UPDATE', resourceId: cohort.id, baseVersion: cohort.version,
+          proposedSnapshot: proposal, reason: payload.reason,
+        }, context);
+      },
+
+      OPEN_CLASS(draft, payload, context) {
+        requirePermission(draft, context, 'class.request_update');
+        const cohort = required(draft.classes.find((item) => item.id === payload.classId), 'CLASS_NOT_FOUND', 'Không tìm thấy lớp.');
+        if (cohort.status !== 'DRAFT') throw new CommandError('INVALID_CLASS_STATE', 'Chỉ lớp nháp đã duyệt mới có thể mở ghi danh.');
+        const version = draft.courseVersions.find((item) => item.id === cohort.courseVersionId);
+        if (!version || version.status !== 'PUBLISHED' || !version.immutable) throw new CommandError('COURSE_VERSION_NOT_PUBLISHED', 'Lớp chỉ được mở với phiên bản khóa học đã công bố.');
+        if (!draft.timetableRules.some((item) => item.classId === cohort.id && item.status !== 'INACTIVE')) throw new CommandError('TIMETABLE_REQUIRED', 'Cần lịch định kỳ trước khi mở lớp.');
+        const createdSessions = generateClassSessions(draft, cohort);
+        cohort.status = 'OPEN';
+        cohort.openedAt = nowIso();
+        cohort.openedBy = context.actor.id;
+        cohort.version = Number(cohort.version || 0) + 1;
+        appendEvent(draft, context, 'CLASS_OPENED', 'CLASS', cohort.id, `${cohort.name} · sinh ${createdSessions} buổi học.`);
+        appendAudit(draft, context, 'CLASS_OPENED', 'CLASS', cohort.id, String(payload.reason || 'Đã kiểm tra khóa học và lịch định kỳ.'));
+        return { message: `Đã mở lớp và sinh ${createdSessions} buổi học.`, createdSessions };
+      },
+
+      MARK_CLASS_READY(draft, payload, context) {
+        requirePermission(draft, context, 'class.request_update');
+        const cohort = required(draft.classes.find((item) => item.id === payload.classId), 'CLASS_NOT_FOUND', 'Không tìm thấy lớp.');
+        if (cohort.status !== 'OPEN') throw new CommandError('INVALID_CLASS_STATE', 'Chỉ lớp đang mở mới có thể chuyển sang Sẵn sàng.');
+        const readiness = root.YC.selectors.classReadiness(draft, cohort.id);
+        const blocking = readiness.errors.filter((item) => item.code !== 'MINIMUM_CAPACITY');
+        const minimumError = readiness.errors.find((item) => item.code === 'MINIMUM_CAPACITY');
+        const overrideReason = String(payload.overrideReason || '').trim();
+        if (blocking.length || (minimumError && !overrideReason)) throw new CommandError('CLASS_NOT_READY', 'Lớp chưa đủ điều kiện sẵn sàng.', { evidence: readiness });
+        if (minimumError) cohort.readinessOverride = { reason: overrideReason, approvedBy: context.actor.id, approvedAt: nowIso(), rule: minimumError.code };
+        cohort.status = 'READY';
+        cohort.readyAt = nowIso();
+        cohort.version = Number(cohort.version || 0) + 1;
+        appendEvent(draft, context, 'CLASS_READY', 'CLASS', cohort.id, minimumError ? 'Sẵn sàng theo ngoại lệ sức chứa.' : 'Đã đạt đủ điều kiện sẵn sàng.');
+        appendAudit(draft, context, 'CLASS_READY', 'CLASS', cohort.id, overrideReason || 'Đủ khóa học, lịch, giáo viên, phòng và sức chứa.');
+        return { message: 'Đã chuyển lớp sang trạng thái Sẵn sàng.', readiness, overridden: Boolean(minimumError) };
+      },
+
+      ARCHIVE_CLASS(draft, payload, context) {
+        requirePermission(draft, context, 'class.request_archive');
+        const cohort = required(draft.classes.find((item) => item.id === payload.classId), 'CLASS_NOT_FOUND', 'Không tìm thấy lớp.');
+        const reason = String(payload.reason || '').trim();
+        if (!reason) throw new CommandError('REASON_REQUIRED', 'Lưu trữ lớp cần có lý do.');
+        cohort.status = 'ARCHIVED';
+        cohort.archivedAt = nowIso();
+        cohort.archivedBy = context.actor.id;
+        cohort.version = Number(cohort.version || 0) + 1;
+        appendEvent(draft, context, 'CLASS_ARCHIVED', 'CLASS', cohort.id, cohort.name);
+        appendAudit(draft, context, 'CLASS_ARCHIVED', 'CLASS', cohort.id, reason);
+        return { message: 'Đã lưu trữ lớp và giữ nguyên lịch sử ghi danh, buổi học.' };
+      },
+
       CREATE_CONTENT_DRAFT(draft, payload, context) {
         requireRole(context.actor, ['TEACHER', 'ACADEMIC_MANAGER']);
         const version = required(draft.courseVersions.find((item) => item.id === payload.courseVersionId), 'COURSE_VERSION_NOT_FOUND', 'Không tìm thấy phiên bản khóa học.');
@@ -3637,15 +4030,19 @@ fieldset.question-card { margin:0; }
       },
 
       PUBLISH_COURSE_VERSION(draft, payload, context) {
-        requireRole(context.actor, ['ACADEMIC_MANAGER']);
         const version = required(draft.courseVersions.find((item) => item.id === payload.courseVersionId), 'COURSE_VERSION_NOT_FOUND', 'Không tìm thấy phiên bản khóa học.');
         if (version.status === 'PUBLISHED' && version.immutable) throw new CommandError('COURSE_VERSION_IMMUTABLE', 'Phiên bản khóa học đã công bố thì không thể sửa.');
-        if (!['DRAFT', 'APPROVED'].includes(version.status)) throw new CommandError('INVALID_COURSE_VERSION_STATE', 'Phiên bản khóa học chưa sẵn sàng để công bố.');
+        requirePermission(draft, context, 'course.publish');
+        if (!['SUBMITTED', 'APPROVED'].includes(version.status)) throw new CommandError('INVALID_COURSE_VERSION_STATE', 'Phiên bản khóa học chưa sẵn sàng để công bố.');
+        const validation = root.YC.selectors.coursePublishValidation(draft, version.id);
+        if (!validation.valid) throw new CommandError('COURSE_VERSION_INVALID', 'Phiên bản khóa học chưa đủ điều kiện công bố.', { evidence: validation });
         version.status = 'PUBLISHED';
         version.immutable = true;
         version.publishedAt = nowIso();
+        version.publishedBy = context.actor.id;
+        version.recordVersion = Number(version.recordVersion || 0) + 1;
         appendEvent(draft, context, 'COURSE_VERSION_PUBLISHED', 'COURSE_VERSION', version.id, `${version.title} đã được công bố.`);
-        appendAudit(draft, context, 'COURSE_VERSION_PUBLISHED', 'COURSE_VERSION', version.id, 'Đã khóa bản chụp chương trình học.');
+        appendAudit(draft, context, 'COURSE_VERSION_PUBLISHED', 'COURSE_VERSION', version.id, String(payload.reason || 'Đã khóa bản chụp chương trình học.'));
         return { message: 'Đã công bố phiên bản khóa học.' };
       },
 
@@ -3691,6 +4088,48 @@ fieldset.question-card { margin:0; }
         return { message: 'Đã nhận lớp và kích hoạt quyền theo phân công.' };
       },
 
+      REQUEST_CREATE_SESSION(draft, payload, context) {
+        const cohort = required(draft.classes.find((item) => item.id === payload.classId), 'CLASS_NOT_FOUND', 'Không tìm thấy lớp.');
+        const proposal = {
+          provisionalId: payload.provisionalId || uid('session-proposed'), classId: cohort.id,
+          lessonTemplateId: payload.lessonTemplateId, startsAt: payload.startsAt, endsAt: payload.endsAt,
+          room: String(payload.room || cohort.room || '').trim(), mode: payload.mode || cohort.mode,
+          status: 'PLANNED', attendanceFinalized: false, version: 1,
+        };
+        const validation = root.YC.selectors.sessionValidation(draft, proposal);
+        if (!validation.valid) throw new CommandError(validation.errors[0].code, validation.errors[0].message, { evidence: validation });
+        const input = {
+          resourceType: 'SESSION', operation: 'CREATE', baseVersion: 0,
+          proposedSnapshot: proposal, reason: payload.reason,
+        };
+        if (context.actor.role === 'ADMIN') return applyAdminDirectChange(draft, input, context);
+        return handlers.SUBMIT_CHANGE_REQUEST(draft, input, context);
+      },
+
+      REQUEST_RESCHEDULE_SESSION(draft, payload, context) {
+        const session = required(draft.sessions.find((item) => item.id === payload.sessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học.');
+        if (['IN_PROGRESS', 'COMPLETED'].includes(session.status) || session.actualStartsAt) throw new CommandError('SESSION_ALREADY_STARTED', 'Không thể đổi lịch sau khi buổi học đã bắt đầu.');
+        const proposal = {
+          startsAt: payload.startsAt, endsAt: payload.endsAt,
+          room: String(payload.room || session.room || '').trim(), mode: payload.mode || session.mode,
+        };
+        const validation = root.YC.selectors.sessionValidation(draft, { ...session, ...proposal, excludeSessionId: session.id });
+        if (!validation.valid) throw new CommandError(validation.errors[0].code, validation.errors[0].message, { evidence: validation });
+        return handlers.SUBMIT_CHANGE_REQUEST(draft, {
+          resourceType: 'SESSION', operation: 'RESCHEDULE', resourceId: session.id, baseVersion: session.version,
+          proposedSnapshot: proposal, reason: payload.reason,
+        }, context);
+      },
+
+      REQUEST_CANCEL_SESSION(draft, payload, context) {
+        const session = required(draft.sessions.find((item) => item.id === payload.sessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học.');
+        if (session.status === 'CANCELLED') throw new CommandError('SESSION_ALREADY_CANCELLED', 'Buổi học đã được hủy trước đó.');
+        return handlers.SUBMIT_CHANGE_REQUEST(draft, {
+          resourceType: 'SESSION', operation: 'CANCEL', resourceId: session.id, baseVersion: session.version,
+          proposedSnapshot: {}, reason: payload.reason,
+        }, context);
+      },
+
       CONFIRM_SESSION(draft, payload, context) {
         requireRole(context.actor, ['ACADEMIC_MANAGER', 'STUDENT_SERVICE']);
         const session = required(draft.sessions.find((item) => item.id === payload.sessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học.');
@@ -3725,8 +4164,17 @@ fieldset.question-card { margin:0; }
         const plan = draft.lessonPlans.find((item) => item.sessionId === session.id);
         if (!plan || plan.readiness !== 'READY') throw new CommandError('SESSION_NOT_READY', 'Cần xác nhận giáo án sẵn sàng trước khi bắt đầu.');
         if (session.status !== 'CONFIRMED') throw new CommandError('INVALID_SESSION_STATE', 'Chỉ buổi đã xác nhận mới được bắt đầu.');
+        const enrollments = draft.enrollments.filter((item) => item.classId === session.classId && item.status === 'ACTIVE');
+        const makeUpBookings = draft.makeUpBookings.filter((item) => (item.targetSessionId || item.sessionId) === session.id && ['HELD', 'BOOKED', 'NOTIFIED'].includes(item.status));
+        session.rosterSnapshot = {
+          capturedAt: nowIso(),
+          learnerIds: [...new Set([...enrollments.map((item) => item.learnerId), ...makeUpBookings.map((item) => item.learnerId)])],
+          enrollmentIds: enrollments.map((item) => item.id),
+          makeUpBookingIds: makeUpBookings.map((item) => item.id),
+        };
         session.status = 'IN_PROGRESS';
         session.actualStartsAt = nowIso();
+        session.version = Number(session.version || 0) + 1;
         appendEvent(draft, context, 'SESSION_STARTED', 'SESSION', session.id, 'Giáo viên xác nhận có mặt và bắt đầu buổi học.');
         appendAudit(draft, context, 'TEACHER_CHECKED_IN', 'SESSION', session.id, context.actor.name);
         return { message: 'Buổi học đã bắt đầu.' };
@@ -3768,6 +4216,10 @@ fieldset.question-card { margin:0; }
         record.correctedAt = nowIso();
         record.correctedBy = context.actor.id;
         record.correctionReason = payload.reason.trim();
+        const reconciliation = root.YC.remedial.reconcileAttendance(draft, record, previous, { now: nowIso(), actorId: context.actor.id });
+        if (reconciliation.createdAssignment) {
+          appendEvent(draft, context, 'REMEDIAL_ASSIGNED', 'REMEDIAL_ASSIGNMENT', reconciliation.assignment.id, 'Đã tạo bài học bù sau khi sửa điểm danh.', { learnerId: record.learnerId });
+        }
         appendEvent(draft, context, 'ATTENDANCE_CORRECTED', 'ATTENDANCE', record.id, `${previous} → ${record.status}.`, { learnerId: record.learnerId });
         appendAudit(draft, context, 'ATTENDANCE_CORRECTED', 'ATTENDANCE', record.id, payload.reason.trim());
         return { message: 'Đã sửa điểm danh với đầy đủ lý do.' };
@@ -3825,6 +4277,89 @@ fieldset.question-card { margin:0; }
         return { message: 'Đã đóng yêu cầu dạy thay.' };
       },
 
+      HOLD_MAKE_UP_SEAT(draft, payload, context) {
+        requireRole(context.actor, ['STUDENT_SERVICE']);
+        const existing = activeMakeUpBooking(draft, payload.caseId);
+        if (existing) {
+          if (existing.targetSessionId === payload.targetSessionId && existing.status === 'HELD') return { message: 'Chỗ học bù đang được giữ.', bookingId: existing.id };
+          throw new CommandError('ACTIVE_MAKE_UP_BOOKING_EXISTS', 'Hồ sơ đã có một lịch học bù đang hoạt động.');
+        }
+        const validated = validateMakeUpTarget(draft, payload, context);
+        const booking = makeUpBookingRecord(draft, validated, context, 'HELD');
+        appendEvent(draft, context, 'MAKE_UP_SEAT_HELD', 'MAKE_UP_BOOKING', booking.id, `Giữ chỗ tại buổi ${booking.targetSessionId}.`, { learnerId: booking.learnerId });
+        appendAudit(draft, context, 'MAKE_UP_SEAT_HELD', 'MAKE_UP_BOOKING', booking.id, `Hạn xác nhận ${booking.confirmationDeadline}.`);
+        if (booking.contentMapping.type === 'ADMIN_EQUIVALENT') appendAudit(draft, context, 'MAKE_UP_MAPPING_OVERRIDDEN', 'MAKE_UP_BOOKING', booking.id, booking.contentMapping.coverageNote);
+        return { message: 'Đã giữ chỗ học bù trong 24 giờ.', bookingId: booking.id };
+      },
+
+      CONFIRM_MAKE_UP_BOOKING(draft, payload, context) {
+        requireRole(context.actor, ['STUDENT_SERVICE']);
+        const existing = activeMakeUpBooking(draft, payload.caseId);
+        if (existing && existing.targetSessionId !== payload.targetSessionId) throw new CommandError('ACTIVE_MAKE_UP_BOOKING_EXISTS', 'Hồ sơ đã có một lịch học bù đang hoạt động.');
+        if (existing && ['BOOKED', 'NOTIFIED'].includes(existing.status)) return { message: 'Lịch học bù đã được xác nhận.', bookingId: existing.id };
+        const validated = validateMakeUpTarget(draft, payload, context);
+        const booking = existing || makeUpBookingRecord(draft, validated, context, 'BOOKED');
+        if (existing) {
+          booking.history ||= [];
+          booking.history.push({ fromStatus: booking.status, toStatus: 'BOOKED', occurredAt: nowIso(), actorId: context.actor.id });
+          booking.status = 'BOOKED';
+          booking.bookedBy = context.actor.id;
+          booking.bookedAt = nowIso();
+          booking.contentMapping = validated.contentMapping;
+        }
+        appendEvent(draft, context, 'MAKE_UP_BOOKED', 'MAKE_UP_BOOKING', booking.id, `Đã xác nhận buổi học bù ${booking.targetSessionId}.`, { learnerId: booking.learnerId });
+        appendAudit(draft, context, 'MAKE_UP_BOOKED', 'MAKE_UP_BOOKING', booking.id, `Buổi đích ${booking.targetSessionId}.`);
+        if (booking.contentMapping.type === 'ADMIN_EQUIVALENT') appendAudit(draft, context, 'MAKE_UP_MAPPING_OVERRIDDEN', 'MAKE_UP_BOOKING', booking.id, booking.contentMapping.coverageNote);
+        const studentUser = draft.users.find((item) => item.role === 'STUDENT' && (item.linkedLearnerIds || []).includes(booking.learnerId));
+        if (studentUser) notifyUser(draft, studentUser.id, 'Lịch học bù đã được xác nhận', `Bạn sẽ tham dự buổi ${booking.targetSessionId} với tư cách khách học bù.`, `/app/student/remedial/${booking.remedialCaseId}`);
+        return { message: 'Đã xác nhận lịch học bù.', bookingId: booking.id };
+      },
+
+      CANCEL_MAKE_UP_BOOKING(draft, payload, context) {
+        requireRole(context.actor, ['STUDENT_SERVICE']);
+        const reason = String(payload.reason || '').trim();
+        if (!reason) throw new CommandError('REASON_REQUIRED', 'Hủy lịch học bù cần ghi rõ lý do.');
+        const booking = required(draft.makeUpBookings.find((item) => item.id === payload.bookingId), 'MAKE_UP_BOOKING_NOT_FOUND', 'Không tìm thấy lịch học bù.');
+        if (!['HELD', 'BOOKED', 'NOTIFIED'].includes(booking.status)) throw new CommandError('INVALID_MAKE_UP_STATE', 'Chỉ lịch đang giữ hoặc đã đặt mới được hủy.');
+        booking.history ||= [];
+        booking.history.push({ fromStatus: booking.status, toStatus: 'CANCELLED', occurredAt: nowIso(), actorId: context.actor.id, reason });
+        booking.status = 'CANCELLED';
+        booking.cancelledAt = nowIso();
+        booking.cancelledBy = context.actor.id;
+        booking.cancellationReason = reason;
+        appendEvent(draft, context, 'MAKE_UP_CANCELLED', 'MAKE_UP_BOOKING', booking.id, reason, { learnerId: booking.learnerId });
+        appendAudit(draft, context, 'MAKE_UP_CANCELLED', 'MAKE_UP_BOOKING', booking.id, reason);
+        return { message: 'Đã hủy lịch học bù và giữ lại lịch sử.' };
+      },
+
+      RECORD_MAKE_UP_ATTENDANCE(draft, payload, context) {
+        requireRole(context.actor, ['TEACHER', 'STUDENT_SERVICE', 'ACADEMIC_MANAGER']);
+        const booking = required(draft.makeUpBookings.find((item) => item.id === payload.bookingId), 'MAKE_UP_BOOKING_NOT_FOUND', 'Không tìm thấy lịch học bù.');
+        if (!['BOOKED', 'NOTIFIED'].includes(booking.status)) throw new CommandError('INVALID_MAKE_UP_STATE', 'Lịch học bù chưa ở trạng thái có thể điểm danh.');
+        const targetSession = required(draft.sessions.find((item) => item.id === booking.targetSessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học đích.');
+        if (!['IN_PROGRESS', 'COMPLETED'].includes(targetSession.status)) throw new CommandError('TARGET_SESSION_NOT_DELIVERED', 'Chỉ ghi nhận sau khi buổi học đích bắt đầu.');
+        if (context.actor.role === 'TEACHER') {
+          const profile = draft.teacherProfiles.find((item) => item.userId === context.actor.id);
+          if (!profile || !draft.teacherAssignments.some((item) => item.teacherProfileId === profile.id && item.classId === targetSession.classId && ['ACTIVE', 'ACCEPTED'].includes(item.status))) {
+            throw new CommandError('FORBIDDEN', 'Giáo viên không được phân công vào lớp đích.');
+          }
+        }
+        const nextStatus = String(payload.attendanceStatus || '').toUpperCase();
+        if (!['ATTENDED', 'NO_SHOW'].includes(nextStatus)) throw new CommandError('INVALID_ATTENDANCE_STATUS', 'Kết quả học bù phải là Đã tham dự hoặc Vắng buổi bù.');
+        const note = String(payload.note || '').trim();
+        if (nextStatus === 'NO_SHOW' && !note) throw new CommandError('REASON_REQUIRED', 'Vắng buổi bù cần ghi chú đối soát.');
+        booking.history ||= [];
+        booking.history.push({ fromStatus: booking.status, toStatus: nextStatus, occurredAt: nowIso(), actorId: context.actor.id, note });
+        booking.status = nextStatus;
+        booking.attendanceRecordedAt = nowIso();
+        booking.attendanceRecordedBy = context.actor.id;
+        booking.attendanceNote = note;
+        booking.rebookRequired = nextStatus === 'NO_SHOW';
+        appendEvent(draft, context, nextStatus === 'ATTENDED' ? 'MAKE_UP_ATTENDED' : 'MAKE_UP_NO_SHOW', 'MAKE_UP_BOOKING', booking.id, note || 'Đã xác nhận tham dự.', { learnerId: booking.learnerId });
+        appendAudit(draft, context, 'MAKE_UP_ATTENDANCE_RECORDED', 'MAKE_UP_BOOKING', booking.id, `${nextStatus}${note ? ` · ${note}` : ''}.`);
+        return { message: nextStatus === 'ATTENDED' ? 'Đã ghi nhận học viên tham dự buổi học bù.' : 'Đã ghi nhận vắng buổi bù; hồ sơ có thể được xếp lại lịch.' };
+      },
+
       BOOK_MAKE_UP(draft, payload, context) {
         requireRole(context.actor, ['STUDENT_SERVICE']);
         const attendance = required(draft.attendanceRecords.find((item) => item.id === payload.attendanceId && ['ABSENT', 'EXCUSED'].includes(item.status)), 'MAKE_UP_NOT_ELIGIBLE', 'Bản ghi điểm danh chưa đủ điều kiện học bù.');
@@ -3847,6 +4382,7 @@ fieldset.question-card { margin:0; }
         for (const input of records) {
           const learner = required(draft.learners.find((item) => item.id === input.learnerId), 'LEARNER_NOT_FOUND', 'Không tìm thấy học viên trong danh sách điểm danh.');
           let record = draft.attendanceRecords.find((item) => item.sessionId === session.id && item.learnerId === learner.id);
+          const previousStatus = record?.status || null;
           if (!record) {
             record = { id: uid('attendance'), sessionId: session.id, learnerId: learner.id };
             draft.attendanceRecords.push(record);
@@ -3855,16 +4391,9 @@ fieldset.question-card { margin:0; }
           record.reasonCode = input.reasonCode || null;
           record.markedBy = context.actor.id;
           record.markedAt = nowIso();
-          if (input.status === 'ABSENT' && !draft.remedialAssignments.some((item) => item.sessionId === session.id && item.learnerId === learner.id && item.status !== 'CANCELLED')) {
-            const assignment = {
-              id: uid('remedial'), learnerId: learner.id, sessionId: session.id, lessonTemplateId: session.lessonTemplateId,
-              assessmentId: 'assessment-remedial', status: 'ASSIGNED', assignedAt: nowIso(),
-              dueAt: new Date(new Date(nowIso()).getTime() + draft.settings.remedialDeadlineDays * 86400000).toISOString(),
-              videoProgress: 0, highestScore: null, completionMode: null, completedAt: null,
-              accessToken: uid('access'), accessStatus: 'ACTIVE', linkVersion: 1,
-              accessExpiresAt: new Date(new Date(nowIso()).getTime() + draft.settings.remedialDeadlineDays * 86400000).toISOString(),
-            };
-            draft.remedialAssignments.push(assignment);
+          const reconciliation = root.YC.remedial.reconcileAttendance(draft, record, previousStatus, { now: nowIso(), actorId: context.actor.id });
+          if (reconciliation.createdAssignment) {
+            const assignment = reconciliation.assignment;
             createdAssignments += 1;
             appendEvent(draft, context, 'REMEDIAL_ASSIGNED', 'REMEDIAL_ASSIGNMENT', assignment.id, `${learner.name} nhận bài học bù.`, { learnerId: learner.id });
             const studentUser = draft.users.find((item) => item.role === 'STUDENT' && (item.linkedLearnerIds || []).includes(learner.id));
@@ -4196,6 +4725,215 @@ fieldset.question-card { margin:0; }
   root.YC.define('commands', Object.freeze({ CommandError, create }));
 })(globalThis);
 
+/* 06-remedial.js */
+(function defineRemedial(root) {
+  'use strict';
+
+  const { clone, uid } = root.YC.utils;
+
+  function sourceTrace(state, attendance) {
+    const session = state.sessions.find((item) => item.id === attendance.sessionId);
+    const cohort = state.classes.find((item) => item.id === session?.classId);
+    const courseVersion = state.courseVersions.find((item) => item.id === cohort?.courseVersionId);
+    const course = state.courses.find((item) => item.id === courseVersion?.courseId);
+    const lesson = state.lessonTemplates.find((item) => item.id === session?.lessonTemplateId);
+    return { session, cohort, courseVersion, course, lesson };
+  }
+
+  function overlaps(firstStart, firstEnd, secondStart, secondEnd) {
+    return new Date(firstStart).getTime() < new Date(secondEnd).getTime()
+      && new Date(firstEnd).getTime() > new Date(secondStart).getTime();
+  }
+
+  function activeAt(assignment, instant) {
+    const time = new Date(instant).getTime();
+    return ['ACTIVE', 'ACCEPTED'].includes(assignment.status)
+      && (!assignment.startsAt || new Date(assignment.startsAt).getTime() <= time)
+      && (!assignment.endsAt || new Date(assignment.endsAt).getTime() >= time);
+  }
+
+  function rankMakeUpTargets(state, caseId) {
+    const remedialCase = state.remedialCases.find((item) => item.id === caseId);
+    if (!remedialCase) return [];
+    const sourceSession = state.sessions.find((item) => item.id === remedialCase.sourceSessionId);
+    const sourceClass = state.classes.find((item) => item.id === remedialCase.sourceClassId);
+    const learner = state.learners.find((item) => item.id === remedialCase.learnerId);
+    const currentAt = new Date(state.currentAt || state.seededAt).getTime();
+    const activeEnrollmentClassIds = state.enrollments
+      .filter((item) => item.learnerId === remedialCase.learnerId && item.status === 'ACTIVE')
+      .map((item) => item.classId);
+    const activeBookingSessionIds = state.makeUpBookings
+      .filter((item) => item.remedialCaseId !== caseId && item.learnerId === remedialCase.learnerId && ['HELD', 'BOOKED', 'NOTIFIED'].includes(item.status))
+      .map((item) => item.targetSessionId || item.sessionId);
+
+    return state.sessions
+      .filter((session) => session.id !== remedialCase.sourceSessionId)
+      .map((session) => {
+        const cohort = state.classes.find((item) => item.id === session.classId);
+        const targetCourseVersionId = cohort?.courseVersionId || null;
+        const activeEnrollments = state.enrollments.filter((item) => item.classId === session.classId && item.status === 'ACTIVE').length;
+        const reservations = state.makeUpBookings.filter((item) => item.remedialCaseId !== caseId
+          && (item.targetSessionId || item.sessionId) === session.id
+          && ['HELD', 'BOOKED', 'NOTIFIED'].includes(item.status)).length;
+        const capacity = Number(cohort?.capacity || 0);
+        const learnerConflict = state.sessions.some((other) => other.id !== session.id
+          && !['CANCELLED', 'REVIEWED'].includes(other.status)
+          && (activeEnrollmentClassIds.includes(other.classId) || activeBookingSessionIds.includes(other.id))
+          && overlaps(session.startsAt, session.endsAt, other.startsAt, other.endsAt));
+        const teacherAccess = state.teacherAssignments.some((item) => item.classId === session.classId && activeAt(item, session.startsAt));
+        const sameCourseVersion = targetCourseVersionId === remedialCase.sourceCourseVersionId;
+        const sameLesson = session.lessonTemplateId === remedialCase.sourceLessonTemplateId;
+        const futureAndOpen = new Date(session.startsAt).getTime() > currentAt && ['CONFIRMED', 'READY'].includes(session.status);
+        const hardGates = [
+          { key: 'CASE_ACTIVE', label: 'Hồ sơ học bù còn hiệu lực', passed: remedialCase.resolution !== 'NOT_REQUIRED' },
+          { key: 'COURSE_VERSION', label: 'Cùng phiên bản khóa học', passed: sameCourseVersion },
+          { key: 'LESSON_TEMPLATE', label: 'Cùng bài học', passed: sameLesson },
+          { key: 'CAPACITY', label: 'Còn chỗ cho khách học bù', passed: capacity > activeEnrollments + reservations },
+          { key: 'LEARNER_SCHEDULE', label: 'Không trùng lịch học viên', passed: !learnerConflict },
+          { key: 'SESSION_OPEN', label: 'Buổi học chưa bắt đầu và đã xác nhận', passed: futureAndOpen },
+          { key: 'TEACHER_ACCESS', label: 'Giáo viên đích có phân công hiệu lực', passed: teacherAccess },
+        ];
+        const rankingSignals = [
+          { key: 'EXACT_COURSE', label: 'Đúng phiên bản khóa học', score: sameCourseVersion ? 40 : 0 },
+          { key: 'EXACT_LESSON', label: 'Đúng bài học', score: sameLesson ? 40 : 0 },
+          { key: 'BRANCH_FIT', label: 'Cùng cơ sở', score: cohort?.branchId === sourceClass?.branchId ? 10 : 0 },
+          { key: 'MODE_FIT', label: 'Cùng hình thức học', score: session.mode === sourceSession?.mode ? 5 : 0 },
+          { key: 'AGE_BAND_FIT', label: 'Cùng nhóm tuổi', score: cohort?.ageBand === sourceClass?.ageBand ? 5 : 0 },
+        ];
+        const score = rankingSignals.reduce((sum, item) => sum + item.score, 0);
+        const failedKeys = hardGates.filter((item) => !item.passed).map((item) => item.key);
+        return {
+          sessionId: session.id,
+          classId: session.classId,
+          learnerId: learner?.id || remedialCase.learnerId,
+          eligible: failedKeys.length === 0,
+          requiresAdminOverride: failedKeys.length === 1 && failedKeys[0] === 'LESSON_TEMPLATE',
+          score,
+          hardGates,
+          rankingSignals,
+          reasons: [...hardGates.filter((item) => !item.passed).map((item) => item.label), ...rankingSignals.filter((item) => item.score > 0).map((item) => item.label)],
+        };
+      })
+      .sort((first, second) => Number(second.eligible) - Number(first.eligible)
+        || Number(second.requiresAdminOverride) - Number(first.requiresAdminOverride)
+        || second.score - first.score
+        || new Date(state.sessions.find((item) => item.id === first.sessionId)?.startsAt).getTime() - new Date(state.sessions.find((item) => item.id === second.sessionId)?.startsAt).getTime());
+  }
+
+  function evaluateEligibility(state, attendanceId) {
+    const attendance = state.attendanceRecords.find((item) => item.id === attendanceId);
+    if (!attendance) return { eligible: false, code: 'ATTENDANCE_NOT_FOUND', policySnapshot: null };
+    const trace = sourceTrace(state, attendance);
+    if (!trace.session || !trace.cohort || !trace.courseVersion || !trace.lesson) return { eligible: false, code: 'SOURCE_TRACE_INCOMPLETE', policySnapshot: null };
+    const policySnapshot = clone(trace.courseVersion.remedialPolicy || {
+      triggerStatuses: ['ABSENT'], requiredModes: ['ONLINE'], deadlineDays: state.settings.remedialDeadlineDays,
+      passingScore: state.settings.defaultPassingScore, minimumVideoProgress: state.settings.minimumVideoProgress,
+    });
+    const eligible = (policySnapshot.triggerStatuses || ['ABSENT']).includes(attendance.status);
+    return { eligible, code: eligible ? 'ELIGIBLE' : 'ATTENDANCE_STATUS_NOT_ELIGIBLE', attendance, policySnapshot, ...trace };
+  }
+
+  function caseStatus(state, caseId) {
+    const remedialCase = state.remedialCases.find((item) => item.id === caseId);
+    if (!remedialCase) return null;
+    const online = state.remedialAssignments.find((item) => item.remedialCaseId === remedialCase.id) || null;
+    const liveBookings = state.makeUpBookings.filter((item) => item.remedialCaseId === remedialCase.id);
+    const completedModes = [];
+    if (online?.status === 'COMPLETED') completedModes.push('ONLINE');
+    if (liveBookings.some((item) => item.status === 'ATTENDED')) completedModes.push('LIVE');
+    const requiredModes = remedialCase.requiredModes || [];
+    if (requiredModes.length && requiredModes.every((mode) => completedModes.includes(mode))) {
+      return { caseId, status: 'COMPLETED', requiredModes, completedModes, online, liveBookings };
+    }
+    if (remedialCase.resolution === 'NOT_REQUIRED') return { caseId, status: 'NOT_REQUIRED', requiredModes, completedModes, online, liveBookings };
+    const hasProgress = online && ['IN_PROGRESS', 'NOT_PASSED', 'COMPLETED'].includes(online.status)
+      || liveBookings.some((item) => ['HELD', 'BOOKED', 'NOTIFIED', 'ATTENDED'].includes(item.status));
+    return { caseId, status: hasProgress ? 'IN_PROGRESS' : 'OPEN', requiredModes, completedModes, online, liveBookings };
+  }
+
+  function createOnlineAssignment(draft, remedialCase, evaluation, context) {
+    const now = context.now;
+    const deadlineDays = Number(evaluation.policySnapshot.deadlineDays || draft.settings.remedialDeadlineDays);
+    const dueAt = new Date(new Date(now).getTime() + deadlineDays * 86400000).toISOString();
+    const assessment = draft.assessments.find((item) => item.lessonTemplateId === evaluation.lesson.id && item.purpose === 'FORMATIVE')
+      || draft.assessments.find((item) => item.id === 'assessment-remedial');
+    const assignment = {
+      id: uid('remedial'), remedialCaseId: remedialCase.id, learnerId: remedialCase.learnerId,
+      sessionId: remedialCase.sourceSessionId, lessonTemplateId: remedialCase.sourceLessonTemplateId,
+      assessmentId: assessment?.id || null, status: 'ASSIGNED', assignedAt: now, dueAt,
+      videoProgress: 0, highestScore: null, completionMode: null, completedAt: null,
+      accessToken: uid('access'), accessStatus: 'ACTIVE', linkVersion: 1, accessExpiresAt: dueAt,
+      policySnapshot: clone(evaluation.policySnapshot),
+    };
+    draft.remedialAssignments.push(assignment);
+    return assignment;
+  }
+
+  function reconcileAttendance(draft, attendance, previousStatus, context) {
+    const evaluation = evaluateEligibility(draft, attendance.id);
+    let remedialCase = draft.remedialCases.find((item) => item.sourceAttendanceId === attendance.id) || null;
+    let assignment = remedialCase ? draft.remedialAssignments.find((item) => item.remedialCaseId === remedialCase.id) || null : null;
+    let createdCase = false;
+    let createdAssignment = false;
+
+    if (evaluation.eligible) {
+      if (!remedialCase) {
+        remedialCase = {
+          id: uid('remedial-case'), learnerId: attendance.learnerId, sourceAttendanceId: attendance.id,
+          sourceSessionId: evaluation.session.id, sourceClassId: evaluation.cohort.id,
+          sourceCourseVersionId: evaluation.courseVersion.id, sourceCourseId: evaluation.course?.id || null,
+          sourceLessonTemplateId: evaluation.lesson.id, policySnapshot: clone(evaluation.policySnapshot),
+          requiredModes: clone(evaluation.policySnapshot.requiredModes || ['ONLINE']), openedAt: context.now,
+          openedBy: context.actorId, resolution: null, reconciliationHistory: [],
+        };
+        draft.remedialCases.push(remedialCase);
+        createdCase = true;
+      }
+      if (remedialCase.resolution === 'NOT_REQUIRED') {
+        remedialCase.resolution = null;
+        remedialCase.resolutionAt = null;
+      }
+      if ((remedialCase.requiredModes || []).includes('ONLINE')) {
+        if (!assignment) {
+          assignment = createOnlineAssignment(draft, remedialCase, evaluation, context);
+          createdAssignment = true;
+        } else if (assignment.status === 'CANCELLED' && !draft.attempts.some((item) => item.assignmentId === assignment.id)) {
+          assignment.status = 'ASSIGNED';
+          assignment.cancelledAt = null;
+          assignment.cancellationReason = null;
+          assignment.accessStatus = 'ACTIVE';
+        }
+      }
+    } else if (remedialCase) {
+      const completedEvidence = assignment?.status === 'COMPLETED' || draft.makeUpBookings.some((item) => item.remedialCaseId === remedialCase.id && item.status === 'ATTENDED');
+      if (!completedEvidence) {
+        remedialCase.resolution = 'NOT_REQUIRED';
+        remedialCase.resolutionAt = context.now;
+        remedialCase.resolvedBy = context.actorId;
+        if (assignment && !['COMPLETED', 'CANCELLED'].includes(assignment.status)) {
+          assignment.status = 'CANCELLED';
+          assignment.cancelledAt = context.now;
+          assignment.cancellationReason = 'Điểm danh nguồn không còn đủ điều kiện.';
+          assignment.accessStatus = 'REVOKED';
+        }
+        draft.makeUpBookings.filter((item) => item.remedialCaseId === remedialCase.id && ['HELD', 'BOOKED', 'NOTIFIED'].includes(item.status)).forEach((item) => {
+          item.status = 'CANCELLED';
+          item.cancelledAt = context.now;
+          item.cancellationReason = 'Điểm danh nguồn đã được sửa.';
+        });
+      }
+    }
+
+    if (remedialCase && previousStatus !== attendance.status) {
+      remedialCase.reconciliationHistory ||= [];
+      remedialCase.reconciliationHistory.push({ fromStatus: previousStatus || null, toStatus: attendance.status, occurredAt: context.now, actorId: context.actorId });
+    }
+    return { remedialCase, assignment, createdCase, createdAssignment, evaluation };
+  }
+
+  root.YC.define('remedial', Object.freeze({ caseStatus, evaluateEligibility, rankMakeUpTargets, reconcileAttendance, sourceTrace }));
+})(globalThis);
+
 /* 06-selectors.js */
 (function defineSelectors(root) {
   'use strict';
@@ -4328,6 +5066,56 @@ fieldset.question-card { margin:0; }
     return conflicts;
   }
 
+  function sessionValidation(state, proposal) {
+    const errors = [];
+    const warnings = [];
+    const cohort = byId(state, 'classes', proposal.classId);
+    if (!cohort) return { valid: false, errors: [{ code: 'CLASS_NOT_FOUND', message: 'Không tìm thấy lớp.' }], warnings };
+    const startsAt = new Date(proposal.startsAt).getTime();
+    const endsAt = new Date(proposal.endsAt).getTime();
+    if (!Number.isFinite(startsAt) || !Number.isFinite(endsAt) || endsAt <= startsAt) errors.push({ code: 'INVALID_SESSION_TIME', message: 'Thời gian kết thúc phải sau thời gian bắt đầu.' });
+    const unitIds = state.units.filter((item) => item.courseVersionId === cohort.courseVersionId).map((item) => item.id);
+    const lesson = byId(state, 'lessonTemplates', proposal.lessonTemplateId);
+    if (!lesson || !unitIds.includes(lesson.unitId)) errors.push({ code: 'LESSON_COURSE_MISMATCH', message: 'Bài học không thuộc phiên bản khóa học của lớp.' });
+    if (!proposal.room && (proposal.mode || cohort.mode) !== 'ONLINE') errors.push({ code: 'ROOM_REQUIRED', message: 'Buổi học trực tiếp cần có phòng.' });
+    const excludedId = proposal.excludeSessionId || proposal.id || null;
+    const candidates = state.sessions.filter((item) => item.id !== excludedId && !['CANCELLED', 'COMPLETED', 'REVIEWED'].includes(item.status)
+      && Number.isFinite(startsAt) && overlaps(proposal.startsAt, proposal.endsAt, item.startsAt, item.endsAt));
+    const targetAssignments = state.teacherAssignments.filter((item) => item.classId === cohort.id && ['ACCEPTED', 'ACTIVE'].includes(item.status)).map((item) => item.teacherProfileId);
+    const targetLearners = state.enrollments.filter((item) => item.classId === cohort.id && item.status === 'ACTIVE').map((item) => item.learnerId);
+    for (const session of candidates) {
+      const otherClass = byId(state, 'classes', session.classId);
+      if (session.room === proposal.room && otherClass?.branchId === cohort.branchId) errors.push({ code: 'ROOM_CONFLICT', sessionId: session.id, message: `Phòng ${proposal.room} đã có lịch.` });
+      const otherAssignments = state.teacherAssignments.filter((item) => item.classId === session.classId && ['ACCEPTED', 'ACTIVE'].includes(item.status)).map((item) => item.teacherProfileId);
+      if (targetAssignments.some((id) => otherAssignments.includes(id))) errors.push({ code: 'TEACHER_CONFLICT', sessionId: session.id, message: 'Giáo viên đã có buổi dạy trùng giờ.' });
+      const otherLearners = state.enrollments.filter((item) => item.classId === session.classId && item.status === 'ACTIVE').map((item) => item.learnerId);
+      const conflictedLearners = targetLearners.filter((id) => otherLearners.includes(id));
+      if (conflictedLearners.length) errors.push({ code: 'LEARNER_CONFLICT', sessionId: session.id, learnerIds: conflictedLearners, message: `${conflictedLearners.length} học viên có lịch học trùng.` });
+    }
+    if (!targetAssignments.length) warnings.push({ code: 'TEACHER_NOT_ASSIGNED', message: 'Lớp chưa có giáo viên đang hiệu lực.' });
+    return { valid: errors.length === 0, errors, warnings };
+  }
+
+  function sessionTrace(state, sessionId) {
+    const session = byId(state, 'sessions', sessionId);
+    if (!session) return null;
+    const cohort = byId(state, 'classes', session.classId);
+    const courseVersion = byId(state, 'courseVersions', cohort?.courseVersionId);
+    const course = byId(state, 'courses', courseVersion?.courseId);
+    const lesson = byId(state, 'lessonTemplates', session.lessonTemplateId);
+    const unit = byId(state, 'units', lesson?.unitId);
+    const branch = byId(state, 'branches', cohort?.branchId);
+    const enrollments = state.enrollments.filter((item) => item.classId === cohort?.id && item.status === 'ACTIVE');
+    const makeUpBookings = state.makeUpBookings.filter((item) => (item.targetSessionId || item.sessionId) === session.id && ['HELD', 'BOOKED', 'NOTIFIED', 'ATTENDED'].includes(item.status));
+    return {
+      session, cohort, courseVersion, course, lesson, unit, branch,
+      teacherAssignments: state.teacherAssignments.filter((item) => item.classId === cohort?.id && ['ACCEPTED', 'ACTIVE'].includes(item.status)),
+      learnerIds: [...new Set([...enrollments.map((item) => item.learnerId), ...makeUpBookings.map((item) => item.learnerId)])],
+      enrollmentIds: enrollments.map((item) => item.id),
+      makeUpBookingIds: makeUpBookings.map((item) => item.id),
+    };
+  }
+
   function sessionWorkbench(state, sessionId) {
     const session = byId(state, 'sessions', sessionId);
     if (!session) return null;
@@ -4391,7 +5179,74 @@ fieldset.question-card { margin:0; }
     });
   }
 
-  root.YC.define('selectors', Object.freeze({ byId, completionStatus, journey, metrics, progressReportEvidence, riskSignals, roleHome, scheduleConflicts, sessionWorkbench, skillProfile, teacherEligibility, teacherWorkload }));
+  function coursePublishValidation(state, courseVersionId) {
+    const version = byId(state, 'courseVersions', courseVersionId);
+    const errors = [];
+    const warnings = [];
+    if (!version) return { valid: false, errors: [{ code: 'COURSE_VERSION_NOT_FOUND', message: 'Không tìm thấy phiên bản khóa học.' }], warnings };
+    const course = byId(state, 'courses', version.courseId);
+    if (!course) errors.push({ code: 'COURSE_REQUIRED', message: 'Phiên bản chưa gắn với khóa học.' });
+    else {
+      if (!byId(state, 'programs', course.programId)) errors.push({ code: 'PROGRAM_REQUIRED', message: 'Khóa học chưa có chương trình.' });
+      if (!byId(state, 'levels', course.levelId)) errors.push({ code: 'LEVEL_REQUIRED', message: 'Khóa học chưa có cấp độ.' });
+      if (!String(course.description || '').trim()) warnings.push({ code: 'DESCRIPTION_RECOMMENDED', message: 'Nên bổ sung mô tả khóa học.' });
+    }
+    const units = state.units.filter((item) => item.courseVersionId === version.id);
+    if (!units.length) errors.push({ code: 'UNIT_REQUIRED', message: 'Cần ít nhất một học phần.' });
+    const unitIds = units.map((item) => item.id);
+    const lessons = state.lessonTemplates.filter((item) => unitIds.includes(item.unitId));
+    if (units.length && !lessons.length) errors.push({ code: 'LESSON_REQUIRED', message: 'Cần ít nhất một bài học.' });
+    for (const lesson of lessons) {
+      if (!Array.isArray(lesson.objectives) || !lesson.objectives.filter(Boolean).length) errors.push({ code: 'LESSON_OBJECTIVE_REQUIRED', lessonId: lesson.id, message: `${lesson.title}: thiếu mục tiêu.` });
+      if (!Number(lesson.durationMinutes) || Number(lesson.durationMinutes) < 1) errors.push({ code: 'LESSON_DURATION_REQUIRED', lessonId: lesson.id, message: `${lesson.title}: thiếu thời lượng.` });
+      if (!state.learningItems.some((item) => item.lessonTemplateId === lesson.id && item.status !== 'ARCHIVED')) warnings.push({ code: 'LEARNING_ITEM_RECOMMENDED', lessonId: lesson.id, message: `${lesson.title}: chưa có học liệu.` });
+    }
+    const lessonIds = lessons.map((item) => item.id);
+    const assessments = state.assessments.filter((item) => item.courseVersionId === version.id || lessonIds.includes(item.lessonTemplateId));
+    if (!assessments.length) errors.push({ code: 'ASSESSMENT_REQUIRED', message: 'Cần ít nhất một bài đánh giá.' });
+    for (const assessment of assessments) {
+      const invalidQuestion = (assessment.questionIds || []).find((id) => !state.questions.some((item) => item.id === id));
+      if (invalidQuestion) errors.push({ code: 'ASSESSMENT_QUESTION_INVALID', assessmentId: assessment.id, message: `${assessment.title}: câu hỏi không tồn tại.` });
+    }
+    if (!version.completionRule) errors.push({ code: 'COMPLETION_RULE_REQUIRED', message: 'Thiếu quy tắc hoàn thành.' });
+    if (!version.remedialPolicy) errors.push({ code: 'REMEDIAL_POLICY_REQUIRED', message: 'Thiếu chính sách học bù.' });
+    if (!Number(version.totalHours)) errors.push({ code: 'TOTAL_HOURS_REQUIRED', message: 'Thiếu tổng số giờ học.' });
+    return { valid: errors.length === 0, errors, warnings };
+  }
+
+  function classCapacity(state, classId) {
+    const cohort = byId(state, 'classes', classId);
+    if (!cohort) return null;
+    const activeEnrollments = state.enrollments.filter((item) => item.classId === classId && item.status === 'ACTIVE').length;
+    const sessionIds = state.sessions.filter((item) => item.classId === classId).map((item) => item.id);
+    const makeUpReservations = state.makeUpBookings.filter((item) => ['HELD', 'BOOKED', 'NOTIFIED'].includes(item.status)
+      && sessionIds.includes(item.targetSessionId || item.sessionId)).length;
+    const capacity = Number(cohort.capacity || 0);
+    const used = activeEnrollments + makeUpReservations;
+    return { classId, capacity, activeEnrollments, makeUpReservations, used, remaining: Math.max(0, capacity - used), full: used >= capacity };
+  }
+
+  function classReadiness(state, classId) {
+    const cohort = byId(state, 'classes', classId);
+    if (!cohort) return { ready: false, errors: [{ code: 'CLASS_NOT_FOUND', message: 'Không tìm thấy lớp.' }], warnings: [] };
+    const errors = [];
+    const warnings = [];
+    const version = byId(state, 'courseVersions', cohort.courseVersionId);
+    if (!version || version.status !== 'PUBLISHED' || !version.immutable) errors.push({ code: 'COURSE_VERSION_NOT_PUBLISHED', message: 'Phiên bản khóa học chưa được công bố.' });
+    const rules = state.timetableRules.filter((item) => item.classId === cohort.id && item.status !== 'INACTIVE');
+    if (!rules.length || rules.some((item) => !Array.isArray(item.recurrence) || !item.recurrence.length || !Number(item.durationMinutes))) errors.push({ code: 'TIMETABLE_REQUIRED', message: 'Lớp chưa có lịch định kỳ hợp lệ.' });
+    if (!cohort.room && cohort.mode !== 'ONLINE') errors.push({ code: 'ROOM_REQUIRED', message: 'Lớp trực tiếp cần có phòng.' });
+    if (!cohort.meetingUrl && cohort.mode === 'ONLINE') errors.push({ code: 'MEETING_URL_REQUIRED', message: 'Lớp trực tuyến cần có liên kết học.' });
+    const assignment = state.teacherAssignments.find((item) => item.classId === cohort.id && item.role === 'PRIMARY' && ['ACCEPTED', 'ACTIVE'].includes(item.status));
+    if (!assignment) errors.push({ code: 'PRIMARY_TEACHER_REQUIRED', message: 'Lớp chưa có giáo viên chính đang hiệu lực.' });
+    if (!state.sessions.some((item) => item.classId === cohort.id && item.status !== 'CANCELLED')) errors.push({ code: 'SESSION_REQUIRED', message: 'Lớp chưa có buổi học.' });
+    const capacity = classCapacity(state, cohort.id);
+    if (capacity.used < Number(cohort.minCapacity || 1)) errors.push({ code: 'MINIMUM_CAPACITY', message: `Cần tối thiểu ${cohort.minCapacity || 1} học viên; hiện có ${capacity.used}.` });
+    if (capacity.remaining <= 1) warnings.push({ code: 'CAPACITY_LOW', message: 'Lớp gần đạt sức chứa tối đa.' });
+    return { classId, ready: errors.length === 0, errors, warnings, capacity, assignmentId: assignment?.id || null };
+  }
+
+  root.YC.define('selectors', Object.freeze({ byId, classCapacity, classReadiness, completionStatus, coursePublishValidation, journey, metrics, progressReportEvidence, riskSignals, roleHome, scheduleConflicts, sessionTrace, sessionValidation, sessionWorkbench, skillProfile, teacherEligibility, teacherWorkload }));
 })(globalThis);
 
 /* 07-ui-kit.js */
@@ -4775,16 +5630,22 @@ fieldset.question-card { margin:0; }
     return `<div class="workspace-page">${pageHeader('Học bù', 'Bài học bù', 'Nội dung được nối trực tiếp từ buổi học đã vắng; để hoàn thành cần đủ cả video và bài kiểm tra.')}${body}</div>`;
   }
 
-  function studentRemedialDetail(ctx, assignmentId) {
+  function studentRemedialDetail(ctx, resourceId) {
     const learner = learnerFor(ctx);
-    const assignment = ctx.state.remedialAssignments.find((item) => (item.id === assignmentId || item.assessmentId === assignmentId) && item.learnerId === learner.id);
+    const directCase = ctx.state.remedialCases.find((item) => item.id === resourceId && item.learnerId === learner.id);
+    const assignment = ctx.state.remedialAssignments.find((item) => (item.id === resourceId || item.assessmentId === resourceId || item.remedialCaseId === directCase?.id) && item.learnerId === learner.id);
     if (!assignment) return empty('Không tìm thấy bài học bù', 'Nhiệm vụ không tồn tại hoặc không thuộc tài khoản học viên này.', link('Về danh sách học bù', '/app/student/remedial'));
+    const remedialCase = directCase || ctx.state.remedialCases.find((item) => item.id === assignment.remedialCaseId);
     const lesson = ctx.state.lessonTemplates.find((item) => item.id === assignment.lessonTemplateId);
     const assessment = ctx.state.assessments.find((item) => item.id === assignment.assessmentId);
+    const attendance = ctx.state.attendanceRecords.find((item) => item.id === remedialCase?.sourceAttendanceId);
+    const trace = remedialCase && attendance ? root.YC.remedial.sourceTrace(ctx.state, attendance) : null;
+    const bookings = ctx.state.makeUpBookings.filter((item) => item.remedialCaseId === remedialCase?.id);
     return `<div class="workspace-page">${pageHeader('Học viên · Học bù', 'Chi tiết bài học bù', `${lesson?.title || ''} · Hạn ${formatDate(assignment.dueAt)}`, link('Về danh sách', '/app/student/remedial'))}
       <div class="content-grid main-aside"><section class="panel remedial-player"><div class="video-stage"><div class="video-illustration"><button class="play-button" type="button" data-action="toggle-video" data-assignment-id="${escapeHtml(assignment.id)}" aria-label="Phát video">▶</button><div><small>VIDEO BÀI HỌC</small><strong>Thì quá khứ đơn trong ngữ cảnh</strong></div></div><div class="video-controls"><span>${assignment.videoProgress >= 100 ? '✓' : '▶'}</span><div><i style="width:${assignment.videoProgress || 0}%"></i></div><strong>${assignment.videoProgress || 0}%</strong></div></div>
       <div class="panel-body"><p>${escapeHtml(lesson?.objectives?.join(' · ') || '')}</p><div class="progress-presets">${[25, 50, 75, 100].map((value) => `<button class="btn btn-secondary btn-sm" type="button" data-action="video-progress" data-assignment-id="${escapeHtml(assignment.id)}" data-progress="${value}">Lưu ${value}%</button>`).join('')}</div></div></section>
-      ${section('Điều kiện hoàn thành', `<dl class="detail-list"><div><dt>Video tối thiểu</dt><dd>${ctx.state.settings.minimumVideoProgress}%</dd></div><div><dt>Điểm đạt</dt><dd>${assessment?.passingScore || 80}%</dd></div><div><dt>Số lượt làm</dt><dd>${ctx.state.attempts.filter((item) => item.assignmentId === assignment.id).length}/${assessment?.maxAttempts || 3}</dd></div><div><dt>Trạng thái</dt><dd>${badge(assignment.status)}</dd></div></dl>${link('Làm bài kiểm tra', `/app/student/quiz/${assignment.id}`, { kind: 'primary' })}`)}</div></div>`;
+      ${section('Điều kiện hoàn thành', `<dl class="detail-list"><div><dt>Video tối thiểu</dt><dd>${assignment.policySnapshot?.minimumVideoProgress || ctx.state.settings.minimumVideoProgress}%</dd></div><div><dt>Điểm đạt</dt><dd>${assignment.policySnapshot?.passingScore || assessment?.passingScore || 80}%</dd></div><div><dt>Số lượt làm</dt><dd>${ctx.state.attempts.filter((item) => item.assignmentId === assignment.id).length}/${assessment?.maxAttempts || 3}</dd></div><div><dt>Trạng thái</dt><dd>${badge(assignment.status)}</dd></div></dl>${link('Làm bài kiểm tra', `/app/student/quiz/${assignment.id}`, { kind: 'primary' })}`)}</div>
+      <div class="content-grid two">${section('Nguồn bài học bù', trace ? `<dl class="detail-list"><div><dt>Khóa học</dt><dd>${escapeHtml(trace.courseVersion?.title || '')}</dd></div><div><dt>Lớp đã vắng</dt><dd>${escapeHtml(trace.cohort?.name || '')}</dd></div><div><dt>Buổi học</dt><dd>${formatDate(trace.session?.startsAt, true)}</dd></div><div><dt>Điểm danh</dt><dd>${badge(attendance?.status || 'DRAFT')}</dd></div></dl>` : '<p class="muted">Nguồn cũ chưa có đủ liên kết.</p>')}${section('Lịch học bù tại lớp', bookings.length ? bookings.map((booking) => `<article class="queue-card"><div><strong>${escapeHtml(ctx.state.classes.find((item) => item.id === booking.targetClassId)?.name || '')}</strong><small>${formatDate(ctx.state.sessions.find((item) => item.id === booking.targetSessionId)?.startsAt, true)} · Khách học bù</small></div>${badge(booking.status)}</article>`).join('') : '<p class="muted">Chưa đặt lịch tại lớp.</p>')}</div></div>`;
   }
 
   function studentQuiz(ctx, assignmentId) {
@@ -5007,7 +5868,16 @@ fieldset.question-card { margin:0; }
   }
 
   function makeUp(ctx) {
-    return `<div class="workspace-page">${pageHeader('Dịch vụ học viên · Học bù', 'Đặt lịch học bù', 'Điều kiện, buổi học đích và điểm danh bù không làm mất bản ghi gốc.')}${section('Danh sách lịch học bù', table([{ label: 'Học viên', render: (row) => escapeHtml(ctx.state.learners.find((item) => item.id === row.learnerId)?.name || '') }, { label: 'Buổi gốc', key: 'originalSessionId' }, { label: 'Buổi bù', key: 'targetSessionId' }, { label: 'Lý do', key: 'reason' }, { label: 'Trạng thái', render: (row) => badge(row.status) }], ctx.state.makeUpBookings))}</div>`;
+    const openCases = ctx.state.remedialCases.filter((item) => item.resolution !== 'NOT_REQUIRED');
+    const bookingRows = ctx.state.makeUpBookings.map((item) => ({ ...item, learner: ctx.state.learners.find((learner) => learner.id === item.learnerId), targetSession: ctx.state.sessions.find((session) => session.id === item.targetSessionId), targetClass: ctx.state.classes.find((cohort) => cohort.id === item.targetClassId) }));
+    const ranking = openCases.map((remedialCase) => {
+      const learner = ctx.state.learners.find((item) => item.id === remedialCase.learnerId);
+      const candidates = root.YC.remedial.rankMakeUpTargets(ctx.state, remedialCase.id);
+      const eligible = candidates.filter((item) => item.eligible);
+      const active = ctx.state.makeUpBookings.find((item) => item.remedialCaseId === remedialCase.id && ['HELD', 'BOOKED', 'NOTIFIED'].includes(item.status));
+      return `<article class="ranking-card"><div class="between"><div><p class="eyebrow">${escapeHtml(learner?.code || '')}</p><h3>${escapeHtml(learner?.name || '')}</h3></div>${badge(root.YC.remedial.caseStatus(ctx.state, remedialCase.id)?.status || 'OPEN')}</div>${active ? `<div class="notice-panel"><b>Đã có lịch đang hoạt động</b><p>${escapeHtml(active.targetSessionId)} · ${escapeHtml(valueLabel(active.status))}</p></div>` : `<form data-form="make-up-booking" class="stack"><input type="hidden" name="caseId" value="${escapeHtml(remedialCase.id)}"><label>Buổi học đích<select class="input" name="targetSessionId" required>${eligible.map((candidate) => { const session = ctx.state.sessions.find((item) => item.id === candidate.sessionId); const cohort = ctx.state.classes.find((item) => item.id === candidate.classId); return `<option value="${escapeHtml(candidate.sessionId)}">${escapeHtml(cohort?.name || '')} · ${formatDate(session?.startsAt, true)} · ${candidate.score} điểm · ${escapeHtml(candidate.sessionId)}</option>`; }).join('')}</select></label><button class="btn btn-primary" type="submit" ${eligible.length ? '' : 'disabled'}>Xác nhận lịch học bù</button></form>`}<details><summary>Điều kiện và xếp hạng</summary><div class="candidate-list">${candidates.slice(0, 5).map((candidate) => `<div class="candidate-card ${candidate.eligible ? '' : 'muted-card'}"><strong>${escapeHtml(candidate.sessionId)}</strong><span>${candidate.score} điểm</span><div class="gate-row">${candidate.hardGates.map((gate) => `<span class="${gate.passed ? 'pass' : 'fail'}">${gate.passed ? '✓' : '×'} ${escapeHtml(gate.label)}</span>`).join('')}</div></div>`).join('') || '<p class="muted">Chưa có buổi học đích phù hợp.</p>'}</div></details></article>`;
+    }).join('');
+    return `<div class="workspace-page">${pageHeader('Dịch vụ học viên · Học bù', 'Đặt lịch học bù', 'Hệ thống xếp hạng đúng nội dung, còn chỗ, không trùng lịch và có giáo viên hiệu lực trước khi đặt.')}<div class="content-grid main-aside">${section('Xếp hạng buổi học đích', ranking || empty('Chưa có hồ sơ cần xếp lịch', 'Hồ sơ đủ điều kiện sẽ xuất hiện sau khi điểm danh được chốt.'))}${section('Quy tắc giữ chỗ', '<ul class="check-list"><li>✓ Một hồ sơ chỉ có một booking hoạt động</li><li>✓ Giữ chỗ được tính vào sức chứa</li><li>✓ No-show cho phép đặt lại nhưng không xóa lần cũ</li><li>✓ Khác bài học cần Admin duyệt mapping</li></ul>')}</div>${section('Lịch sử đặt học bù', table([{ label: 'Học viên', render: (row) => `<strong>${escapeHtml(row.learner?.name || '')}</strong><small>Khách học bù</small>` }, { label: 'Buổi gốc', key: 'originalSessionId' }, { label: 'Buổi đích', render: (row) => `<strong>${escapeHtml(row.targetClass?.name || '')}</strong><small>${formatDate(row.targetSession?.startsAt, true)}</small>` }, { label: 'Trạng thái', render: (row) => badge(row.status) }, { label: 'Thao tác', render: (row) => ['HELD', 'BOOKED', 'NOTIFIED'].includes(row.status) ? `<button class="text-link danger-link" data-action="cancel-make-up-booking" data-booking-id="${escapeHtml(row.id)}">Hủy lịch</button>` : 'Đã đóng' }], bookingRows))}</div>`;
   }
 
   function transfers(ctx) {
@@ -5018,6 +5888,28 @@ fieldset.question-card { margin:0; }
   function substitutions(ctx) {
     const rows = ctx.state.substitutions.map((item) => ({ ...item, session: ctx.state.sessions.find((session) => session.id === item.sessionId), original: ctx.state.teacherProfiles.find((profile) => profile.id === item.originalTeacherProfileId), replacement: ctx.state.teacherProfiles.find((profile) => profile.id === item.replacementTeacherProfileId) }));
     return `<div class="workspace-page">${pageHeader('Dịch vụ học viên · Liên tục', 'Giáo viên dạy thay', 'Ứng viên → xác nhận → quyền có thời hạn → bàn giao → đóng.')}${section('Hàng chờ dạy thay', table([{ label: 'Buổi học', render: (row) => `<strong>${escapeHtml(row.session?.id || '')}</strong><small>${formatDate(row.session?.startsAt)}</small>` }, { label: 'Giáo viên chính', render: (row) => escapeHtml(ctx.state.users.find((item) => item.id === row.original?.userId)?.name || '') }, { label: 'Thay thế', render: (row) => escapeHtml(ctx.state.users.find((item) => item.id === row.replacement?.userId)?.name || 'Chưa chọn') }, { label: 'Bàn giao', render: (row) => row.handover ? escapeHtml(row.handover.note) : 'Chưa có' }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows))}</div>`;
+  }
+
+  function traceBreadcrumb(items) {
+    return `<nav class="trace-breadcrumb" aria-label="Chuỗi truy vết">${items.map((item, index) => `${index ? '<span>›</span>' : ''}${item.href ? `<a href="#${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>` : `<strong>${escapeHtml(item.label)}</strong>`}`).join('')}</nav>`;
+  }
+
+  function teacherCourseRequestForm(ctx) {
+    return `<form class="operations-form panel" data-form="request-course"><div class="panel-heading"><div><h2>Đề xuất khóa học mới</h2><p>Dữ liệu chỉ xuất hiện chính thức sau khi được duyệt.</p></div>${badge('SUBMITTED', 'Chờ Admin duyệt')}</div><div class="form-grid"><label>Mã khóa học<input class="input" name="code" required placeholder="YEN-KIDS-A2"></label><label>Tên khóa học<input class="input" name="name" required></label><label>Chương trình<select class="input" name="programId">${ctx.state.programs.filter((item) => item.status === 'PUBLISHED').map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`).join('')}</select></label><label>Cấp độ<select class="input" name="levelId">${ctx.state.levels.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`).join('')}</select></label><label>Nhóm tuổi<select class="input" name="ageBand"><option value="YOUNG_LEARNER">Thiếu nhi</option><option value="TEEN">Thiếu niên</option></select></label><label>Hình thức<select class="input" name="mode"><option value="OFFLINE">Tại trung tâm</option><option value="ONLINE">Trực tuyến</option><option value="HYBRID">Kết hợp</option></select></label><label class="span-two">Mô tả<textarea class="input" name="description" rows="2"></textarea></label><label class="span-two">Lý do đề xuất<textarea class="input" name="reason" rows="2" required></textarea></label></div><button class="btn btn-primary" type="submit">Gửi đề xuất · Chờ Admin duyệt</button></form>`;
+  }
+
+  function teacherClassRequestForm(ctx) {
+    return `<form class="operations-form panel" data-form="request-class"><div class="panel-heading"><div><h2>Đề xuất lớp học mới</h2><p>Admin kiểm tra sức chứa, lịch, khóa học và chi nhánh.</p></div>${badge('SUBMITTED', 'Chờ Admin duyệt')}</div><div class="form-grid"><label>Mã lớp<input class="input" name="code" required placeholder="YEN-A2-T3T5"></label><label>Tên lớp<input class="input" name="name" required></label><label>Chi nhánh<select class="input" name="branchId">${ctx.state.branches.filter((item) => (ctx.actor.branchIds || []).includes(item.id)).map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`).join('')}</select></label><label>Phiên bản khóa học<select class="input" name="courseVersionId">${ctx.state.courseVersions.filter((item) => item.status === 'PUBLISHED' && item.immutable).map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.title)} · ${escapeHtml(item.id)}</option>`).join('')}</select></label><label>Nhóm tuổi<select class="input" name="ageBand"><option value="YOUNG_LEARNER">Thiếu nhi</option><option value="TEEN">Thiếu niên</option></select></label><label>Hình thức<select class="input" name="mode"><option value="OFFLINE">Tại trung tâm</option><option value="ONLINE">Trực tuyến</option></select></label><label>Sức chứa tối thiểu<input class="input" type="number" name="minCapacity" min="1" value="4"></label><label>Sức chứa tối đa<input class="input" type="number" name="capacity" min="1" value="12"></label><label>Phòng<input class="input" name="room" value="P.204"></label><label>Lịch định kỳ<input class="input" name="recurrence" value="TUE_1800,THU_1800"></label><label>Ngày bắt đầu<input class="input" type="date" name="startDate" value="2026-09-15"></label><label>Ngày kết thúc<input class="input" type="date" name="endDate" value="2026-12-15"></label><label class="span-two">Lý do đề xuất<textarea class="input" name="reason" rows="2" required></textarea></label></div><button class="btn btn-primary" type="submit">Gửi đề xuất · Chờ Admin duyệt</button></form>`;
+  }
+
+  function teacherSessionRequestForm(ctx) {
+    const profile = ctx.state.teacherProfiles.find((item) => item.userId === ctx.actor.id);
+    const classIds = ctx.state.teacherAssignments.filter((item) => item.teacherProfileId === profile?.id && ['ACTIVE', 'ACCEPTED'].includes(item.status)).map((item) => item.classId);
+    const classes = ctx.state.classes.filter((item) => classIds.includes(item.id));
+    const versionIds = classes.map((item) => item.courseVersionId);
+    const unitIds = ctx.state.units.filter((item) => versionIds.includes(item.courseVersionId)).map((item) => item.id);
+    const lessons = ctx.state.lessonTemplates.filter((item) => unitIds.includes(item.unitId));
+    return `<form class="operations-form panel" data-form="request-session"><div class="panel-heading"><div><h2>Đề xuất buổi học bổ sung</h2><p>Hệ thống kiểm tra bài học, phòng, giáo viên và trùng lịch trước khi gửi.</p></div>${badge('SUBMITTED', 'Chờ Admin duyệt')}</div><div class="form-grid"><label>Lớp học<select class="input" name="classId">${classes.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`).join('')}</select></label><label>Bài học<select class="input" name="lessonTemplateId">${lessons.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.title)} · ${escapeHtml(item.id)}</option>`).join('')}</select></label><label>Bắt đầu<input class="input" type="datetime-local" name="startsAt" value="2026-09-08T18:00" required></label><label>Kết thúc<input class="input" type="datetime-local" name="endsAt" value="2026-09-08T19:30" required></label><label>Phòng<input class="input" name="room" value="P.304"></label><label>Hình thức<select class="input" name="mode"><option value="OFFLINE">Tại trung tâm</option><option value="ONLINE">Trực tuyến</option></select></label><label class="span-two">Lý do đề xuất<textarea class="input" name="reason" rows="2" required></textarea></label></div><button class="btn btn-primary" type="submit">Gửi đề xuất · Chờ Admin duyệt</button></form>`;
   }
 
   function teacherDashboard(ctx) {
@@ -5032,14 +5924,14 @@ fieldset.question-card { margin:0; }
 
   function teacherSessions(ctx) {
     const rows = ctx.state.sessions.map((item) => ({ ...item, cohort: ctx.state.classes.find((cohort) => cohort.id === item.classId), plan: ctx.state.lessonPlans.find((plan) => plan.sessionId === item.id) }));
-    return `<div class="workspace-page">${pageHeader('Giáo viên · Giảng dạy', 'Buổi học', 'Từ mức độ sẵn sàng đến bằng chứng giảng dạy và điểm danh đã chốt.', canonicalAction('Cập nhật buổi học mẫu'))}${section('Danh sách buổi học', table([{ label: 'Buổi học', render: (row) => `<a class="table-link" href="#/app/teacher/sessions/${row.id}"><strong>${escapeHtml(row.cohort?.name || '')}</strong><small>${escapeHtml(row.id)}</small></a>` }, { label: 'Lịch', render: (row) => formatDate(row.startsAt) }, { label: 'Phòng', key: 'room' }, { label: 'Sẵn sàng', render: (row) => badge(row.plan?.readiness || 'DRAFT') }, { label: 'Giảng dạy', render: (row) => badge(row.status) }, { label: 'Điểm danh', render: (row) => row.attendanceFinalized ? badge('COMPLETED', 'Đã chốt') : badge('DRAFT', 'Chưa chốt') }], rows))}</div>`;
+    return `<div class="workspace-page">${pageHeader('Giáo viên · Giảng dạy', 'Buổi học', 'Từ mức độ sẵn sàng đến bằng chứng giảng dạy và điểm danh đã chốt.', canonicalAction('Cập nhật buổi học mẫu'))}${section('Danh sách buổi học', table([{ label: 'Buổi học', render: (row) => `<a class="table-link" href="#/app/teacher/sessions/${row.id}"><strong>${escapeHtml(row.cohort?.name || '')}</strong><small>${escapeHtml(row.id)}</small></a>` }, { label: 'Lịch', render: (row) => formatDate(row.startsAt) }, { label: 'Phòng', key: 'room' }, { label: 'Sẵn sàng', render: (row) => badge(row.plan?.readiness || 'DRAFT') }, { label: 'Giảng dạy', render: (row) => badge(row.status) }, { label: 'Điểm danh', render: (row) => row.attendanceFinalized ? badge('COMPLETED', 'Đã chốt') : badge('DRAFT', 'Chưa chốt') }], rows))}${teacherSessionRequestForm(ctx)}</div>`;
   }
 
   function teacherClasses(ctx) {
     const profile = ctx.state.teacherProfiles.find((item) => item.userId === ctx.actor?.id) || ctx.state.teacherProfiles[0];
     const classIds = ctx.state.teacherAssignments.filter((item) => item.teacherProfileId === profile.id && ['PROPOSED', 'ACTIVE'].includes(item.status)).map((item) => item.classId);
     const cohorts = ctx.state.classes.filter((item) => classIds.includes(item.id));
-    return `<div class="workspace-page">${pageHeader('Giáo viên · Lớp học', 'Lớp của tôi', 'Danh sách học viên, lịch học, nội dung và điểm danh dùng cùng dữ liệu phân công.')}${section('Danh sách lớp', table([{ label: 'Lớp', render: (row) => `<a class="table-link" href="#/app/teacher/classes/${row.id}"><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.code)}</small></a>` }, { label: 'Lịch học', key: 'scheduleLabel' }, { label: 'Phòng', key: 'room' }, { label: 'Học viên', render: (row) => ctx.state.enrollments.filter((item) => item.classId === row.id && item.status === 'ACTIVE').length }, { label: 'Trạng thái', render: (row) => badge(row.status) }], cohorts, { emptyTitle: 'Chưa có lớp được phân công', emptyBody: 'Lớp sẽ xuất hiện khi giáo viên có phân công đang hiệu lực.' }))}</div>`;
+    return `<div class="workspace-page">${pageHeader('Giáo viên · Lớp học', 'Lớp của tôi', 'Danh sách học viên, lịch học, nội dung và điểm danh dùng cùng dữ liệu phân công.')}${section('Danh sách lớp', table([{ label: 'Lớp', render: (row) => `<a class="table-link" href="#/app/teacher/classes/${row.id}"><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.code)}</small></a>` }, { label: 'Lịch học', key: 'scheduleLabel' }, { label: 'Phòng', key: 'room' }, { label: 'Học viên', render: (row) => ctx.state.enrollments.filter((item) => item.classId === row.id && item.status === 'ACTIVE').length }, { label: 'Trạng thái', render: (row) => badge(row.status) }], cohorts, { emptyTitle: 'Chưa có lớp được phân công', emptyBody: 'Lớp sẽ xuất hiện khi giáo viên có phân công đang hiệu lực.' }))}${teacherClassRequestForm(ctx)}</div>`;
   }
 
   function teacherClassDetail(ctx, classId) {
@@ -5047,7 +5939,9 @@ fieldset.question-card { margin:0; }
     const learnerIds = ctx.state.enrollments.filter((item) => item.classId === cohort.id && item.status === 'ACTIVE').map((item) => item.learnerId);
     const learners = ctx.state.learners.filter((item) => learnerIds.includes(item.id));
     const sessions = ctx.state.sessions.filter((item) => item.classId === cohort.id);
-    return `<div class="workspace-page">${pageHeader('Giáo viên · Lớp học', cohort.name, `${cohort.scheduleLabel} · ${cohort.room}`, link('Về danh sách lớp', '/app/teacher/classes'))}
+    const version = ctx.state.courseVersions.find((item) => item.id === cohort.courseVersionId);
+    const course = ctx.state.courses.find((item) => item.id === version?.courseId);
+    return `<div class="workspace-page">${traceBreadcrumb([{ label: 'Khóa học', href: '/app/teacher/courses' }, { label: course?.name || 'Khóa học' }, { label: `Phiên bản v${version?.version || '—'}` }, { label: 'Lớp học' }])}${pageHeader('Giáo viên · Lớp học', cohort.name, `${cohort.scheduleLabel} · ${cohort.room}`, link('Về danh sách lớp', '/app/teacher/classes'))}
       <div class="metric-grid three">${metric('Học viên', learners.length, `${cohort.capacity - learners.length} chỗ còn lại`, 'people')}${metric('Buổi học', sessions.length, 'Theo lịch đang hiệu lực', 'calendar')}${metric('Phiên bản khóa học', ctx.state.courseVersions.find((item) => item.id === cohort.courseVersionId)?.version || '—', 'Snapshot không đổi', 'book')}</div>
       <div class="content-grid two">${section('Danh sách học viên', table([{ label: 'Mã', key: 'code' }, { label: 'Họ và tên', key: 'name' }, { label: 'Mục tiêu', key: 'goal' }, { label: 'Trạng thái', render: (row) => badge(row.status) }], learners))}${section('Các buổi học', sessions.map((session) => `<div class="queue-card"><div><strong>${formatDate(session.startsAt)}</strong><small>${escapeHtml(ctx.state.lessonTemplates.find((item) => item.id === session.lessonTemplateId)?.title || '')}</small></div>${link(session.attendanceFinalized ? 'Xem điểm danh' : 'Điểm danh', `/app/teacher/sessions/${session.id}/attendance`, { small: true, kind: session.attendanceFinalized ? 'secondary' : 'primary' })}</div>`).join('') || '<p class="muted">Chưa có buổi học.</p>')}</div></div>`;
   }
@@ -5066,8 +5960,19 @@ fieldset.question-card { margin:0; }
   }
 
   function teacherRemedial(ctx) {
-    const rows = ctx.state.remedialAssignments.map((item) => ({ ...item, learner: ctx.state.learners.find((learner) => learner.id === item.learnerId), lesson: ctx.state.lessonTemplates.find((lesson) => lesson.id === item.lessonTemplateId) }));
-    return `<div class="workspace-page">${pageHeader('Giáo viên · Học bù', 'Theo dõi bài học bù', 'Nhiệm vụ được tạo trực tiếp từ buổi điểm danh vắng và hiển thị trong tài khoản Học viên.')}${section('Danh sách bài học bù', table([{ label: 'Học viên', render: (row) => `<strong>${escapeHtml(row.learner?.name || '')}</strong><small>${escapeHtml(row.learner?.code || '')}</small>` }, { label: 'Bài học', render: (row) => escapeHtml(row.lesson?.title || '') }, { label: 'Hạn hoàn thành', render: (row) => `<strong>${formatDate(row.dueAt)}</strong><small>Liên kết phiên bản ${row.linkVersion || 1} · ${row.accessStatus === 'REVOKED' ? 'Đã thu hồi' : 'Đang hoạt động'}</small>` }, { label: 'Tiến độ', render: (row) => `${row.videoProgress || 0}% · ${row.highestScore ?? '—'}/100` }, { label: 'Trạng thái', render: (row) => badge(row.status) }, { label: 'Quản lý liên kết', render: (row) => `<div class="table-actions"><button type="button" data-action="copy-remedial-link" data-assignment-id="${escapeHtml(row.id)}">Sao chép</button><button type="button" data-action="regenerate-remedial-link" data-assignment-id="${escapeHtml(row.id)}">Tạo lại</button><button type="button" data-action="revoke-remedial-link" data-assignment-id="${escapeHtml(row.id)}">Thu hồi</button><button type="button" data-action="extend-remedial-deadline" data-assignment-id="${escapeHtml(row.id)}">Gia hạn</button></div>` }], rows, { emptyTitle: 'Chưa có bài học bù', emptyBody: 'Điểm danh một học viên vắng để tạo nhiệm vụ.' }))}</div>`;
+    const rows = ctx.state.remedialCases.map((item) => ({ ...item, learner: ctx.state.learners.find((learner) => learner.id === item.learnerId), lesson: ctx.state.lessonTemplates.find((lesson) => lesson.id === item.sourceLessonTemplateId), assignment: ctx.state.remedialAssignments.find((entry) => entry.remedialCaseId === item.id), computed: root.YC.remedial.caseStatus(ctx.state, item.id) }));
+    return `<div class="workspace-page">${pageHeader('Giáo viên · Học bù', 'Theo dõi bài học bù', 'Một hồ sơ chung cho bài trực tuyến và lịch học tại lớp, luôn truy về buổi vắng.')}${section('Danh sách hồ sơ học bù', table([{ label: 'Học viên', render: (row) => `<a class="table-link" href="#/app/teacher/remedial/${escapeHtml(row.id)}"><strong>${escapeHtml(row.learner?.name || '')}</strong><small>${escapeHtml(row.learner?.code || '')}</small></a>` }, { label: 'Bài học', render: (row) => escapeHtml(row.lesson?.title || '') }, { label: 'Hạn hoàn thành', render: (row) => formatDate(row.assignment?.dueAt) }, { label: 'Tiến độ', render: (row) => `${row.assignment?.videoProgress || 0}% · ${row.assignment?.highestScore ?? '—'}/100` }, { label: 'Trạng thái tổng', render: (row) => badge(row.computed?.status || 'OPEN') }, { label: 'Quản lý liên kết', render: (row) => row.assignment ? `<div class="table-actions"><button type="button" data-action="copy-remedial-link" data-assignment-id="${escapeHtml(row.assignment.id)}">Sao chép</button><button type="button" data-action="regenerate-remedial-link" data-assignment-id="${escapeHtml(row.assignment.id)}">Tạo lại</button><button type="button" data-action="revoke-remedial-link" data-assignment-id="${escapeHtml(row.assignment.id)}">Thu hồi</button><button type="button" data-action="extend-remedial-deadline" data-assignment-id="${escapeHtml(row.assignment.id)}">Gia hạn</button></div>` : '—' }], rows, { emptyTitle: 'Chưa có hồ sơ học bù', emptyBody: 'Điểm danh một học viên vắng để tạo hồ sơ.' }))}</div>`;
+  }
+
+  function teacherRemedialDetail(ctx, caseId) {
+    const remedialCase = ctx.state.remedialCases.find((item) => item.id === caseId);
+    if (!remedialCase) return '';
+    const attendance = ctx.state.attendanceRecords.find((item) => item.id === remedialCase.sourceAttendanceId);
+    const trace = root.YC.remedial.sourceTrace(ctx.state, attendance);
+    const learner = ctx.state.learners.find((item) => item.id === remedialCase.learnerId);
+    const assignment = ctx.state.remedialAssignments.find((item) => item.remedialCaseId === caseId);
+    const bookings = ctx.state.makeUpBookings.filter((item) => item.remedialCaseId === caseId);
+    return `<div class="workspace-page">${traceBreadcrumb([{ label: 'Khóa học', href: '/app/teacher/courses' }, { label: `Phiên bản v${trace.courseVersion?.version || '—'}` }, { label: 'Lớp gốc', href: `/app/teacher/classes/${trace.cohort?.id}` }, { label: 'Buổi gốc', href: `/app/teacher/sessions/${trace.session?.id}` }, { label: 'Điểm danh' }, { label: 'Hồ sơ học bù' }])}${pageHeader('Giáo viên · Học bù', learner?.name || 'Hồ sơ học bù', 'Chuỗi truy vết từ nội dung gốc đến bằng chứng hoàn thành.', link('Về danh sách', '/app/teacher/remedial'))}<div class="content-grid main-aside">${section('Nguồn phát sinh', `<dl class="detail-list"><div><dt>Khóa học</dt><dd>${escapeHtml(trace.courseVersion?.title || '')}</dd></div><div><dt>Lớp gốc</dt><dd>${escapeHtml(trace.cohort?.name || '')}</dd></div><div><dt>Buổi gốc</dt><dd>${formatDate(trace.session?.startsAt, true)}</dd></div><div><dt>Điểm danh</dt><dd>${badge(attendance?.status || 'DRAFT')}</dd></div></dl>`)}${section('Bằng chứng trực tuyến', assignment ? `<dl class="detail-list"><div><dt>Tiến độ video</dt><dd>${assignment.videoProgress || 0}%</dd></div><div><dt>Điểm cao nhất</dt><dd>${assignment.highestScore ?? '—'}</dd></div><div><dt>Trạng thái</dt><dd>${badge(assignment.status)}</dd></div></dl>` : '<p class="muted">Không yêu cầu hình thức trực tuyến.</p>')}</div>${section('Lịch học tại lớp', bookings.map((booking) => `<div class="queue-card"><div><strong>${escapeHtml(ctx.state.classes.find((item) => item.id === booking.targetClassId)?.name || '')}</strong><small>${formatDate(ctx.state.sessions.find((item) => item.id === booking.targetSessionId)?.startsAt, true)}</small></div>${badge(booking.status)}</div>`).join('') || '<p class="muted">Chưa đặt lịch tại lớp.</p>')}</div>`;
   }
 
   function teacherReports(ctx) {
@@ -5085,11 +5990,18 @@ fieldset.question-card { margin:0; }
     const { session, plan, roster, risks, openHomework, delivery } = workbench;
     const cohort = ctx.state.classes.find((item) => item.id === session.classId);
     const lesson = ctx.state.lessonTemplates.find((item) => item.id === session.lessonTemplateId);
-    return `<div class="workspace-page session-workbench">${pageHeader('Bàn điều khiển buổi học', cohort.name, `${formatDate(session.startsAt)} · ${session.room} · ${session.mode}`, canonicalAction('Chạy bước buổi học'))}
+    const version = ctx.state.courseVersions.find((item) => item.id === cohort.courseVersionId);
+    const course = ctx.state.courses.find((item) => item.id === version?.courseId);
+    const canPrepare = root.YC.policy.can(ctx.actor, 'session.prepare', { classId: cohort.id, sessionId: session.id }, ctx.state);
+    let controls = '';
+    if (canPrepare && session.status === 'CONFIRMED' && plan?.readiness !== 'READY') controls = button('Xác nhận giáo án sẵn sàng', 'mark-session-ready', { payload: { sessionId: session.id }, icon: 'check' });
+    else if (canPrepare && session.status === 'CONFIRMED' && plan?.readiness === 'READY') controls = button('Bắt đầu buổi học', 'start-session', { payload: { sessionId: session.id }, icon: 'arrow' });
+    else if (canPrepare && session.status === 'IN_PROGRESS') controls = `${link('Mở điểm danh', `/app/teacher/sessions/${session.id}/attendance`, { kind: 'secondary' })}${button('Hoàn tất và lưu bằng chứng', 'complete-session', { payload: { sessionId: session.id }, icon: 'check' })}`;
+    return `<div class="workspace-page session-workbench">${traceBreadcrumb([{ label: 'Khóa học', href: '/app/teacher/courses' }, { label: course?.name || 'Khóa học' }, { label: `Phiên bản v${version?.version || '—'}` }, { label: 'Lớp', href: `/app/teacher/classes/${cohort.id}` }, { label: 'Buổi học' }])}${pageHeader('Bàn điều khiển buổi học', cohort.name, `${formatDate(session.startsAt)} · ${session.room} · ${session.mode}`, controls)}
       <div class="session-tabs"><a class="active" href="#/app/teacher/sessions/${session.id}">Tổng quan</a><a href="#/app/teacher/sessions/${session.id}/attendance">Điểm danh</a><a href="#/app/teacher/grading">Bài tập</a><a href="#/app/teacher/quality">Bằng chứng</a></div>
       <div class="content-grid main-aside"><div class="stack-lg">${section('Giáo án', `<div class="lesson-plan"><div><p class="eyebrow">${escapeHtml(lesson.title)}</p><h3>${escapeHtml(lesson.objectives.join(' · '))}</h3></div>${badge(plan?.readiness || 'DRAFT')}</div><dl class="detail-list"><div><dt>Điều chỉnh</dt><dd>${escapeHtml((plan?.adaptations || []).join(', ') || 'Chưa có')}</dd></div><div><dt>Nội dung dự kiến</dt><dd>${ctx.state.learningItems.filter((item) => item.lessonTemplateId === lesson.id).length} hoạt động</dd></div><div><dt>Bằng chứng giảng dạy</dt><dd>${delivery ? `${delivery.taughtItemIds.length} đã dạy · ${delivery.deferredItemIds.length} chuyển sau` : 'Chưa ghi'}</dd></div></dl>`)}
       ${section('Danh sách lớp và điểm danh', table([{ label: 'Học viên', render: (row) => `<strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.code)}</small>` }, { label: 'Rủi ro', render: (row) => risks.some((risk) => risk.learnerId === row.id) ? badge('REQUESTED', 'Cần lưu ý') : '—' }, { label: 'Điểm danh', render: (row) => { const record = ctx.state.attendanceRecords.find((item) => item.sessionId === session.id && item.learnerId === row.id); return record ? badge(record.status) : badge('DRAFT', 'Chưa ghi'); } }], roster))}</div>
-      <div class="stack-lg">${section('Điều khiển buổi học', `<div class="state-machine"><span class="done">Đã xác nhận</span><span class="${['READY', 'IN_PROGRESS', 'COMPLETED'].includes(session.status) ? 'done' : ''}">Sẵn sàng</span><span class="${['IN_PROGRESS', 'COMPLETED'].includes(session.status) ? 'done' : ''}">Đang diễn ra</span><span class="${session.status === 'COMPLETED' ? 'done' : ''}">Đã hoàn thành</span></div><p>Trạng thái hiện tại: ${badge(session.status)}</p>${canonicalAction('Thực hiện bước hợp lệ tiếp theo')}`)}${section('Bài tập đang mở', openHomework.length ? openHomework.map((item) => `<div class="queue-card"><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(ctx.state.learners.find((learner) => learner.id === item.learnerId)?.name || '')}</small></div>${badge(item.status)}</div>`).join('') : '<p class="muted">Không có bài tập đang mở cho lớp này.</p>')}</div></div>`;
+      <div class="stack-lg">${section('Điều khiển buổi học', `<div class="state-machine"><span class="done">Đã xác nhận</span><span class="${plan?.readiness === 'READY' || ['IN_PROGRESS', 'COMPLETED'].includes(session.status) ? 'done' : ''}">Sẵn sàng</span><span class="${['IN_PROGRESS', 'COMPLETED'].includes(session.status) ? 'done' : ''}">Đang diễn ra</span><span class="${session.status === 'COMPLETED' ? 'done' : ''}">Đã hoàn thành</span></div><p>Trạng thái hiện tại: ${badge(session.status)}</p>${controls}`)}${section('Bài tập đang mở', openHomework.length ? openHomework.map((item) => `<div class="queue-card"><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(ctx.state.learners.find((learner) => learner.id === item.learnerId)?.name || '')}</small></div>${badge(item.status)}</div>`).join('') : '<p class="muted">Không có bài tập đang mở cho lớp này.</p>')}</div></div>`;
   }
 
   function grading(ctx) {
@@ -5120,7 +6032,7 @@ fieldset.question-card { margin:0; }
     return `<div class="workspace-page">${pageHeader('Giáo viên · Khóa học', 'Xưởng nội dung', 'Chuẩn bị bài học, xem trước hoạt động và quản lý câu hỏi trên cùng chương trình.', button('Tạo bản nháp mẫu', 'create-content-draft', { payload: { courseVersionId: 'course-v6', lessonTemplateId: 'lesson-past-simple', title: 'Luyện nói cuối bài' }, icon: 'book' }))}
       <nav class="session-tabs">${tabs.map(([label, href]) => `<a class="${activePath === href ? 'active' : ''}" href="#${href}">${label}</a>`).join('')}</nav>
       <div class="content-grid main-aside">${section('Kho nội dung khóa học', ctx.state.lessonTemplates.map((lesson) => { const unit = ctx.state.units.find((item) => item.id === lesson.unitId); const items = ctx.state.learningItems.filter((item) => item.lessonTemplateId === lesson.id); return `<article class="lesson-plan"><div><p class="eyebrow">${escapeHtml(unit?.title || '')}</p><h3>${escapeHtml(lesson.title)}</h3><small>${items.length} hoạt động · ${lesson.durationMinutes} phút</small></div><div class="inline">${badge(lesson.status)}${link('Xem trước', `/app/teacher/content/preview/${lesson.id}`, { small: true })}</div></article>`; }).join(''))}
-      ${section('Ngân hàng câu hỏi', `<dl class="detail-list"><div><dt>Tổng câu hỏi</dt><dd>${ctx.state.questions.length}</dd></div><div><dt>Bài kiểm tra đã xuất bản</dt><dd>${ctx.state.assessments.filter((item) => item.status === 'PUBLISHED').length}</dd></div><div><dt>Bản nháp cá nhân</dt><dd>${drafts.length}</dd></div></dl>${drafts.map((item) => `<div class="queue-card"><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(valueLabel(item.type))}</small></div>${badge(item.status)}</div>`).join('')}`)}</div></div>`;
+      ${section('Ngân hàng câu hỏi', `<dl class="detail-list"><div><dt>Tổng câu hỏi</dt><dd>${ctx.state.questions.length}</dd></div><div><dt>Bài kiểm tra đã xuất bản</dt><dd>${ctx.state.assessments.filter((item) => item.status === 'PUBLISHED').length}</dd></div><div><dt>Bản nháp cá nhân</dt><dd>${drafts.length}</dd></div></dl>${drafts.map((item) => `<div class="queue-card"><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(valueLabel(item.type))}</small></div>${badge(item.status)}</div>`).join('')}`)}</div>${activePath === '/app/teacher/courses' ? teacherCourseRequestForm(ctx) : ''}</div>`;
   }
 
   function contentPreview(ctx, lessonId) {
@@ -5151,6 +6063,7 @@ fieldset.question-card { margin:0; }
     if (path === '/app/teacher/sessions') return teacherSessions(ctx);
     if (/^\/app\/teacher\/sessions\/[^/]+\/attendance$/.test(path)) return attendanceEditor(ctx, path.split('/')[4]);
     if (path.startsWith('/app/teacher/sessions/')) return sessionDetail(ctx, path.split('/').at(-1));
+    if (path.startsWith('/app/teacher/remedial/')) return teacherRemedialDetail(ctx, path.split('/').at(-1));
     if (path === '/app/teacher/remedial') return teacherRemedial(ctx);
     if (path === '/app/teacher/reports') return teacherReports(ctx);
     if (path === '/app/teacher/notifications') return teacherNotifications(ctx);
@@ -5468,14 +6381,61 @@ fieldset.question-card { margin:0; }
       <dialog class="form-card" data-add-student-dialog><form data-form="add-student" class="stack"><div class="between"><h2>Thêm học viên</h2><button type="button" class="icon-btn" data-action="close-add-student">×</button></div><label>Mã học viên<input class="input" name="code" required placeholder="HSNEW01"></label><label>Họ và tên<input class="input" name="name" required placeholder="Nguyễn Văn An"></label><label>Số điện thoại<input class="input" name="phone" placeholder="0900 000 000"></label><label>Lớp<select class="input" name="classId"><option value="">Chưa xếp lớp</option>${ctx.state.classes.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`).join('')}</select></label><button class="btn btn-primary" type="submit">Lưu học viên</button></form></dialog></div>`;
   }
 
+  function traceBreadcrumb(items) {
+    return `<nav class="trace-breadcrumb" aria-label="Chuỗi truy vết">${items.map((item, index) => `${index ? '<span>›</span>' : ''}${item.href ? `<a href="#${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>` : `<strong>${escapeHtml(item.label)}</strong>`}`).join('')}</nav>`;
+  }
+
+  function courseForm(ctx, audience = 'admin') {
+    return `<form class="operations-form panel" data-form="request-course" data-audience="${audience}"><div class="form-grid"><label>Mã khóa học<input class="input" name="code" required placeholder="YEN-KIDS-A2"></label><label>Tên khóa học<input class="input" name="name" required placeholder="Tiếng Anh thiếu nhi A2"></label><label>Chương trình<select class="input" name="programId" required>${ctx.state.programs.filter((item) => item.status === 'PUBLISHED').map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`).join('')}</select></label><label>Cấp độ<select class="input" name="levelId" required>${ctx.state.levels.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`).join('')}</select></label><label>Nhóm tuổi<select class="input" name="ageBand"><option value="YOUNG_LEARNER">Thiếu nhi</option><option value="TEEN">Thiếu niên</option><option value="ADULT">Người lớn</option></select></label><label>Hình thức<select class="input" name="mode"><option value="OFFLINE">Tại trung tâm</option><option value="ONLINE">Trực tuyến</option><option value="HYBRID">Kết hợp</option></select></label><label class="span-two">Mô tả<textarea class="input" name="description" rows="3"></textarea></label><label class="span-two">Lý do tạo<textarea class="input" name="reason" rows="3" required></textarea></label></div><button class="btn btn-primary" type="submit">${audience === 'teacher' ? 'Gửi đề xuất · Chờ Admin duyệt' : 'Tạo khóa học'}</button></form>`;
+  }
+
+  function classForm(ctx, audience = 'admin') {
+    return `<form class="operations-form panel" data-form="request-class" data-audience="${audience}"><div class="form-grid"><label>Mã lớp<input class="input" name="code" required placeholder="YEN-A2-T3T5"></label><label>Tên lớp<input class="input" name="name" required placeholder="Tiếng Anh A2 buổi tối"></label><label>Chi nhánh<select class="input" name="branchId" required>${ctx.state.branches.filter((item) => item.status === 'ACTIVE').map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`).join('')}</select></label><label>Phiên bản khóa học<select class="input" name="courseVersionId" required>${ctx.state.courseVersions.filter((item) => item.status === 'PUBLISHED' && item.immutable).map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.title)} · ${escapeHtml(item.id)}</option>`).join('')}</select></label><label>Nhóm tuổi<select class="input" name="ageBand"><option value="YOUNG_LEARNER">Thiếu nhi</option><option value="TEEN">Thiếu niên</option><option value="ADULT">Người lớn</option></select></label><label>Hình thức<select class="input" name="mode"><option value="OFFLINE">Tại trung tâm</option><option value="ONLINE">Trực tuyến</option><option value="HYBRID">Kết hợp</option></select></label><label>Sức chứa tối thiểu<input class="input" type="number" name="minCapacity" min="1" value="4" required></label><label>Sức chứa tối đa<input class="input" type="number" name="capacity" min="1" value="12" required></label><label>Phòng học<input class="input" name="room" value="P.204"></label><label>Lịch định kỳ<input class="input" name="recurrence" value="TUE_1800,THU_1800" required></label><label>Ngày bắt đầu<input class="input" type="date" name="startDate" value="2026-09-15" required></label><label>Ngày kết thúc<input class="input" type="date" name="endDate" value="2026-12-15" required></label><label class="span-two">Lý do tạo<textarea class="input" name="reason" rows="3" required></textarea></label></div><button class="btn btn-primary" type="submit">${audience === 'teacher' ? 'Gửi đề xuất · Chờ Admin duyệt' : 'Tạo lớp học'}</button></form>`;
+  }
+
   function adminClasses(ctx) {
     const rows = ctx.state.classes.map((cohort) => ({ ...cohort, enrollmentCount: ctx.state.enrollments.filter((item) => item.classId === cohort.id && item.status === 'ACTIVE').length, sessionCount: ctx.state.sessions.filter((item) => item.classId === cohort.id).length }));
-    return `<div class="workspace-page">${pageHeader('Quản trị viên · Vận hành', 'Lớp, lịch và buổi học', 'Ghi danh, lịch học và buổi học dùng cùng phiên bản khóa học.')}${section('Danh sách lớp', table([{ label: 'Lớp', render: (row) => `<strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.code)}</small>` }, { label: 'Lịch', key: 'scheduleLabel' }, { label: 'Khóa học', render: (row) => escapeHtml(ctx.state.courseVersions.find((item) => item.id === row.courseVersionId)?.title || '') }, { label: 'Học viên', render: (row) => `${row.enrollmentCount}/${row.capacity}` }, { label: 'Buổi học', key: 'sessionCount' }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows))}</div>`;
+    return `<div class="workspace-page">${pageHeader('Quản trị viên · Vận hành', 'Lớp, lịch và buổi học', 'Ghi danh, lịch học và buổi học dùng cùng phiên bản khóa học.', link('Tạo lớp học', '/app/admin/classes/new', { kind: 'primary' }))}${section('Danh sách lớp', table([{ label: 'Lớp', render: (row) => `<a class="table-link" href="#/app/admin/classes/${escapeHtml(row.id)}"><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.code)}</small></a>` }, { label: 'Lịch', key: 'scheduleLabel' }, { label: 'Khóa học', render: (row) => escapeHtml(ctx.state.courseVersions.find((item) => item.id === row.courseVersionId)?.title || '') }, { label: 'Học viên', render: (row) => `${row.enrollmentCount}/${row.capacity}` }, { label: 'Buổi học', key: 'sessionCount' }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows))}</div>`;
+  }
+
+  function adminClassCreate(ctx) {
+    return `<div class="workspace-page">${pageHeader('Quản trị · Lớp học', 'Tạo lớp học', 'Lớp phải gắn với một phiên bản khóa học đã công bố; lịch định kỳ sẽ sinh các buổi học.', link('Về danh sách', '/app/admin/classes'))}${classForm(ctx)}</div>`;
+  }
+
+  function adminClassDetail(ctx, classId) {
+    const cohort = ctx.state.classes.find((item) => item.id === classId);
+    if (!cohort) return '';
+    const version = ctx.state.courseVersions.find((item) => item.id === cohort.courseVersionId);
+    const course = ctx.state.courses.find((item) => item.id === version?.courseId);
+    const sessions = ctx.state.sessions.filter((item) => item.classId === cohort.id);
+    const enrollments = ctx.state.enrollments.filter((item) => item.classId === cohort.id && item.status === 'ACTIVE');
+    const readiness = root.YC.selectors.classReadiness(ctx.state, cohort.id);
+    return `<div class="workspace-page">${traceBreadcrumb([{ label: 'Khóa học', href: `/app/admin/courses/${course?.id}` }, { label: 'Phiên bản', href: `/app/admin/course-versions/${version?.id}` }, { label: 'Lớp học' }])}${pageHeader('Quản trị · Lớp học', cohort.name, `${cohort.code} · ${cohort.scheduleLabel || 'Chưa có nhãn lịch'}`, link('Về danh sách lớp', '/app/admin/classes'))}<div class="metric-grid three">${metric('Học viên', enrollments.length, `${Math.max(0, cohort.capacity - enrollments.length)} chỗ còn lại`, 'people')}${metric('Buổi học', sessions.length, 'Không xóa lịch sử', 'calendar')}${metric('Sẵn sàng', readiness.ready ? 'Đạt' : readiness.errors.length, readiness.ready ? 'Đủ điều kiện' : 'điều kiện chưa đạt', 'shield')}</div><div class="content-grid main-aside">${section('Phiên bản khóa học gắn cố định', `<a class="trace-card" href="#/app/admin/course-versions/${escapeHtml(version?.id || '')}"><strong>${escapeHtml(version?.title || '')}</strong><small>${escapeHtml(course?.name || '')} · v${version?.version || '—'} · không đổi sau buổi đầu</small></a><dl class="detail-list"><div><dt>Chi nhánh</dt><dd>${escapeHtml(ctx.state.branches.find((item) => item.id === cohort.branchId)?.name || '')}</dd></div><div><dt>Hình thức</dt><dd>${escapeHtml(valueLabel(cohort.mode))}</dd></div><div><dt>Sức chứa</dt><dd>${enrollments.length}/${cohort.capacity}</dd></div></dl>`)}${section('Điều kiện sẵn sàng', readiness.errors.length ? `<ul class="check-list">${readiness.errors.map((item) => `<li>○ ${escapeHtml(item.message)}</li>`).join('')}</ul>` : '<p>✓ Đã đạt đủ điều kiện mở lớp.</p>')}</div>${section('Buổi học', sessions.length ? sessions.map((session) => `<a class="queue-card" href="#/app/admin/sessions/${escapeHtml(session.id)}"><div><strong>${formatDate(session.startsAt, true)}</strong><small>${escapeHtml(ctx.state.lessonTemplates.find((item) => item.id === session.lessonTemplateId)?.title || '')}</small></div>${badge(session.status)}</a>`).join('') : '<p class="muted">Chưa có buổi học.</p>')}</div>`;
+  }
+
+  function adminSessionDetail(ctx, sessionId) {
+    const trace = root.YC.selectors.sessionTrace(ctx.state, sessionId);
+    if (!trace) return '';
+    const attendance = ctx.state.attendanceRecords.filter((item) => item.sessionId === sessionId);
+    const roster = ctx.state.learners.filter((item) => trace.learnerIds.includes(item.id));
+    return `<div class="workspace-page">${traceBreadcrumb([{ label: 'Khóa học', href: `/app/admin/courses/${trace.course?.id}` }, { label: 'Phiên bản', href: `/app/admin/course-versions/${trace.courseVersion?.id}` }, { label: 'Lớp gốc', href: `/app/admin/classes/${trace.cohort?.id}` }, { label: 'Buổi học' }])}${pageHeader('Quản trị · Buổi học', trace.cohort?.name || sessionId, `${formatDate(trace.session.startsAt, true)} · ${trace.session.room || 'Trực tuyến'}`, link('Về lớp học', `/app/admin/classes/${trace.cohort?.id}`))}<div class="content-grid main-aside">${section('Nội dung và lịch', `<dl class="detail-list"><div><dt>Bài học</dt><dd>${escapeHtml(trace.lesson?.title || '')}</dd></div><div><dt>Phiên bản khóa học</dt><dd>${escapeHtml(trace.courseVersion?.title || '')}</dd></div><div><dt>Phòng / hình thức</dt><dd>${escapeHtml(trace.session.room || '—')} · ${escapeHtml(valueLabel(trace.session.mode))}</dd></div><div><dt>Trạng thái</dt><dd>${badge(trace.session.status)}</dd></div></dl>`)}${section('Điểm danh', table([{ label: 'Học viên', render: (row) => `<strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.code)}</small>` }, { label: 'Trạng thái', render: (row) => { const record = attendance.find((item) => item.learnerId === row.id); return record ? badge(record.status) : badge('DRAFT', 'Chưa ghi'); } }, { label: 'Hồ sơ học bù', render: (row) => { const record = attendance.find((item) => item.learnerId === row.id); const remedialCase = ctx.state.remedialCases.find((item) => item.sourceAttendanceId === record?.id); return remedialCase ? `<a href="#/app/admin/remedial/${escapeHtml(remedialCase.id)}">Mở hồ sơ</a>` : '—'; } }], roster))}</div></div>`;
   }
 
   function adminRemedial(ctx) {
-    const rows = ctx.state.remedialAssignments.map((item) => ({ ...item, learner: ctx.state.learners.find((learner) => learner.id === item.learnerId) }));
-    return `<div class="workspace-page">${pageHeader('Quản trị viên · Học bù', 'Quản lý học bù', 'Theo dõi hạn, liên kết, tiến độ video và kết quả.', button('Xuất CSV', 'export-csv', { kind: 'secondary', payload: { type: 'remedial' } }))}${section('Toàn trung tâm', table([{ label: 'Học viên', render: (row) => `<strong>${escapeHtml(row.learner?.name || '')}</strong><small>${escapeHtml(row.learner?.code || '')}</small>` }, { label: 'Hạn', render: (row) => formatDate(row.dueAt) }, { label: 'Tiến độ', render: (row) => `${row.videoProgress || 0}% · ${row.highestScore ?? '—'}/100` }, { label: 'Liên kết', render: (row) => `${row.accessStatus || 'ACTIVE'} · phiên bản ${row.linkVersion || 1}` }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows, { emptyTitle: 'Chưa có bài học bù', emptyBody: 'Bản ghi sẽ xuất hiện khi giáo viên lưu một lượt điểm danh vắng.' }))}</div>`;
+    const rows = ctx.state.remedialCases.map((item) => ({ ...item, learner: ctx.state.learners.find((learner) => learner.id === item.learnerId), computed: root.YC.remedial.caseStatus(ctx.state, item.id), assignment: ctx.state.remedialAssignments.find((entry) => entry.remedialCaseId === item.id) }));
+    return `<div class="workspace-page">${pageHeader('Quản trị viên · Học bù', 'Quản lý học bù', 'Một hồ sơ nối điểm danh nguồn, bài trực tuyến và mọi lần đặt lịch tại lớp.', button('Xuất CSV', 'export-csv', { kind: 'secondary', payload: { type: 'remedial' } }))}${section('Toàn trung tâm', table([{ label: 'Học viên', render: (row) => `<a class="table-link" href="#/app/admin/remedial/${escapeHtml(row.id)}"><strong>${escapeHtml(row.learner?.name || '')}</strong><small>${escapeHtml(row.learner?.code || '')}</small></a>` }, { label: 'Nguồn', render: (row) => escapeHtml(row.sourceSessionId) }, { label: 'Trực tuyến', render: (row) => badge(row.assignment?.status || 'DRAFT') }, { label: 'Lịch tại lớp', render: (row) => ctx.state.makeUpBookings.filter((item) => item.remedialCaseId === row.id).length }, { label: 'Trạng thái tổng', render: (row) => badge(row.computed?.status || 'OPEN') }], rows, { emptyTitle: 'Chưa có hồ sơ học bù', emptyBody: 'Hồ sơ sẽ xuất hiện khi giáo viên chốt một lượt điểm danh đủ điều kiện.' }))}</div>`;
+  }
+
+  function adminRemedialDetail(ctx, caseId) {
+    const remedialCase = ctx.state.remedialCases.find((item) => item.id === caseId);
+    if (!remedialCase) return '';
+    const attendance = ctx.state.attendanceRecords.find((item) => item.id === remedialCase.sourceAttendanceId);
+    const trace = root.YC.remedial.sourceTrace(ctx.state, attendance);
+    const learner = ctx.state.learners.find((item) => item.id === remedialCase.learnerId);
+    const assignment = ctx.state.remedialAssignments.find((item) => item.remedialCaseId === remedialCase.id);
+    const bookings = ctx.state.makeUpBookings.filter((item) => item.remedialCaseId === remedialCase.id);
+    const computed = root.YC.remedial.caseStatus(ctx.state, remedialCase.id);
+    return `<div class="workspace-page">${traceBreadcrumb([{ label: 'Khóa học', href: `/app/admin/courses/${trace.course?.id}` }, { label: 'Phiên bản', href: `/app/admin/course-versions/${trace.courseVersion?.id}` }, { label: 'Lớp gốc', href: `/app/admin/classes/${trace.cohort?.id}` }, { label: 'Buổi gốc', href: `/app/admin/sessions/${trace.session?.id}` }, { label: 'Điểm danh' }, { label: 'Hồ sơ học bù' }])}${pageHeader('Quản trị · Học bù', learner?.name || 'Hồ sơ học bù', `${trace.lesson?.title || ''} · trạng thái được tính tự động`, link('Về danh sách', '/app/admin/remedial'))}<div class="metric-grid three">${metric('Trạng thái tổng', computed?.status || 'OPEN', (remedialCase.requiredModes || []).join(' + '), 'shield')}${metric('Tiến độ trực tuyến', `${assignment?.videoProgress || 0}%`, assignment?.status || 'Chưa giao', 'trend')}${metric('Lịch học tại lớp', bookings.length, 'Giữ đầy đủ lịch sử đặt lại', 'calendar')}</div><div class="content-grid main-aside">${section('Nguồn phát sinh', `<dl class="detail-list"><div><dt>Khóa học / phiên bản</dt><dd>${escapeHtml(trace.course?.name || '')} · ${escapeHtml(trace.courseVersion?.title || '')}</dd></div><div><dt>Lớp gốc</dt><dd><a href="#/app/admin/classes/${escapeHtml(trace.cohort?.id || '')}">${escapeHtml(trace.cohort?.name || '')}</a></dd></div><div><dt>Buổi học gốc</dt><dd><a href="#/app/admin/sessions/${escapeHtml(trace.session?.id || '')}">${formatDate(trace.session?.startsAt, true)}</a></dd></div><div><dt>Điểm danh</dt><dd>${badge(attendance?.status || 'DRAFT')}</dd></div></dl>`)}${section('Duyệt ngoại lệ', `<p>Mapping khác bài học chỉ được xác nhận khi Admin ghi rõ phạm vi bao phủ.</p>${bookings.filter((item) => item.contentMapping?.type === 'ADMIN_EQUIVALENT').map((item) => `<div class="evidence-note">${escapeHtml(item.contentMapping.coverageNote)}</div>`).join('') || '<p class="muted">Chưa dùng ngoại lệ nội dung.</p>'}`)}</div>${section('Buổi học đích', bookings.length ? bookings.map((item) => { const targetClass = ctx.state.classes.find((entry) => entry.id === item.targetClassId); const targetSession = ctx.state.sessions.find((entry) => entry.id === item.targetSessionId); return `<article class="trace-card"><div><strong>${escapeHtml(targetClass?.name || '')}</strong><small>${formatDate(targetSession?.startsAt, true)} · ${escapeHtml(item.rosterRole)}</small></div>${badge(item.status)}</article>`; }).join('') : '<p class="muted">Chưa đặt lịch học bù tại lớp.</p>')}</div>`;
   }
 
   function adminContacts(ctx) {
@@ -5507,10 +6467,36 @@ fieldset.question-card { margin:0; }
       const lessons = ctx.state.lessonTemplates.filter((item) => unitIds.includes(item.unitId));
       return { ...course, versions, lessons };
     });
-    return `<div class="workspace-page">${pageHeader('Quản trị viên · Khóa học', 'Quản trị khóa học', 'Kiểm kê khóa học, phiên bản, bài học, video, câu hỏi và bài kiểm tra từ cùng một nguồn dữ liệu.')}
+    return `<div class="workspace-page">${pageHeader('Quản trị viên · Khóa học', 'Quản trị khóa học', 'Kiểm kê khóa học, phiên bản, bài học, video, câu hỏi và bài kiểm tra từ cùng một nguồn dữ liệu.', link('Tạo khóa học', '/app/admin/courses/new', { kind: 'primary' }))}
       <div class="metric-grid four">${metric('Khóa học', ctx.state.courses.length, 'Theo chương trình và cấp độ', 'book')}${metric('Bài học', ctx.state.lessonTemplates.length, 'Mẫu bài có phiên bản', 'grid')}${metric('Video', ctx.state.learningItems.filter((item) => item.type === 'VIDEO').length, 'Thông tin mô phỏng', 'trend')}${metric('Câu hỏi', ctx.state.questions.length, 'Ngân hàng dùng chung', 'check')}</div>
-      ${section('Danh mục khóa học', table([{ label: 'Khóa học', render: (row) => `<strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.code)}</small>` }, { label: 'Phiên bản', render: (row) => row.versions.map((item) => `v${item.version}`).join(', ') }, { label: 'Bài học', render: (row) => row.lessons.length }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows))}
+      ${section('Danh mục khóa học', table([{ label: 'Khóa học', render: (row) => `<a class="table-link" href="#/app/admin/courses/${escapeHtml(row.id)}"><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.code)}</small></a>` }, { label: 'Phiên bản', render: (row) => row.versions.map((item) => `v${item.version}`).join(', ') }, { label: 'Bài học', render: (row) => row.lessons.length }, { label: 'Trạng thái', render: (row) => badge(row.status) }], rows))}
       <div class="content-grid two">${section('Video & hoạt động', table([{ label: 'Nội dung', render: (row) => `<strong>${escapeHtml(row.title)}</strong><small>${escapeHtml(valueLabel(row.type))}</small>` }, { label: 'Thời lượng', render: (row) => `${row.durationMinutes} phút` }, { label: 'Yêu cầu', render: (row) => row.required ? 'Bắt buộc' : 'Tự chọn' }], ctx.state.learningItems))}${section('Bài kiểm tra', table([{ label: 'Tên bài', key: 'title' }, { label: 'Số câu', render: (row) => row.questionIds.length }, { label: 'Điểm đạt', render: (row) => `${row.passingScore}%` }, { label: 'Trạng thái', render: (row) => badge(row.status) }], ctx.state.assessments))}</div></div>`;
+  }
+
+  function adminCourseCreate(ctx) {
+    return `<div class="workspace-page">${pageHeader('Quản trị · Khóa học', 'Tạo khóa học', 'Chọn đúng chương trình, cấp độ, nhóm tuổi và hình thức trước khi tạo phiên bản nội dung.', link('Về danh sách', '/app/admin/courses'))}${courseForm(ctx)}</div>`;
+  }
+
+  function adminCourseDetail(ctx, courseId) {
+    const course = ctx.state.courses.find((item) => item.id === courseId);
+    if (!course) return '';
+    const program = ctx.state.programs.find((item) => item.id === course.programId);
+    const level = ctx.state.levels.find((item) => item.id === course.levelId);
+    const versions = ctx.state.courseVersions.filter((item) => item.courseId === course.id).sort((a, b) => b.version - a.version);
+    const versionIds = versions.map((item) => item.id);
+    const cohorts = ctx.state.classes.filter((item) => versionIds.includes(item.courseVersionId));
+    const requests = ctx.state.changeRequests.filter((item) => item.resourceType === 'COURSE' && (item.resourceId === course.id || versions.some((version) => version.changeRequestId === item.id)));
+    return `<div class="workspace-page">${traceBreadcrumb([{ label: 'Khóa học' }, { label: course.name }])}${pageHeader('Quản trị · Khóa học', course.name, `${course.code} · ${program?.name || ''} · ${level?.name || ''}`, link('Về danh sách', '/app/admin/courses'))}<nav class="session-tabs"><a class="active">Tổng quan</a><a>Phiên bản</a><a>Cấu trúc</a><a>Đánh giá</a><a>Học bù</a><a>Lớp sử dụng</a><a>Phê duyệt / Nhật ký</a></nav><div class="content-grid main-aside">${section('Phiên bản khóa học', versions.map((version) => `<a class="trace-card" href="#/app/admin/course-versions/${escapeHtml(version.id)}"><div><strong>${escapeHtml(version.title)}</strong><small>Phiên bản ${version.version} · ${version.totalHours} giờ</small></div>${badge(version.status)}</a>`).join(''))}${section('Tổng quan', `<dl class="detail-list"><div><dt>Chương trình</dt><dd>${escapeHtml(program?.name || '')}</dd></div><div><dt>Cấp độ</dt><dd>${escapeHtml(level?.name || '')}</dd></div><div><dt>Trạng thái</dt><dd>${badge(course.status)}</dd></div><div><dt>Yêu cầu đang chờ</dt><dd>${requests.filter((item) => ['SUBMITTED', 'IN_REVIEW'].includes(item.status)).length}</dd></div></dl>`)}</div>${section('Lớp sử dụng', cohorts.length ? cohorts.map((cohort) => `<a class="queue-card" href="#/app/admin/classes/${escapeHtml(cohort.id)}"><div><strong>${escapeHtml(cohort.name)}</strong><small>${escapeHtml(cohort.scheduleLabel || '')}</small></div>${badge(cohort.status)}</a>`).join('') : '<p class="muted">Chưa có lớp dùng khóa học này.</p>')}</div>`;
+  }
+
+  function adminCourseVersionDetail(ctx, versionId) {
+    const version = ctx.state.courseVersions.find((item) => item.id === versionId);
+    if (!version) return '';
+    const course = ctx.state.courses.find((item) => item.id === version.courseId);
+    const units = ctx.state.units.filter((item) => item.courseVersionId === version.id);
+    const lessons = ctx.state.lessonTemplates.filter((item) => units.some((unit) => unit.id === item.unitId));
+    const validation = root.YC.selectors.coursePublishValidation(ctx.state, version.id);
+    return `<div class="workspace-page">${traceBreadcrumb([{ label: 'Khóa học', href: `/app/admin/courses/${course?.id}` }, { label: 'Phiên bản khóa học' }])}${pageHeader('Quản trị · Phiên bản khóa học', version.title, `v${version.version} · ${version.totalHours} giờ`, link('Về khóa học', `/app/admin/courses/${course?.id}`))}${version.immutable ? '<div class="notice-panel panel"><b>Đã khóa, không thể sửa trực tiếp</b><p>Muốn thay đổi nội dung, hãy tạo một phiên bản nháp mới từ bản này.</p></div>' : ''}<div class="content-grid main-aside">${section('Cấu trúc chương trình', units.map((unit) => `<article class="lesson-plan"><div><strong>Học phần ${unit.order} · ${escapeHtml(unit.title)}</strong><small>${lessons.filter((item) => item.unitId === unit.id).map((item) => item.title).join(' · ')}</small></div></article>`).join(''))}${section('Kiểm tra công bố', `<p>${validation.valid ? '✓ Đủ điều kiện công bố' : `${validation.errors.length} lỗi cần xử lý`}</p><ul class="check-list">${validation.errors.map((item) => `<li>○ ${escapeHtml(item.message)}</li>`).join('') || '<li>✓ Cấu trúc hợp lệ</li>'}</ul>`)}</div><div class="content-grid two">${section('Quy tắc hoàn thành', `<dl class="detail-list"><div><dt>Chuyên cần tối thiểu</dt><dd>${version.completionRule?.attendanceMinimum ?? '—'}%</dd></div><div><dt>Điểm cuối khóa</dt><dd>${version.completionRule?.finalScoreMinimum ?? '—'}</dd></div><div><dt>Điểm từng kỹ năng</dt><dd>${version.completionRule?.skillMinimum ?? '—'}</dd></div></dl>`)}${section('Chính sách học bù', `<dl class="detail-list"><div><dt>Trạng thái kích hoạt</dt><dd>${escapeHtml((version.remedialPolicy?.triggerStatuses || []).join(', '))}</dd></div><div><dt>Hình thức bắt buộc</dt><dd>${escapeHtml((version.remedialPolicy?.requiredModes || []).join(' + '))}</dd></div><div><dt>Hạn hoàn thành</dt><dd>${version.remedialPolicy?.deadlineDays ?? '—'} ngày</dd></div><div><dt>Điểm đạt</dt><dd>${version.remedialPolicy?.passingScore ?? '—'}%</dd></div></dl>`)}</div></div>`;
   }
 
   function render(path, ctx) {
@@ -5532,10 +6518,22 @@ fieldset.question-card { margin:0; }
       '/app/admin/integrations': integrations,
       '/app/admin/settings': settings,
     };
+    if (path === '/app/admin/courses/new') return adminCourseCreate(ctx);
+    const courseMatch = /^\/app\/admin\/courses\/([^/]+)$/.exec(path);
+    if (courseMatch) return adminCourseDetail(ctx, decodeURIComponent(courseMatch[1]));
+    const versionMatch = /^\/app\/admin\/course-versions\/([^/]+)$/.exec(path);
+    if (versionMatch) return adminCourseVersionDetail(ctx, decodeURIComponent(versionMatch[1]));
     if (['/app/admin/courses', '/app/admin/lessons', '/app/admin/videos', '/app/admin/questions', '/app/admin/quizzes'].includes(path)) return adminCourses(ctx);
     if (['/app/admin/users', '/app/admin/teachers'].includes(path)) return adminUsers(ctx);
     if (path === '/app/admin/students') return adminStudents(ctx);
+    if (path === '/app/admin/classes/new') return adminClassCreate(ctx);
+    const classMatch = /^\/app\/admin\/classes\/([^/]+)$/.exec(path);
+    if (classMatch) return adminClassDetail(ctx, decodeURIComponent(classMatch[1]));
+    const sessionMatch = /^\/app\/admin\/sessions\/([^/]+)$/.exec(path);
+    if (sessionMatch) return adminSessionDetail(ctx, decodeURIComponent(sessionMatch[1]));
     if (['/app/admin/classes', '/app/admin/enrollments', '/app/admin/schedules', '/app/admin/sessions'].includes(path)) return adminClasses(ctx);
+    const remedialMatch = /^\/app\/admin\/remedial\/([^/]+)$/.exec(path);
+    if (remedialMatch) return adminRemedialDetail(ctx, decodeURIComponent(remedialMatch[1]));
     if (path === '/app/admin/remedial') return adminRemedial(ctx);
     if (path === '/app/admin/contacts') return adminContacts(ctx);
     if (path === '/app/admin/reports') return adminReports(ctx);
@@ -5791,6 +6789,64 @@ fieldset.question-card { margin:0; }
       if (action === 'create-content-draft') {
         const actorId = storage?.getItem(ACTOR_KEY) || 'teacher-1';
         const result = bus.dispatch('CREATE_CONTENT_DRAFT', data, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'request-course') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'admin-1';
+        const result = bus.dispatch('REQUEST_CREATE_COURSE', data, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'request-class') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'admin-1';
+        const result = bus.dispatch('REQUEST_CREATE_CLASS', data, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'request-session') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'admin-1';
+        const result = bus.dispatch('REQUEST_CREATE_SESSION', data, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'mark-session-ready') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'teacher-1';
+        const result = bus.dispatch('MARK_SESSION_READY', { sessionId: data.sessionId, adaptations: ['Đã đối chiếu mục tiêu, học liệu và lưu ý học viên từ bàn điều khiển.'] }, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'start-session') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'teacher-1';
+        const result = bus.dispatch('START_SESSION', { sessionId: data.sessionId }, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'complete-session') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'teacher-1';
+        const session = state().sessions.find((item) => item.id === data.sessionId);
+        const taughtItemIds = state().learningItems.filter((item) => item.lessonTemplateId === session?.lessonTemplateId).map((item) => item.id);
+        const result = bus.dispatch('COMPLETE_SESSION', { sessionId: data.sessionId, taughtItemIds, deferredItemIds: [], note: 'Đã hoàn tất nội dung theo giáo án.' }, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'confirm-make-up-booking') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'service-1';
+        const result = bus.dispatch('CONFIRM_MAKE_UP_BOOKING', data, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'cancel-make-up-booking') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'service-1';
+        const result = bus.dispatch('CANCEL_MAKE_UP_BOOKING', { bookingId: data.bookingId, reason: data.reason }, actorId);
         onToast(result.message, result.ok ? 'success' : 'error');
         onChange();
         return result;
@@ -6136,7 +7192,7 @@ fieldset.question-card { margin:0; }
         }, 500);
         return;
       }
-      const data = { ...payloadFrom(trigger), actorId: trigger.dataset.actorId, learnerId: trigger.dataset.learnerId, sessionId: trigger.dataset.sessionId, assignmentId: trigger.dataset.assignmentId, documentId: trigger.dataset.documentId, programId: trigger.dataset.programId, eventId: trigger.dataset.eventId, status: trigger.dataset.status, progress: trigger.dataset.progress };
+      const data = { ...payloadFrom(trigger), actorId: trigger.dataset.actorId, learnerId: trigger.dataset.learnerId, sessionId: trigger.dataset.sessionId, assignmentId: trigger.dataset.assignmentId, bookingId: trigger.dataset.bookingId, documentId: trigger.dataset.documentId, programId: trigger.dataset.programId, eventId: trigger.dataset.eventId, status: trigger.dataset.status, progress: trigger.dataset.progress };
       if (action === 'revoke-remedial-link') {
         if (root.confirm && !root.confirm('Thu hồi liên kết học bù này? Học viên sẽ không thể mở liên kết hiện tại.')) return;
         data.reason = 'Giáo viên xác nhận thu hồi từ màn quản lý.';
@@ -6147,6 +7203,11 @@ fieldset.question-card { margin:0; }
         const reason = root.prompt('Lý do gia hạn', 'Học viên cần thêm thời gian hoàn thành');
         if (reason === null) return;
         data.days = days;
+        data.reason = reason;
+      }
+      if (action === 'cancel-make-up-booking') {
+        const reason = root.prompt ? root.prompt('Lý do hủy lịch học bù', 'Phụ huynh đề nghị đổi lịch') : 'Hủy từ màn Dịch vụ học viên';
+        if (reason === null) return;
         data.reason = reason;
       }
       trigger.disabled = true;
@@ -6170,6 +7231,10 @@ fieldset.question-card { margin:0; }
       if (form.dataset.form === 'quiz') { action = 'submit-quiz'; data = { assignmentId: form.dataset.assignmentId, answers: Array.from(form.querySelectorAll('.question-card'), (_card, index) => { const selected = form.querySelector(`input[name="answer-${index}"]:checked`); return selected ? Number(selected.value) : null; }) }; }
       if (form.dataset.form === 'public-lead') { action = 'submit-public-lead'; data = { type: form.dataset.type, name: values.get('name'), studentName: values.get('studentName'), organization: values.get('organization'), phone: values.get('phone'), email: values.get('email'), message: values.get('message') }; }
       if (form.dataset.form === 'add-student') { action = 'add-learner'; data = { code: values.get('code'), name: values.get('name'), phone: values.get('phone'), classId: values.get('classId') }; }
+      if (form.dataset.form === 'request-course') { action = 'request-course'; data = { code: values.get('code'), name: values.get('name'), programId: values.get('programId'), levelId: values.get('levelId'), ageBand: values.get('ageBand'), mode: values.get('mode'), description: values.get('description'), reason: values.get('reason') }; }
+      if (form.dataset.form === 'request-class') { action = 'request-class'; data = { code: values.get('code'), name: values.get('name'), branchId: values.get('branchId'), courseVersionId: values.get('courseVersionId'), ageBand: values.get('ageBand'), mode: values.get('mode'), minCapacity: values.get('minCapacity'), capacity: values.get('capacity'), room: values.get('room'), recurrence: String(values.get('recurrence') || '').split(',').map((item) => item.trim()).filter(Boolean), startDate: values.get('startDate'), endDate: values.get('endDate'), durationMinutes: 90, reason: values.get('reason') }; }
+      if (form.dataset.form === 'request-session') { action = 'request-session'; data = { classId: values.get('classId'), lessonTemplateId: values.get('lessonTemplateId'), startsAt: values.get('startsAt'), endsAt: values.get('endsAt'), room: values.get('room'), mode: values.get('mode'), reason: values.get('reason') }; }
+      if (form.dataset.form === 'make-up-booking') { action = 'confirm-make-up-booking'; data = { caseId: values.get('caseId'), targetSessionId: values.get('targetSessionId') }; }
       if (form.dataset.form === 'settings') { action = 'update-settings'; data = { minimumVideoProgress: values.get('minimumVideoProgress'), defaultPassingScore: values.get('defaultPassingScore'), remedialDeadlineDays: values.get('remedialDeadlineDays') }; }
       if (form.dataset.form === 'role-permissions') { action = 'set-role-permission'; data = { role: values.get('role'), permissionId: values.get('permissionId'), effect: values.get('effect'), scopeType: values.get('scopeType'), scopeIds: String(values.get('scopeIds') || '').split(',').map((item) => item.trim()).filter(Boolean), reason: values.get('reason') }; }
       if (form.dataset.form === 'user-permissions') { action = 'set-user-permission'; data = { userId: values.get('userId'), permissionId: values.get('permissionId'), effect: values.get('effect'), scopeType: values.get('scopeType'), scopeIds: String(values.get('scopeIds') || '').split(',').map((item) => item.trim()).filter(Boolean), reason: values.get('reason') }; }

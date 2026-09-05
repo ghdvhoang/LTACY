@@ -195,6 +195,26 @@
       return booking;
     }
 
+    function applyAdminDirectChange(draft, input, context) {
+      const permissionId = approvalCall(() => root.YC.approval.permissionFor(input.resourceType, input.operation));
+      const scope = root.YC.approval.resourceScope(input, draft);
+      if (!root.YC.policy.can(context.actor, permissionId, scope, draft)) throw new CommandError('FORBIDDEN', 'Tài khoản hiện tại không có quyền tạo dữ liệu này.');
+      const request = approvalCall(() => root.YC.approval.buildRequest(input, { actorId: context.actor.id, now: nowIso(), state: draft }));
+      request.direct = true;
+      request.reviewerId = context.actor.id;
+      request.reviewNote = 'Quản trị viên tạo trực tiếp theo quyền được cấp.';
+      request.reviewedAt = nowIso();
+      const canonical = approvalCall(() => root.YC.approval.applyChange(request, draft));
+      root.YC.approval.transition(request, 'APPROVED');
+      request.resourceId = canonical.id;
+      request.appliedAt = nowIso();
+      draft.changeRequests.push(request);
+      const event = appendEvent(draft, context, 'ADMIN_DIRECT_CHANGE_APPLIED', 'CHANGE_REQUEST', request.id, `${request.resourceType} · ${request.operation} · ${input.reason}.`);
+      request.eventIds.push(event.id);
+      appendAudit(draft, context, 'ADMIN_DIRECT_CHANGE_APPLIED', request.resourceType, canonical.id, input.reason);
+      return { message: 'Đã tạo dữ liệu chính thức và lưu đầy đủ nhật ký.', requestId: request.id, resourceId: canonical.id, status: request.status, applied: true };
+    }
+
     const handlers = {
       SET_ROLE_PERMISSION(draft, payload, context) {
         requirePermission(draft, context, 'access.manage_role');
@@ -716,10 +736,12 @@
           status: 'DRAFT',
           version: 1,
         };
-        return handlers.SUBMIT_CHANGE_REQUEST(draft, {
+        const input = {
           resourceType: 'COURSE', operation: 'CREATE', baseVersion: 0,
           proposedSnapshot: proposal, reason: payload.reason,
-        }, context);
+        };
+        if (context.actor.role === 'ADMIN') return applyAdminDirectChange(draft, input, context);
+        return handlers.SUBMIT_CHANGE_REQUEST(draft, input, context);
       },
 
       REQUEST_UPDATE_COURSE(draft, payload, context) {
@@ -824,10 +846,12 @@
           remedialPolicySnapshot: clone(draft.courseVersions.find((item) => item.id === payload.courseVersionId)?.remedialPolicy || {}),
           status: 'DRAFT', version: 1,
         };
-        return handlers.SUBMIT_CHANGE_REQUEST(draft, {
+        const input = {
           resourceType: 'CLASS', operation: 'CREATE', baseVersion: 0,
           proposedSnapshot: proposal, reason: payload.reason,
-        }, context);
+        };
+        if (context.actor.role === 'ADMIN') return applyAdminDirectChange(draft, input, context);
+        return handlers.SUBMIT_CHANGE_REQUEST(draft, input, context);
       },
 
       REQUEST_UPDATE_CLASS(draft, payload, context) {
@@ -987,10 +1011,12 @@
         };
         const validation = root.YC.selectors.sessionValidation(draft, proposal);
         if (!validation.valid) throw new CommandError(validation.errors[0].code, validation.errors[0].message, { evidence: validation });
-        return handlers.SUBMIT_CHANGE_REQUEST(draft, {
+        const input = {
           resourceType: 'SESSION', operation: 'CREATE', baseVersion: 0,
           proposedSnapshot: proposal, reason: payload.reason,
-        }, context);
+        };
+        if (context.actor.role === 'ADMIN') return applyAdminDirectChange(draft, input, context);
+        return handlers.SUBMIT_CHANGE_REQUEST(draft, input, context);
       },
 
       REQUEST_RESCHEDULE_SESSION(draft, payload, context) {

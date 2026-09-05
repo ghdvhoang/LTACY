@@ -136,6 +136,64 @@
         onChange();
         return result;
       }
+      if (action === 'request-course') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'admin-1';
+        const result = bus.dispatch('REQUEST_CREATE_COURSE', data, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'request-class') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'admin-1';
+        const result = bus.dispatch('REQUEST_CREATE_CLASS', data, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'request-session') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'admin-1';
+        const result = bus.dispatch('REQUEST_CREATE_SESSION', data, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'mark-session-ready') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'teacher-1';
+        const result = bus.dispatch('MARK_SESSION_READY', { sessionId: data.sessionId, adaptations: ['Đã đối chiếu mục tiêu, học liệu và lưu ý học viên từ bàn điều khiển.'] }, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'start-session') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'teacher-1';
+        const result = bus.dispatch('START_SESSION', { sessionId: data.sessionId }, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'complete-session') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'teacher-1';
+        const session = state().sessions.find((item) => item.id === data.sessionId);
+        const taughtItemIds = state().learningItems.filter((item) => item.lessonTemplateId === session?.lessonTemplateId).map((item) => item.id);
+        const result = bus.dispatch('COMPLETE_SESSION', { sessionId: data.sessionId, taughtItemIds, deferredItemIds: [], note: 'Đã hoàn tất nội dung theo giáo án.' }, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'confirm-make-up-booking') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'service-1';
+        const result = bus.dispatch('CONFIRM_MAKE_UP_BOOKING', data, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'cancel-make-up-booking') {
+        const actorId = storage?.getItem(ACTOR_KEY) || 'service-1';
+        const result = bus.dispatch('CANCEL_MAKE_UP_BOOKING', { bookingId: data.bookingId, reason: data.reason }, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
       if (action === 'set-attendance') {
         if (!['PRESENT', 'ABSENT', 'LATE'].includes(data.status)) return { ok: false, code: 'INVALID_ATTENDANCE_STATUS', message: 'Trạng thái điểm danh không hợp lệ.' };
         const draft = getAttendanceDraft(data.sessionId);

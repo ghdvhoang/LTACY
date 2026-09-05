@@ -132,7 +132,7 @@
         }, 500);
         return;
       }
-      const data = { ...payloadFrom(trigger), actorId: trigger.dataset.actorId, learnerId: trigger.dataset.learnerId, sessionId: trigger.dataset.sessionId, assignmentId: trigger.dataset.assignmentId, documentId: trigger.dataset.documentId, programId: trigger.dataset.programId, eventId: trigger.dataset.eventId, status: trigger.dataset.status, progress: trigger.dataset.progress };
+      const data = { ...payloadFrom(trigger), actorId: trigger.dataset.actorId, learnerId: trigger.dataset.learnerId, sessionId: trigger.dataset.sessionId, assignmentId: trigger.dataset.assignmentId, bookingId: trigger.dataset.bookingId, documentId: trigger.dataset.documentId, programId: trigger.dataset.programId, eventId: trigger.dataset.eventId, status: trigger.dataset.status, progress: trigger.dataset.progress };
       if (action === 'revoke-remedial-link') {
         if (root.confirm && !root.confirm('Thu hồi liên kết học bù này? Học viên sẽ không thể mở liên kết hiện tại.')) return;
         data.reason = 'Giáo viên xác nhận thu hồi từ màn quản lý.';
@@ -143,6 +143,11 @@
         const reason = root.prompt('Lý do gia hạn', 'Học viên cần thêm thời gian hoàn thành');
         if (reason === null) return;
         data.days = days;
+        data.reason = reason;
+      }
+      if (action === 'cancel-make-up-booking') {
+        const reason = root.prompt ? root.prompt('Lý do hủy lịch học bù', 'Phụ huynh đề nghị đổi lịch') : 'Hủy từ màn Dịch vụ học viên';
+        if (reason === null) return;
         data.reason = reason;
       }
       trigger.disabled = true;
@@ -166,6 +171,10 @@
       if (form.dataset.form === 'quiz') { action = 'submit-quiz'; data = { assignmentId: form.dataset.assignmentId, answers: Array.from(form.querySelectorAll('.question-card'), (_card, index) => { const selected = form.querySelector(`input[name="answer-${index}"]:checked`); return selected ? Number(selected.value) : null; }) }; }
       if (form.dataset.form === 'public-lead') { action = 'submit-public-lead'; data = { type: form.dataset.type, name: values.get('name'), studentName: values.get('studentName'), organization: values.get('organization'), phone: values.get('phone'), email: values.get('email'), message: values.get('message') }; }
       if (form.dataset.form === 'add-student') { action = 'add-learner'; data = { code: values.get('code'), name: values.get('name'), phone: values.get('phone'), classId: values.get('classId') }; }
+      if (form.dataset.form === 'request-course') { action = 'request-course'; data = { code: values.get('code'), name: values.get('name'), programId: values.get('programId'), levelId: values.get('levelId'), ageBand: values.get('ageBand'), mode: values.get('mode'), description: values.get('description'), reason: values.get('reason') }; }
+      if (form.dataset.form === 'request-class') { action = 'request-class'; data = { code: values.get('code'), name: values.get('name'), branchId: values.get('branchId'), courseVersionId: values.get('courseVersionId'), ageBand: values.get('ageBand'), mode: values.get('mode'), minCapacity: values.get('minCapacity'), capacity: values.get('capacity'), room: values.get('room'), recurrence: String(values.get('recurrence') || '').split(',').map((item) => item.trim()).filter(Boolean), startDate: values.get('startDate'), endDate: values.get('endDate'), durationMinutes: 90, reason: values.get('reason') }; }
+      if (form.dataset.form === 'request-session') { action = 'request-session'; data = { classId: values.get('classId'), lessonTemplateId: values.get('lessonTemplateId'), startsAt: values.get('startsAt'), endsAt: values.get('endsAt'), room: values.get('room'), mode: values.get('mode'), reason: values.get('reason') }; }
+      if (form.dataset.form === 'make-up-booking') { action = 'confirm-make-up-booking'; data = { caseId: values.get('caseId'), targetSessionId: values.get('targetSessionId') }; }
       if (form.dataset.form === 'settings') { action = 'update-settings'; data = { minimumVideoProgress: values.get('minimumVideoProgress'), defaultPassingScore: values.get('defaultPassingScore'), remedialDeadlineDays: values.get('remedialDeadlineDays') }; }
       if (form.dataset.form === 'role-permissions') { action = 'set-role-permission'; data = { role: values.get('role'), permissionId: values.get('permissionId'), effect: values.get('effect'), scopeType: values.get('scopeType'), scopeIds: String(values.get('scopeIds') || '').split(',').map((item) => item.trim()).filter(Boolean), reason: values.get('reason') }; }
       if (form.dataset.form === 'user-permissions') { action = 'set-user-permission'; data = { userId: values.get('userId'), permissionId: values.get('permissionId'), effect: values.get('effect'), scopeType: values.get('scopeType'), scopeIds: String(values.get('scopeIds') || '').split(',').map((item) => item.trim()).filter(Boolean), reason: values.get('reason') }; }
