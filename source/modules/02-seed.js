@@ -150,6 +150,7 @@
         { id: 'availability-4', teacherProfileId: 'teacher-profile-3', day: 'TUE', start: '17:00', end: '21:00', branchId: 'branch-q3', mode: 'OFFLINE', effectiveFrom: at(-30), effectiveTo: at(120) },
       ],
       teacherAssignments: [
+        { id: 'teacher-assignment-6a', teacherProfileId: 'teacher-profile-1', classId: 'class-6a', role: 'PRIMARY', startsAt: at(-30), endsAt: at(120), workloadMinutes: 720, status: 'ACTIVE', acceptedAt: at(-35), assignedBy: 'academic-1' },
         { id: 'teacher-assignment-7b', teacherProfileId: 'teacher-profile-2', classId: 'class-7b', role: 'PRIMARY', startsAt: at(-30), endsAt: at(120), workloadMinutes: 720, status: 'ACTIVE', acceptedAt: at(-35), assignedBy: 'academic-1' },
       ],
       sessionAssignments: [],
@@ -166,7 +167,7 @@
         { id: 'timetable-7b', classId: 'class-7b', recurrence: ['MON_1900', 'WED_1900'], durationMinutes: 90, room: 'P.105', branchId: 'branch-td' },
       ],
       sessions: [
-        { id: 'session-canonical', classId: 'class-6a', lessonTemplateId: 'lesson-past-simple', startsAt: at(0, 18), endsAt: at(0, 19, 30), room: 'P.302', mode: 'OFFLINE', status: 'CONFIRMED', attendanceFinalized: false, version: 1 },
+        { id: 'session-canonical', classId: 'class-6a', lessonTemplateId: 'lesson-past-simple', startsAt: at(0, 18), endsAt: at(0, 19, 30), room: 'P.302', mode: 'OFFLINE', status: 'IN_PROGRESS', attendanceFinalized: false, version: 1 },
         { id: 'session-7b', classId: 'class-7b', lessonTemplateId: 'lesson-future', startsAt: at(1, 19), endsAt: at(1, 20, 30), room: 'P.105', mode: 'OFFLINE', status: 'CONFIRMED', attendanceFinalized: false, version: 1 },
       ],
       attendanceRecords: [],
