@@ -111,6 +111,40 @@
       draft.notifications.unshift({ id: uid('notification'), userId, title, body, link, read: false, createdAt: nowIso() });
     }
 
+    function generateClassSessions(draft, cohort) {
+      const rules = draft.timetableRules.filter((item) => item.classId === cohort.id && item.status !== 'INACTIVE');
+      const unitIds = draft.units.filter((item) => item.courseVersionId === cohort.courseVersionId).sort((a, b) => a.order - b.order).map((item) => item.id);
+      const lessons = draft.lessonTemplates.filter((item) => unitIds.includes(item.unitId)).sort((a, b) => unitIds.indexOf(a.unitId) - unitIds.indexOf(b.unitId));
+      if (!lessons.length) throw new CommandError('CLASS_LESSON_REQUIRED', 'Phiên bản khóa học chưa có bài học để sinh lịch.');
+      const dayIndexes = { SUN: 0, MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6 };
+      const start = new Date(`${cohort.startDate || nowIso().slice(0, 10)}T00:00:00Z`);
+      const fallbackEnd = new Date(start.getTime() + 28 * 86400000);
+      const end = cohort.endDate ? new Date(`${cohort.endDate}T23:59:59Z`) : fallbackEnd;
+      let created = 0;
+      for (let cursor = new Date(start); cursor <= end && created < 48; cursor = new Date(cursor.getTime() + 86400000)) {
+        const date = cursor.toISOString().slice(0, 10);
+        for (const rule of rules) {
+          for (const slot of rule.recurrence || []) {
+            const match = /^(SUN|MON|TUE|WED|THU|FRI|SAT)_(\d{2})(\d{2})$/.exec(slot);
+            if (!match || dayIndexes[match[1]] !== cursor.getUTCDay()) continue;
+            const startsAt = new Date(`${date}T${match[2]}:${match[3]}:00+07:00`);
+            const endsAt = new Date(startsAt.getTime() + Number(rule.durationMinutes || cohort.durationMinutes || 90) * 60000);
+            const startIso = startsAt.toISOString();
+            if (draft.sessions.some((item) => item.classId === cohort.id && item.startsAt === startIso)) continue;
+            const lesson = lessons[created % lessons.length];
+            draft.sessions.push({
+              id: uid('session'), classId: cohort.id, lessonTemplateId: lesson.id,
+              startsAt: startIso, endsAt: endsAt.toISOString(), room: rule.room || cohort.room,
+              mode: cohort.mode, status: 'PLANNED', attendanceFinalized: false, version: 1,
+              generatedFromTimetableId: rule.id,
+            });
+            created += 1;
+          }
+        }
+      }
+      return created;
+    }
+
     function findLead(draft, leadId) {
       return required(draft.leads.find((item) => item.id === leadId), 'LEAD_NOT_FOUND', 'Không tìm thấy khách hàng.');
     }
@@ -731,6 +765,90 @@
         appendEvent(draft, context, 'COURSE_ARCHIVED', 'COURSE', course.id, `${course.name} → ${course.status}.`);
         appendAudit(draft, context, 'COURSE_ARCHIVED', 'COURSE', course.id, reason);
         return { message: inUse ? 'Đã ngừng mở mới; lịch sử lớp vẫn được giữ.' : 'Đã lưu trữ khóa học.', status: course.status };
+      },
+
+      REQUEST_CREATE_CLASS(draft, payload, context) {
+        const proposal = {
+          provisionalId: payload.provisionalId || uid('class-proposed'),
+          code: String(payload.code || '').trim().toUpperCase(), name: String(payload.name || '').trim(),
+          branchId: payload.branchId, courseVersionId: payload.courseVersionId,
+          ageBand: payload.ageBand, mode: payload.mode || 'OFFLINE',
+          capacity: Number(payload.capacity || 0), minCapacity: Number(payload.minCapacity || 1),
+          room: String(payload.room || '').trim(), meetingUrl: String(payload.meetingUrl || '').trim(),
+          startDate: payload.startDate, endDate: payload.endDate,
+          enrollmentStartsAt: payload.enrollmentStartsAt || null, enrollmentEndsAt: payload.enrollmentEndsAt || payload.startDate || null,
+          timezone: payload.timezone || 'Asia/Ho_Chi_Minh', recurrence: Array.isArray(payload.recurrence) ? payload.recurrence : [],
+          durationMinutes: Number(payload.durationMinutes || 90), waitlistPolicy: payload.waitlistPolicy || 'QUEUE',
+          remedialPolicySnapshot: clone(draft.courseVersions.find((item) => item.id === payload.courseVersionId)?.remedialPolicy || {}),
+          status: 'DRAFT', version: 1,
+        };
+        return handlers.SUBMIT_CHANGE_REQUEST(draft, {
+          resourceType: 'CLASS', operation: 'CREATE', baseVersion: 0,
+          proposedSnapshot: proposal, reason: payload.reason,
+        }, context);
+      },
+
+      REQUEST_UPDATE_CLASS(draft, payload, context) {
+        const cohort = required(draft.classes.find((item) => item.id === payload.classId), 'CLASS_NOT_FOUND', 'Không tìm thấy lớp.');
+        if (payload.courseVersionId && payload.courseVersionId !== cohort.courseVersionId && draft.sessions.some((item) => item.classId === cohort.id)) {
+          throw new CommandError('COURSE_VERSION_PINNED', 'Không thể đổi phiên bản khóa học sau khi lớp đã có buổi học.');
+        }
+        const proposal = { ...payload };
+        delete proposal.classId;
+        delete proposal.reason;
+        return handlers.SUBMIT_CHANGE_REQUEST(draft, {
+          resourceType: 'CLASS', operation: 'UPDATE', resourceId: cohort.id, baseVersion: cohort.version,
+          proposedSnapshot: proposal, reason: payload.reason,
+        }, context);
+      },
+
+      OPEN_CLASS(draft, payload, context) {
+        requirePermission(draft, context, 'class.request_update');
+        const cohort = required(draft.classes.find((item) => item.id === payload.classId), 'CLASS_NOT_FOUND', 'Không tìm thấy lớp.');
+        if (cohort.status !== 'DRAFT') throw new CommandError('INVALID_CLASS_STATE', 'Chỉ lớp nháp đã duyệt mới có thể mở ghi danh.');
+        const version = draft.courseVersions.find((item) => item.id === cohort.courseVersionId);
+        if (!version || version.status !== 'PUBLISHED' || !version.immutable) throw new CommandError('COURSE_VERSION_NOT_PUBLISHED', 'Lớp chỉ được mở với phiên bản khóa học đã công bố.');
+        if (!draft.timetableRules.some((item) => item.classId === cohort.id && item.status !== 'INACTIVE')) throw new CommandError('TIMETABLE_REQUIRED', 'Cần lịch định kỳ trước khi mở lớp.');
+        const createdSessions = generateClassSessions(draft, cohort);
+        cohort.status = 'OPEN';
+        cohort.openedAt = nowIso();
+        cohort.openedBy = context.actor.id;
+        cohort.version = Number(cohort.version || 0) + 1;
+        appendEvent(draft, context, 'CLASS_OPENED', 'CLASS', cohort.id, `${cohort.name} · sinh ${createdSessions} buổi học.`);
+        appendAudit(draft, context, 'CLASS_OPENED', 'CLASS', cohort.id, String(payload.reason || 'Đã kiểm tra khóa học và lịch định kỳ.'));
+        return { message: `Đã mở lớp và sinh ${createdSessions} buổi học.`, createdSessions };
+      },
+
+      MARK_CLASS_READY(draft, payload, context) {
+        requirePermission(draft, context, 'class.request_update');
+        const cohort = required(draft.classes.find((item) => item.id === payload.classId), 'CLASS_NOT_FOUND', 'Không tìm thấy lớp.');
+        if (cohort.status !== 'OPEN') throw new CommandError('INVALID_CLASS_STATE', 'Chỉ lớp đang mở mới có thể chuyển sang Sẵn sàng.');
+        const readiness = root.YC.selectors.classReadiness(draft, cohort.id);
+        const blocking = readiness.errors.filter((item) => item.code !== 'MINIMUM_CAPACITY');
+        const minimumError = readiness.errors.find((item) => item.code === 'MINIMUM_CAPACITY');
+        const overrideReason = String(payload.overrideReason || '').trim();
+        if (blocking.length || (minimumError && !overrideReason)) throw new CommandError('CLASS_NOT_READY', 'Lớp chưa đủ điều kiện sẵn sàng.', { evidence: readiness });
+        if (minimumError) cohort.readinessOverride = { reason: overrideReason, approvedBy: context.actor.id, approvedAt: nowIso(), rule: minimumError.code };
+        cohort.status = 'READY';
+        cohort.readyAt = nowIso();
+        cohort.version = Number(cohort.version || 0) + 1;
+        appendEvent(draft, context, 'CLASS_READY', 'CLASS', cohort.id, minimumError ? 'Sẵn sàng theo ngoại lệ sức chứa.' : 'Đã đạt đủ điều kiện sẵn sàng.');
+        appendAudit(draft, context, 'CLASS_READY', 'CLASS', cohort.id, overrideReason || 'Đủ khóa học, lịch, giáo viên, phòng và sức chứa.');
+        return { message: 'Đã chuyển lớp sang trạng thái Sẵn sàng.', readiness, overridden: Boolean(minimumError) };
+      },
+
+      ARCHIVE_CLASS(draft, payload, context) {
+        requirePermission(draft, context, 'class.request_archive');
+        const cohort = required(draft.classes.find((item) => item.id === payload.classId), 'CLASS_NOT_FOUND', 'Không tìm thấy lớp.');
+        const reason = String(payload.reason || '').trim();
+        if (!reason) throw new CommandError('REASON_REQUIRED', 'Lưu trữ lớp cần có lý do.');
+        cohort.status = 'ARCHIVED';
+        cohort.archivedAt = nowIso();
+        cohort.archivedBy = context.actor.id;
+        cohort.version = Number(cohort.version || 0) + 1;
+        appendEvent(draft, context, 'CLASS_ARCHIVED', 'CLASS', cohort.id, cohort.name);
+        appendAudit(draft, context, 'CLASS_ARCHIVED', 'CLASS', cohort.id, reason);
+        return { message: 'Đã lưu trữ lớp và giữ nguyên lịch sử ghi danh, buổi học.' };
       },
 
       CREATE_CONTENT_DRAFT(draft, payload, context) {

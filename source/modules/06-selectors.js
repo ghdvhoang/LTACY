@@ -227,5 +227,37 @@
     return { valid: errors.length === 0, errors, warnings };
   }
 
-  root.YC.define('selectors', Object.freeze({ byId, completionStatus, coursePublishValidation, journey, metrics, progressReportEvidence, riskSignals, roleHome, scheduleConflicts, sessionWorkbench, skillProfile, teacherEligibility, teacherWorkload }));
+  function classCapacity(state, classId) {
+    const cohort = byId(state, 'classes', classId);
+    if (!cohort) return null;
+    const activeEnrollments = state.enrollments.filter((item) => item.classId === classId && item.status === 'ACTIVE').length;
+    const sessionIds = state.sessions.filter((item) => item.classId === classId).map((item) => item.id);
+    const makeUpReservations = state.makeUpBookings.filter((item) => ['HELD', 'BOOKED', 'NOTIFIED'].includes(item.status)
+      && sessionIds.includes(item.targetSessionId || item.sessionId)).length;
+    const capacity = Number(cohort.capacity || 0);
+    const used = activeEnrollments + makeUpReservations;
+    return { classId, capacity, activeEnrollments, makeUpReservations, used, remaining: Math.max(0, capacity - used), full: used >= capacity };
+  }
+
+  function classReadiness(state, classId) {
+    const cohort = byId(state, 'classes', classId);
+    if (!cohort) return { ready: false, errors: [{ code: 'CLASS_NOT_FOUND', message: 'Không tìm thấy lớp.' }], warnings: [] };
+    const errors = [];
+    const warnings = [];
+    const version = byId(state, 'courseVersions', cohort.courseVersionId);
+    if (!version || version.status !== 'PUBLISHED' || !version.immutable) errors.push({ code: 'COURSE_VERSION_NOT_PUBLISHED', message: 'Phiên bản khóa học chưa được công bố.' });
+    const rules = state.timetableRules.filter((item) => item.classId === cohort.id && item.status !== 'INACTIVE');
+    if (!rules.length || rules.some((item) => !Array.isArray(item.recurrence) || !item.recurrence.length || !Number(item.durationMinutes))) errors.push({ code: 'TIMETABLE_REQUIRED', message: 'Lớp chưa có lịch định kỳ hợp lệ.' });
+    if (!cohort.room && cohort.mode !== 'ONLINE') errors.push({ code: 'ROOM_REQUIRED', message: 'Lớp trực tiếp cần có phòng.' });
+    if (!cohort.meetingUrl && cohort.mode === 'ONLINE') errors.push({ code: 'MEETING_URL_REQUIRED', message: 'Lớp trực tuyến cần có liên kết học.' });
+    const assignment = state.teacherAssignments.find((item) => item.classId === cohort.id && item.role === 'PRIMARY' && ['ACCEPTED', 'ACTIVE'].includes(item.status));
+    if (!assignment) errors.push({ code: 'PRIMARY_TEACHER_REQUIRED', message: 'Lớp chưa có giáo viên chính đang hiệu lực.' });
+    if (!state.sessions.some((item) => item.classId === cohort.id && item.status !== 'CANCELLED')) errors.push({ code: 'SESSION_REQUIRED', message: 'Lớp chưa có buổi học.' });
+    const capacity = classCapacity(state, cohort.id);
+    if (capacity.used < Number(cohort.minCapacity || 1)) errors.push({ code: 'MINIMUM_CAPACITY', message: `Cần tối thiểu ${cohort.minCapacity || 1} học viên; hiện có ${capacity.used}.` });
+    if (capacity.remaining <= 1) warnings.push({ code: 'CAPACITY_LOW', message: 'Lớp gần đạt sức chứa tối đa.' });
+    return { classId, ready: errors.length === 0, errors, warnings, capacity, assignmentId: assignment?.id || null };
+  }
+
+  root.YC.define('selectors', Object.freeze({ byId, classCapacity, classReadiness, completionStatus, coursePublishValidation, journey, metrics, progressReportEvidence, riskSignals, roleHome, scheduleConflicts, sessionWorkbench, skillProfile, teacherEligibility, teacherWorkload }));
 })(globalThis);

@@ -129,4 +129,95 @@ test('archiving a Course already used by a class retires it without deleting his
   assert.ok(state().classes.some((item) => item.courseVersionId === 'course-v6'));
 });
 
+test('class capacity includes active enrollment and held make-up seats', () => {
+  const { YC, store, state: current } = runtimeWithTeacherAssignment();
+  store.transact((draft) => {
+    draft.makeUpBookings.push({ id: 'held-seat-1', targetSessionId: 'session-canonical', learnerId: 'student-04', status: 'HELD' });
+  });
+  const result = YC.selectors.classCapacity(current(), 'class-6a');
+  assert.equal(result.used, result.activeEnrollments + result.makeUpReservations);
+  assert.equal(result.makeUpReservations, 1);
+  assert.equal(result.remaining, result.capacity - result.used);
+});
+
+test('Teacher class create stays pending and OPEN generates future sessions once', () => {
+  const { bus, state } = runtimeWithTeacherAssignment();
+  const requested = bus.dispatch('REQUEST_CREATE_CLASS', {
+    code: 'YEN-A2-MW-1730', name: 'A2 Thứ 2 & 4', branchId: 'branch-q3', courseVersionId: 'course-v6',
+    ageBand: 'YOUNG_LEARNER', mode: 'OFFLINE', capacity: 12, minCapacity: 2, room: 'P.306',
+    startDate: '2026-09-07', endDate: '2026-10-01', timezone: 'Asia/Ho_Chi_Minh',
+    recurrence: ['MON_1730', 'WED_1730'], durationMinutes: 90, reason: 'Mở lớp theo nhu cầu đầu vào',
+  }, 'teacher-1');
+  assert.equal(requested.ok, true, requested.message);
+  assert.equal(state().classes.some((item) => item.code === 'YEN-A2-MW-1730'), false);
+  assert.equal(approve(bus, requested.requestId).ok, true);
+  const cohort = state().classes.find((item) => item.code === 'YEN-A2-MW-1730');
+  assert.equal(cohort.status, 'DRAFT');
+  assert.ok(state().timetableRules.some((item) => item.classId === cohort.id));
+
+  const opened = bus.dispatch('OPEN_CLASS', { classId: cohort.id, reason: 'Sẵn sàng nhận học viên' }, 'admin-1');
+  assert.equal(opened.ok, true, opened.message);
+  const generated = state().sessions.filter((item) => item.classId === cohort.id);
+  assert.ok(generated.length >= 2);
+  assert.equal(new Set(generated.map((item) => item.startsAt)).size, generated.length);
+});
+
+test('a Class can only pin a published Course Version', () => {
+  const { bus, store, state } = runtimeWithTeacherAssignment();
+  store.transact((draft) => {
+    draft.courseVersions.push({ id: 'course-v-draft', courseId: 'course-6', version: 4, recordVersion: 1, title: 'Bản nháp', status: 'DRAFT', immutable: false, totalHours: 48, completionRule: {}, remedialPolicy: {} });
+  });
+  const result = bus.dispatch('REQUEST_CREATE_CLASS', {
+    code: 'YEN-DRAFT-CLASS', name: 'Lớp dùng bản nháp', branchId: 'branch-q3', courseVersionId: 'course-v-draft',
+    ageBand: 'YOUNG_LEARNER', mode: 'OFFLINE', capacity: 12, minCapacity: 2, room: 'P.307',
+    startDate: '2026-09-07', endDate: '2026-10-01', recurrence: ['TUE_1800'], durationMinutes: 90,
+    reason: 'Kiểm tra phiên bản',
+  }, 'teacher-1');
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'COURSE_VERSION_NOT_PUBLISHED');
+  assert.equal(state().changeRequests.length, 0);
+});
+
+test('class readiness enforces minimum capacity unless Admin records an override', () => {
+  const { YC, bus, store, state } = runtimeWithTeacherAssignment();
+  store.transact((draft) => {
+    const cohort = draft.classes.find((item) => item.id === 'class-6a');
+    cohort.status = 'OPEN';
+    cohort.minCapacity = 10;
+    cohort.timezone = 'Asia/Ho_Chi_Minh';
+  });
+  const readiness = YC.selectors.classReadiness(state(), 'class-6a');
+  assert.equal(readiness.ready, false);
+  assert.ok(readiness.errors.some((item) => item.code === 'MINIMUM_CAPACITY'));
+
+  const blocked = bus.dispatch('MARK_CLASS_READY', { classId: 'class-6a' }, 'admin-1');
+  assert.equal(blocked.ok, false);
+  assert.equal(blocked.code, 'CLASS_NOT_READY');
+  const overridden = bus.dispatch('MARK_CLASS_READY', { classId: 'class-6a', overrideReason: 'Khai giảng nhóm nhỏ theo cam kết phụ huynh' }, 'admin-1');
+  assert.equal(overridden.ok, true, overridden.message);
+  assert.equal(state().classes.find((item) => item.id === 'class-6a').status, 'READY');
+  assert.match(state().classes.find((item) => item.id === 'class-6a').readinessOverride.reason, /Khai giảng nhóm nhỏ/);
+});
+
+test('Course Version cannot be swapped after a Class has its first Session', () => {
+  const { bus, state } = runtimeWithTeacherAssignment();
+  const result = bus.dispatch('REQUEST_UPDATE_CLASS', {
+    classId: 'class-6a', courseVersionId: 'course-v7', reason: 'Thử đổi chương trình giữa khóa',
+  }, 'teacher-1');
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'COURSE_VERSION_PINNED');
+  assert.equal(state().classes.find((item) => item.id === 'class-6a').courseVersionId, 'course-v6');
+});
+
+test('archiving a used Class preserves its enrollments and Sessions', () => {
+  const { bus, state } = runtimeWithTeacherAssignment();
+  const enrollmentCount = state().enrollments.filter((item) => item.classId === 'class-6a').length;
+  const sessionCount = state().sessions.filter((item) => item.classId === 'class-6a').length;
+  const result = bus.dispatch('ARCHIVE_CLASS', { classId: 'class-6a', reason: 'Kết thúc vận hành lớp' }, 'admin-1');
+  assert.equal(result.ok, true, result.message);
+  assert.equal(state().classes.find((item) => item.id === 'class-6a').status, 'ARCHIVED');
+  assert.equal(state().enrollments.filter((item) => item.classId === 'class-6a').length, enrollmentCount);
+  assert.equal(state().sessions.filter((item) => item.classId === 'class-6a').length, sessionCount);
+});
+
 module.exports = { FIXED_NOW, approve, finalizeAbsent, renderAs, requestSession, runtimeWithTeacherAssignment };

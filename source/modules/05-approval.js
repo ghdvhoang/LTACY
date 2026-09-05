@@ -85,6 +85,19 @@
     if (state.courses.some((item) => item.id !== excludeId && String(item.code).toUpperCase() === code)) throw approvalError('COURSE_CODE_EXISTS', 'Mã khóa học đã tồn tại.');
   }
 
+  function validateClass(snapshot, state, excludeId = null) {
+    const code = String(snapshot.code || '').trim().toUpperCase();
+    if (!code || !String(snapshot.name || '').trim()) throw approvalError('CLASS_REQUIRED', 'Cần mã và tên lớp học.');
+    if (!state.branches.some((item) => item.id === snapshot.branchId && item.status === 'ACTIVE')) throw approvalError('BRANCH_NOT_FOUND', 'Không tìm thấy chi nhánh đang hoạt động.');
+    const version = state.courseVersions.find((item) => item.id === snapshot.courseVersionId);
+    if (!version || version.status !== 'PUBLISHED' || !version.immutable) throw approvalError('COURSE_VERSION_NOT_PUBLISHED', 'Lớp chỉ được gắn với phiên bản khóa học đã công bố.');
+    const capacity = Number(snapshot.capacity || 0);
+    const minimum = Number(snapshot.minCapacity || 1);
+    if (!Number.isInteger(capacity) || capacity < 1 || !Number.isInteger(minimum) || minimum < 1 || minimum > capacity) throw approvalError('INVALID_CLASS_CAPACITY', 'Sức chứa tối thiểu và tối đa của lớp không hợp lệ.');
+    if (state.classes.some((item) => item.id !== excludeId && String(item.code).toUpperCase() === code)) throw approvalError('CLASS_CODE_EXISTS', 'Mã lớp đã tồn tại.');
+    if (snapshot.startDate && snapshot.endDate && new Date(snapshot.endDate).getTime() < new Date(snapshot.startDate).getTime()) throw approvalError('INVALID_CLASS_DATES', 'Ngày kết thúc phải sau ngày bắt đầu.');
+  }
+
   function buildRequest(input, context) {
     const resourceType = String(input.resourceType || '').toUpperCase();
     const operation = String(input.operation || '').toUpperCase();
@@ -100,6 +113,7 @@
     }
     if (resourceType === 'SESSION') validateSession({ ...(before || {}), ...proposedSnapshot }, context.state, operation);
     if (resourceType === 'COURSE' && !['ARCHIVE'].includes(operation)) validateCourse({ ...(before || {}), ...proposedSnapshot }, context.state, resourceId);
+    if (resourceType === 'CLASS' && !['ARCHIVE'].includes(operation)) validateClass({ ...(before || {}), ...proposedSnapshot }, context.state, resourceId);
     const provisionalResourceId = operation === 'CREATE'
       ? proposedSnapshot.provisionalId || proposedSnapshot.id || uid(resourceType.toLowerCase())
       : null;
@@ -166,13 +180,22 @@
       };
       if (request.resourceType === 'SESSION') validateSession(record, state, request.operation);
       if (request.resourceType === 'COURSE') validateCourse(record, state);
+      if (request.resourceType === 'CLASS') validateClass(record, state);
       collection.push(record);
+      if (request.resourceType === 'CLASS' && Array.isArray(record.recurrence) && record.recurrence.length) {
+        state.timetableRules.push({
+          id: uid('timetable'), classId: record.id, recurrence: clone(record.recurrence),
+          durationMinutes: Number(record.durationMinutes || 90), room: record.room,
+          branchId: record.branchId, timezone: record.timezone || 'Asia/Ho_Chi_Minh', status: 'ACTIVE',
+        });
+      }
       return record;
     }
 
     const canonical = collection.find((item) => item.id === request.resourceId);
     if (!canonical) throw approvalError('RESOURCE_NOT_FOUND', 'Không tìm thấy dữ liệu gốc cần áp dụng.');
     if (request.resourceType === 'COURSE' && !['ARCHIVE'].includes(request.operation)) validateCourse({ ...canonical, ...request.proposedSnapshot }, state, canonical.id);
+    if (request.resourceType === 'CLASS' && !['ARCHIVE'].includes(request.operation)) validateClass({ ...canonical, ...request.proposedSnapshot }, state, canonical.id);
     if (request.operation === 'ARCHIVE') canonical.status = 'ARCHIVED';
     else if (request.operation === 'CANCEL') canonical.status = 'CANCELLED';
     else Object.assign(canonical, clone(request.proposedSnapshot));
