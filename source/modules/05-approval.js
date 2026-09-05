@@ -63,7 +63,7 @@
     )).map((field) => ({ field, before: clone(left[field] ?? null), after: clone(right[field] ?? null) }));
   }
 
-  function validateSession(snapshot, state, operation) {
+  function validateSession(snapshot, state, operation, excludeSessionId = null) {
     if (operation === 'CREATE') {
       if (!state.classes.some((item) => item.id === snapshot.classId)) throw approvalError('CLASS_NOT_FOUND', 'Không tìm thấy lớp của buổi học.');
       if (!state.lessonTemplates.some((item) => item.id === snapshot.lessonTemplateId)) throw approvalError('LESSON_NOT_FOUND', 'Không tìm thấy bài học mẫu.');
@@ -74,6 +74,10 @@
       if (!Number.isFinite(startsAt) || !Number.isFinite(endsAt) || endsAt <= startsAt) {
         throw approvalError('INVALID_SESSION_TIME', 'Thời gian kết thúc phải sau thời gian bắt đầu.');
       }
+    }
+    if (['CREATE', 'RESCHEDULE', 'UPDATE'].includes(operation) && root.YC.selectors?.sessionValidation) {
+      const validation = root.YC.selectors.sessionValidation(state, { ...snapshot, excludeSessionId });
+      if (!validation.valid) throw approvalError(validation.errors[0].code, validation.errors[0].message);
     }
   }
 
@@ -111,7 +115,7 @@
     if (!Object.keys(proposedSnapshot).length && !['ARCHIVE', 'CANCEL'].includes(operation)) {
       throw approvalError('PROPOSAL_REQUIRED', 'Cần có nội dung thay đổi được đề xuất.');
     }
-    if (resourceType === 'SESSION') validateSession({ ...(before || {}), ...proposedSnapshot }, context.state, operation);
+    if (resourceType === 'SESSION') validateSession({ ...(before || {}), ...proposedSnapshot }, context.state, operation, resourceId);
     if (resourceType === 'COURSE' && !['ARCHIVE'].includes(operation)) validateCourse({ ...(before || {}), ...proposedSnapshot }, context.state, resourceId);
     if (resourceType === 'CLASS' && !['ARCHIVE'].includes(operation)) validateClass({ ...(before || {}), ...proposedSnapshot }, context.state, resourceId);
     const provisionalResourceId = operation === 'CREATE'
@@ -189,6 +193,11 @@
           branchId: record.branchId, timezone: record.timezone || 'Asia/Ho_Chi_Minh', status: 'ACTIVE',
         });
       }
+      if (request.resourceType === 'SESSION') {
+        state.lessonPlans.push({ id: uid('lesson-plan'), sessionId: record.id, lessonTemplateId: record.lessonTemplateId, adaptations: [], readiness: 'DRAFT', ownerId: request.submittedBy });
+        const assignments = state.teacherAssignments.filter((item) => item.classId === record.classId && ['ACCEPTED', 'ACTIVE'].includes(item.status));
+        assignments.forEach((assignment) => state.sessionAssignments.push({ id: uid('session-assignment'), sessionId: record.id, teacherProfileId: assignment.teacherProfileId, role: assignment.role, status: 'ACTIVE', startsAt: record.startsAt, endsAt: record.endsAt }));
+      }
       return record;
     }
 
@@ -196,6 +205,14 @@
     if (!canonical) throw approvalError('RESOURCE_NOT_FOUND', 'Không tìm thấy dữ liệu gốc cần áp dụng.');
     if (request.resourceType === 'COURSE' && !['ARCHIVE'].includes(request.operation)) validateCourse({ ...canonical, ...request.proposedSnapshot }, state, canonical.id);
     if (request.resourceType === 'CLASS' && !['ARCHIVE'].includes(request.operation)) validateClass({ ...canonical, ...request.proposedSnapshot }, state, canonical.id);
+    if (request.resourceType === 'SESSION' && ['RESCHEDULE', 'UPDATE'].includes(request.operation)) {
+      validateSession({ ...canonical, ...request.proposedSnapshot }, state, request.operation, canonical.id);
+      canonical.scheduleRevisions ||= [];
+      canonical.scheduleRevisions.push({
+        startsAt: canonical.startsAt, endsAt: canonical.endsAt, room: canonical.room, mode: canonical.mode,
+        version: canonical[config.versionKey], changedByRequestId: request.id, changedAt: request.reviewedAt,
+      });
+    }
     if (request.operation === 'ARCHIVE') canonical.status = 'ARCHIVED';
     else if (request.operation === 'CANCEL') canonical.status = 'CANCELLED';
     else Object.assign(canonical, clone(request.proposedSnapshot));

@@ -935,6 +935,46 @@
         return { message: 'Đã nhận lớp và kích hoạt quyền theo phân công.' };
       },
 
+      REQUEST_CREATE_SESSION(draft, payload, context) {
+        const cohort = required(draft.classes.find((item) => item.id === payload.classId), 'CLASS_NOT_FOUND', 'Không tìm thấy lớp.');
+        const proposal = {
+          provisionalId: payload.provisionalId || uid('session-proposed'), classId: cohort.id,
+          lessonTemplateId: payload.lessonTemplateId, startsAt: payload.startsAt, endsAt: payload.endsAt,
+          room: String(payload.room || cohort.room || '').trim(), mode: payload.mode || cohort.mode,
+          status: 'PLANNED', attendanceFinalized: false, version: 1,
+        };
+        const validation = root.YC.selectors.sessionValidation(draft, proposal);
+        if (!validation.valid) throw new CommandError(validation.errors[0].code, validation.errors[0].message, { evidence: validation });
+        return handlers.SUBMIT_CHANGE_REQUEST(draft, {
+          resourceType: 'SESSION', operation: 'CREATE', baseVersion: 0,
+          proposedSnapshot: proposal, reason: payload.reason,
+        }, context);
+      },
+
+      REQUEST_RESCHEDULE_SESSION(draft, payload, context) {
+        const session = required(draft.sessions.find((item) => item.id === payload.sessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học.');
+        if (['IN_PROGRESS', 'COMPLETED'].includes(session.status) || session.actualStartsAt) throw new CommandError('SESSION_ALREADY_STARTED', 'Không thể đổi lịch sau khi buổi học đã bắt đầu.');
+        const proposal = {
+          startsAt: payload.startsAt, endsAt: payload.endsAt,
+          room: String(payload.room || session.room || '').trim(), mode: payload.mode || session.mode,
+        };
+        const validation = root.YC.selectors.sessionValidation(draft, { ...session, ...proposal, excludeSessionId: session.id });
+        if (!validation.valid) throw new CommandError(validation.errors[0].code, validation.errors[0].message, { evidence: validation });
+        return handlers.SUBMIT_CHANGE_REQUEST(draft, {
+          resourceType: 'SESSION', operation: 'RESCHEDULE', resourceId: session.id, baseVersion: session.version,
+          proposedSnapshot: proposal, reason: payload.reason,
+        }, context);
+      },
+
+      REQUEST_CANCEL_SESSION(draft, payload, context) {
+        const session = required(draft.sessions.find((item) => item.id === payload.sessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học.');
+        if (session.status === 'CANCELLED') throw new CommandError('SESSION_ALREADY_CANCELLED', 'Buổi học đã được hủy trước đó.');
+        return handlers.SUBMIT_CHANGE_REQUEST(draft, {
+          resourceType: 'SESSION', operation: 'CANCEL', resourceId: session.id, baseVersion: session.version,
+          proposedSnapshot: {}, reason: payload.reason,
+        }, context);
+      },
+
       CONFIRM_SESSION(draft, payload, context) {
         requireRole(context.actor, ['ACADEMIC_MANAGER', 'STUDENT_SERVICE']);
         const session = required(draft.sessions.find((item) => item.id === payload.sessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học.');
@@ -969,8 +1009,17 @@
         const plan = draft.lessonPlans.find((item) => item.sessionId === session.id);
         if (!plan || plan.readiness !== 'READY') throw new CommandError('SESSION_NOT_READY', 'Cần xác nhận giáo án sẵn sàng trước khi bắt đầu.');
         if (session.status !== 'CONFIRMED') throw new CommandError('INVALID_SESSION_STATE', 'Chỉ buổi đã xác nhận mới được bắt đầu.');
+        const enrollments = draft.enrollments.filter((item) => item.classId === session.classId && item.status === 'ACTIVE');
+        const makeUpBookings = draft.makeUpBookings.filter((item) => (item.targetSessionId || item.sessionId) === session.id && ['HELD', 'BOOKED', 'NOTIFIED'].includes(item.status));
+        session.rosterSnapshot = {
+          capturedAt: nowIso(),
+          learnerIds: [...new Set([...enrollments.map((item) => item.learnerId), ...makeUpBookings.map((item) => item.learnerId)])],
+          enrollmentIds: enrollments.map((item) => item.id),
+          makeUpBookingIds: makeUpBookings.map((item) => item.id),
+        };
         session.status = 'IN_PROGRESS';
         session.actualStartsAt = nowIso();
+        session.version = Number(session.version || 0) + 1;
         appendEvent(draft, context, 'SESSION_STARTED', 'SESSION', session.id, 'Giáo viên xác nhận có mặt và bắt đầu buổi học.');
         appendAudit(draft, context, 'TEACHER_CHECKED_IN', 'SESSION', session.id, context.actor.name);
         return { message: 'Buổi học đã bắt đầu.' };

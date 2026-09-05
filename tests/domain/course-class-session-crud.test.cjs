@@ -220,4 +220,93 @@ test('archiving a used Class preserves its enrollments and Sessions', () => {
   assert.equal(state().sessions.filter((item) => item.classId === 'class-6a').length, sessionCount);
 });
 
+test('approved Teacher session request appears in class and learner schedules', () => {
+  const { YC, bus, state } = runtimeWithTeacherAssignment();
+  const request = requestSession(bus);
+  assert.equal(request.ok, true, request.message);
+  assert.equal(state().sessions.some((item) => item.provisionalId === request.provisionalResourceId), false);
+  assert.equal(approve(bus, request.requestId).ok, true);
+  const session = state().sessions.find((item) => item.changeRequestId === request.requestId);
+  assert.equal(session.classId, 'class-6a');
+  const trace = YC.selectors.sessionTrace(state(), session.id);
+  assert.equal(trace.courseVersion.id, 'course-v6');
+  assert.equal(trace.course.id, 'course-6');
+  assert.ok(trace.learnerIds.includes('student-canonical'));
+  assert.equal(state().auditLogs[0].action, 'CHANGE_REQUEST_APPROVED');
+  assert.ok(state().notifications.some((item) => item.userId === 'teacher-1' && item.link.includes(request.requestId)));
+});
+
+test('session validation catches room teacher and learner conflicts', () => {
+  const { YC, store, state } = runtimeWithTeacherAssignment();
+  store.transact((draft) => {
+    draft.enrollments.push({ id: 'cross-enrollment', learnerId: 'student-canonical', classId: 'class-6b', courseVersionId: 'course-v6', status: 'ACTIVE', startsAt: FIXED_NOW, endsAt: null });
+    draft.sessions.push({ id: 'session-conflict', classId: 'class-6b', lessonTemplateId: 'lesson-past-simple', startsAt: '2026-09-08T11:00:00.000Z', endsAt: '2026-09-08T12:30:00.000Z', room: 'P.304', mode: 'OFFLINE', status: 'CONFIRMED', version: 1 });
+    draft.teacherAssignments.push({ id: 'assignment-conflict', teacherProfileId: 'teacher-profile-1', classId: 'class-6b', role: 'PRIMARY', startsAt: '2026-01-01T00:00:00.000Z', endsAt: '2027-01-01T00:00:00.000Z', workloadMinutes: 90, status: 'ACTIVE' });
+  });
+  const validation = YC.selectors.sessionValidation(state(), {
+    classId: 'class-6a', lessonTemplateId: 'lesson-past-simple', startsAt: '2026-09-08T11:15:00.000Z', endsAt: '2026-09-08T12:00:00.000Z', room: 'P.304', mode: 'OFFLINE',
+  });
+  assert.equal(validation.valid, false);
+  assert.ok(validation.errors.some((item) => item.code === 'ROOM_CONFLICT'));
+  assert.ok(validation.errors.some((item) => item.code === 'TEACHER_CONFLICT'));
+  assert.ok(validation.errors.some((item) => item.code === 'LEARNER_CONFLICT'));
+});
+
+test('session lesson must belong to the Class pinned Course Version', () => {
+  const { bus, state } = runtimeWithTeacherAssignment();
+  const result = bus.dispatch('REQUEST_CREATE_SESSION', {
+    classId: 'class-6a', lessonTemplateId: 'lesson-future', startsAt: '2026-09-08T11:00:00.000Z', endsAt: '2026-09-08T12:30:00.000Z', room: 'P.304', mode: 'OFFLINE', reason: 'Dùng thử bài khác khóa',
+  }, 'teacher-1');
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'LESSON_COURSE_MISMATCH');
+  assert.equal(state().changeRequests.length, 0);
+});
+
+test('roster stays dynamic before start and is snapshotted when the Session starts', () => {
+  const { bus, store, state } = runtimeWithTeacherAssignment();
+  store.transact((draft) => {
+    const session = draft.sessions.find((item) => item.id === 'session-canonical');
+    session.status = 'CONFIRMED';
+    delete session.rosterSnapshot;
+    draft.lessonPlans.find((item) => item.sessionId === session.id).readiness = 'READY';
+    draft.learners.push({ id: 'student-late-roster', code: 'HSLATE', name: 'Học viên mới', status: 'ACTIVE', classId: 'class-6a', branchId: 'branch-q3' });
+    draft.enrollments.push({ id: 'enrollment-late-roster', learnerId: 'student-late-roster', classId: 'class-6a', courseVersionId: 'course-v6', status: 'ACTIVE', startsAt: FIXED_NOW, endsAt: null });
+  });
+  assert.equal(state().sessions.find((item) => item.id === 'session-canonical').rosterSnapshot, undefined);
+  const started = bus.dispatch('START_SESSION', { sessionId: 'session-canonical' }, 'teacher-1');
+  assert.equal(started.ok, true, started.message);
+  assert.ok(state().sessions.find((item) => item.id === 'session-canonical').rosterSnapshot.learnerIds.includes('student-late-roster'));
+});
+
+test('rescheduling is blocked after start and approved changes preserve revision history', () => {
+  const first = runtimeWithTeacherAssignment();
+  first.store.transact((draft) => { draft.sessions.find((item) => item.id === 'session-canonical').status = 'IN_PROGRESS'; });
+  const blocked = first.bus.dispatch('REQUEST_RESCHEDULE_SESSION', {
+    sessionId: 'session-canonical', startsAt: '2026-09-10T11:00:00.000Z', endsAt: '2026-09-10T12:30:00.000Z', room: 'P.401', reason: 'Đổi lịch sau khi bắt đầu',
+  }, 'teacher-1');
+  assert.equal(blocked.ok, false);
+  assert.equal(blocked.code, 'SESSION_ALREADY_STARTED');
+
+  const second = runtimeWithTeacherAssignment();
+  second.store.transact((draft) => { draft.sessions.find((item) => item.id === 'session-canonical').status = 'CONFIRMED'; });
+  const requested = second.bus.dispatch('REQUEST_RESCHEDULE_SESSION', {
+    sessionId: 'session-canonical', startsAt: '2026-09-10T11:00:00.000Z', endsAt: '2026-09-10T12:30:00.000Z', room: 'P.401', reason: 'Điều chỉnh theo lịch thi',
+  }, 'teacher-1');
+  assert.equal(requested.ok, true, requested.message);
+  assert.equal(approve(second.bus, requested.requestId).ok, true);
+  const updated = second.state().sessions.find((item) => item.id === 'session-canonical');
+  assert.equal(updated.room, 'P.401');
+  assert.equal(updated.scheduleRevisions.length, 1);
+  assert.notEqual(updated.scheduleRevisions[0].startsAt, updated.startsAt);
+});
+
+test('cancelling a Session uses approval and keeps the canonical record', () => {
+  const { bus, state } = runtimeWithTeacherAssignment();
+  const requested = bus.dispatch('REQUEST_CANCEL_SESSION', { sessionId: 'session-canonical', reason: 'Trung tâm nghỉ do thời tiết' }, 'teacher-1');
+  assert.equal(requested.ok, true, requested.message);
+  assert.notEqual(state().sessions.find((item) => item.id === 'session-canonical').status, 'CANCELLED');
+  assert.equal(approve(bus, requested.requestId).ok, true);
+  assert.equal(state().sessions.find((item) => item.id === 'session-canonical').status, 'CANCELLED');
+});
+
 module.exports = { FIXED_NOW, approve, finalizeAbsent, renderAs, requestSession, runtimeWithTeacherAssignment };

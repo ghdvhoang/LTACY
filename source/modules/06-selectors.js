@@ -129,6 +129,56 @@
     return conflicts;
   }
 
+  function sessionValidation(state, proposal) {
+    const errors = [];
+    const warnings = [];
+    const cohort = byId(state, 'classes', proposal.classId);
+    if (!cohort) return { valid: false, errors: [{ code: 'CLASS_NOT_FOUND', message: 'Không tìm thấy lớp.' }], warnings };
+    const startsAt = new Date(proposal.startsAt).getTime();
+    const endsAt = new Date(proposal.endsAt).getTime();
+    if (!Number.isFinite(startsAt) || !Number.isFinite(endsAt) || endsAt <= startsAt) errors.push({ code: 'INVALID_SESSION_TIME', message: 'Thời gian kết thúc phải sau thời gian bắt đầu.' });
+    const unitIds = state.units.filter((item) => item.courseVersionId === cohort.courseVersionId).map((item) => item.id);
+    const lesson = byId(state, 'lessonTemplates', proposal.lessonTemplateId);
+    if (!lesson || !unitIds.includes(lesson.unitId)) errors.push({ code: 'LESSON_COURSE_MISMATCH', message: 'Bài học không thuộc phiên bản khóa học của lớp.' });
+    if (!proposal.room && (proposal.mode || cohort.mode) !== 'ONLINE') errors.push({ code: 'ROOM_REQUIRED', message: 'Buổi học trực tiếp cần có phòng.' });
+    const excludedId = proposal.excludeSessionId || proposal.id || null;
+    const candidates = state.sessions.filter((item) => item.id !== excludedId && !['CANCELLED', 'COMPLETED', 'REVIEWED'].includes(item.status)
+      && Number.isFinite(startsAt) && overlaps(proposal.startsAt, proposal.endsAt, item.startsAt, item.endsAt));
+    const targetAssignments = state.teacherAssignments.filter((item) => item.classId === cohort.id && ['ACCEPTED', 'ACTIVE'].includes(item.status)).map((item) => item.teacherProfileId);
+    const targetLearners = state.enrollments.filter((item) => item.classId === cohort.id && item.status === 'ACTIVE').map((item) => item.learnerId);
+    for (const session of candidates) {
+      const otherClass = byId(state, 'classes', session.classId);
+      if (session.room === proposal.room && otherClass?.branchId === cohort.branchId) errors.push({ code: 'ROOM_CONFLICT', sessionId: session.id, message: `Phòng ${proposal.room} đã có lịch.` });
+      const otherAssignments = state.teacherAssignments.filter((item) => item.classId === session.classId && ['ACCEPTED', 'ACTIVE'].includes(item.status)).map((item) => item.teacherProfileId);
+      if (targetAssignments.some((id) => otherAssignments.includes(id))) errors.push({ code: 'TEACHER_CONFLICT', sessionId: session.id, message: 'Giáo viên đã có buổi dạy trùng giờ.' });
+      const otherLearners = state.enrollments.filter((item) => item.classId === session.classId && item.status === 'ACTIVE').map((item) => item.learnerId);
+      const conflictedLearners = targetLearners.filter((id) => otherLearners.includes(id));
+      if (conflictedLearners.length) errors.push({ code: 'LEARNER_CONFLICT', sessionId: session.id, learnerIds: conflictedLearners, message: `${conflictedLearners.length} học viên có lịch học trùng.` });
+    }
+    if (!targetAssignments.length) warnings.push({ code: 'TEACHER_NOT_ASSIGNED', message: 'Lớp chưa có giáo viên đang hiệu lực.' });
+    return { valid: errors.length === 0, errors, warnings };
+  }
+
+  function sessionTrace(state, sessionId) {
+    const session = byId(state, 'sessions', sessionId);
+    if (!session) return null;
+    const cohort = byId(state, 'classes', session.classId);
+    const courseVersion = byId(state, 'courseVersions', cohort?.courseVersionId);
+    const course = byId(state, 'courses', courseVersion?.courseId);
+    const lesson = byId(state, 'lessonTemplates', session.lessonTemplateId);
+    const unit = byId(state, 'units', lesson?.unitId);
+    const branch = byId(state, 'branches', cohort?.branchId);
+    const enrollments = state.enrollments.filter((item) => item.classId === cohort?.id && item.status === 'ACTIVE');
+    const makeUpBookings = state.makeUpBookings.filter((item) => (item.targetSessionId || item.sessionId) === session.id && ['HELD', 'BOOKED', 'NOTIFIED', 'ATTENDED'].includes(item.status));
+    return {
+      session, cohort, courseVersion, course, lesson, unit, branch,
+      teacherAssignments: state.teacherAssignments.filter((item) => item.classId === cohort?.id && ['ACCEPTED', 'ACTIVE'].includes(item.status)),
+      learnerIds: [...new Set([...enrollments.map((item) => item.learnerId), ...makeUpBookings.map((item) => item.learnerId)])],
+      enrollmentIds: enrollments.map((item) => item.id),
+      makeUpBookingIds: makeUpBookings.map((item) => item.id),
+    };
+  }
+
   function sessionWorkbench(state, sessionId) {
     const session = byId(state, 'sessions', sessionId);
     if (!session) return null;
@@ -259,5 +309,5 @@
     return { classId, ready: errors.length === 0, errors, warnings, capacity, assignmentId: assignment?.id || null };
   }
 
-  root.YC.define('selectors', Object.freeze({ byId, classCapacity, classReadiness, completionStatus, coursePublishValidation, journey, metrics, progressReportEvidence, riskSignals, roleHome, scheduleConflicts, sessionWorkbench, skillProfile, teacherEligibility, teacherWorkload }));
+  root.YC.define('selectors', Object.freeze({ byId, classCapacity, classReadiness, completionStatus, coursePublishValidation, journey, metrics, progressReportEvidence, riskSignals, roleHome, scheduleConflicts, sessionTrace, sessionValidation, sessionWorkbench, skillProfile, teacherEligibility, teacherWorkload }));
 })(globalThis);
