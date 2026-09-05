@@ -34,6 +34,7 @@ source/modules/03-store.js
 source/modules/04-policy.js
 source/modules/05-approval.js
 source/modules/05-commands.js
+source/modules/06-public-content.js
 source/modules/06-remedial.js
 source/modules/06-selectors.js
 source/modules/07-ui-kit.js
@@ -63,6 +64,7 @@ tests/domain/demo-controller.test.cjs
 tests/domain/foundation.test.cjs
 tests/domain/governance-ui.test.cjs
 tests/domain/learning-outcomes.test.cjs
+tests/domain/public-cms.test.cjs
 tests/domain/rbac-approval.test.cjs
 tests/domain/remedial-case.test.cjs
 tests/domain/remedial-ui.test.cjs

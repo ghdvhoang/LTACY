@@ -36,6 +36,7 @@
       competency: index < 6 ? 'LANGUAGE_USE' : 'READING',
       difficulty: index < 4 ? 'EASY' : index < 8 ? 'MEDIUM' : 'HARD',
     }));
+    const publicMeta = (id, contentKey, order = 0) => ({ id, contentKey, revision: 1, order, status: 'PUBLISHED', effectiveFrom: at(-30), effectiveTo: null, createdBy: 'admin-1', updatedBy: 'admin-1', publishedBy: 'admin-1', publishedAt: at(-30) });
 
     return {
       schemaVersion: 4,
@@ -221,6 +222,69 @@
         events: [{ id: 'event-1', title: 'Kiểm tra đầu vào miễn phí', startsAt: at(4, 9), location: 'Cơ sở Quận 3', status: 'PUBLISHED' }],
         documents: [{ id: 'document-1', title: 'Hướng dẫn cổng học tập', audience: 'Phụ huynh & Học viên', type: 'PDF', status: 'PUBLISHED' }],
       },
+      siteSettings: [{
+        ...publicMeta('site-settings-main', 'site-settings-main'), centerName: 'Lớp Tiếng Anh Cô Yến', shortName: 'Cô Yến',
+        tagline: 'Vững nền tảng, tự tin giao tiếp', description: 'Lộ trình tiếng Anh gần gũi, theo sát từng học viên và minh bạch tiến bộ với gia đình.',
+        primaryColor: '#182550', accentColor: '#c62d3e', locale: 'vi-VN', defaultSeoTitle: 'Lớp Tiếng Anh Cô Yến',
+      }],
+      navigationGroups: [
+        { ...publicMeta('nav-group-about', 'nav-about', 1), label: 'Về Cô Yến', key: 'ABOUT' },
+        { ...publicMeta('nav-group-programs', 'nav-programs', 2), label: 'Chương trình học', key: 'PROGRAMS', source: 'PROGRAMS' },
+        { ...publicMeta('nav-group-branches', 'nav-branches', 3), label: 'Cơ sở & lịch học', key: 'BRANCHES' },
+        { ...publicMeta('nav-group-news', 'nav-news', 4), label: 'Tin tức & sự kiện', key: 'NEWS' },
+        { ...publicMeta('nav-group-family', 'nav-family', 5), label: 'Góc phụ huynh', key: 'FAMILY' },
+      ],
+      navigationItems: [
+        { ...publicMeta('nav-about-story', 'nav-about-story', 1), groupId: 'nav-group-about', label: 'Câu chuyện Cô Yến', href: '/ve-co-yen' },
+        { ...publicMeta('nav-about-teachers', 'nav-about-teachers', 2), groupId: 'nav-group-about', label: 'Đội ngũ giáo viên', href: '/giao-vien' },
+        { ...publicMeta('nav-branches-list', 'nav-branches-list', 1), groupId: 'nav-group-branches', label: 'Hệ thống cơ sở', href: '/co-so' },
+        { ...publicMeta('nav-branches-schedule', 'nav-branches-schedule', 2), groupId: 'nav-group-branches', label: 'Lịch khai giảng', href: '/lich-hoc' },
+        { ...publicMeta('nav-news-list', 'nav-news-list', 1), groupId: 'nav-group-news', label: 'Tin mới', href: '/tin-tuc' },
+        { ...publicMeta('nav-events-list', 'nav-events-list', 2), groupId: 'nav-group-news', label: 'Sự kiện', href: '/su-kien' },
+        { ...publicMeta('nav-family-progress', 'nav-family-progress', 1), groupId: 'nav-group-family', label: 'Theo dõi tiến bộ', href: '/phu-huynh-hoc-sinh' },
+        { ...publicMeta('nav-family-faq', 'nav-family-faq', 2), groupId: 'nav-group-family', label: 'Câu hỏi thường gặp', href: '/cau-hoi-thuong-gap' },
+      ],
+      heroBanners: [{
+        ...publicMeta('hero-home-main', 'hero-home', 1), placement: 'HOME', eyebrow: 'Lớp học đồng hành cùng từng tiến bộ',
+        title: 'Học chắc hôm nay, tự tin nói tiếng Anh ngày mai',
+        description: 'Lộ trình vừa sức, lớp học tương tác và báo cáo rõ ràng để học viên biết mình đang tiến bộ ở đâu.',
+        primaryCtaLabel: 'Khám phá chương trình', primaryCtaHref: '/chuong-trinh', secondaryCtaLabel: 'Đăng ký tư vấn', secondaryCtaHref: '/lien-he',
+        image: './assets/yen-home-hero.png', imageAlt: 'Cô giáo đồng hành cùng học viên trong lớp tiếng Anh',
+      }],
+      publicProgramProfiles: [
+        { ...publicMeta('public-program-kids', 'program-kids', 1), programId: 'program-foundation', slug: 'tieng-anh-thieu-nhi', name: 'Tiếng Anh thiếu nhi', ageRange: '6–11 tuổi', summary: 'Xây nền phát âm, từ vựng và phản xạ qua hoạt động tương tác.', outcome: 'Tự tin sử dụng tiếng Anh trong học tập và đời sống.', accent: 'NAVY' },
+        { ...publicMeta('public-program-teens', 'program-teens', 2), programId: 'program-foundation', slug: 'tieng-anh-thieu-nien', name: 'Tiếng Anh thiếu niên', ageRange: '12–16 tuổi', summary: 'Củng cố học thuật, giao tiếp và kỹ năng trình bày.', outcome: 'Sẵn sàng cho mục tiêu học tập dài hạn.', accent: 'RED' },
+        { ...publicMeta('public-program-ielts', 'program-ielts', 3), programId: 'program-ielts', slug: 'luyen-thi-ielts', name: 'Lộ trình IELTS', ageRange: 'Từ 15 tuổi', summary: 'Lộ trình theo năng lực đầu vào và mục tiêu điểm số.', outcome: 'Tiến bộ cân bằng bốn kỹ năng với bằng chứng rõ ràng.', accent: 'GOLD' },
+      ],
+      publicBranchProfiles: [
+        { ...publicMeta('public-branch-q3', 'branch-q3', 1), branchId: 'branch-q3', slug: 'co-so-quan-3', name: 'Cơ sở Quận 3', address: '120 Võ Văn Tần, Quận 3', scheduleNote: 'Lớp chiều tối trong tuần và cuối tuần', mapLabel: 'Xem lớp đang mở' },
+        { ...publicMeta('public-branch-td', 'branch-td', 2), branchId: 'branch-td', slug: 'co-so-thu-duc', name: 'Cơ sở Thủ Đức', address: '48 Võ Văn Ngân, Thủ Đức', scheduleNote: 'Lớp thiếu niên và luyện thi', mapLabel: 'Xem lớp đang mở' },
+      ],
+      publicTeacherProfiles: [
+        { ...publicMeta('public-teacher-yen', 'teacher-yen', 1), teacherProfileId: 'teacher-profile-1', name: 'Cô Hoàng Yến', roleLabel: 'Giáo viên tiếng Anh', qualifications: ['TESOL', 'Giảng dạy thiếu nhi & thiếu niên'], quote: 'Mỗi học viên cần một cách khích lệ vừa đủ để dám nói.', publicOptIn: true },
+        { ...publicMeta('public-teacher-huong', 'teacher-huong', 2), teacherProfileId: 'teacher-profile-3', name: 'Cô Phạm Thu Hương', roleLabel: 'Giáo viên tiếng Anh', qualifications: ['TESOL', 'Lớp tương tác'], quote: 'Tiến bộ bền vững bắt đầu từ thói quen học tích cực.', publicOptIn: true },
+      ],
+      articleCategories: [
+        { ...publicMeta('category-method', 'category-method', 1), slug: 'phuong-phap-hoc', name: 'Phương pháp học' },
+        { ...publicMeta('category-parent', 'category-parent', 2), slug: 'goc-phu-huynh', name: 'Góc phụ huynh' },
+      ],
+      articles: [
+        { ...publicMeta('article-confidence', 'article-confidence', 1), categoryId: 'category-method', slug: 'giup-con-tu-tin-noi-tieng-anh', title: '5 cách giúp con tự tin nói tiếng Anh mỗi ngày', summary: 'Những hoạt động ngắn, dễ thực hiện để biến tiếng Anh thành phản xạ tự nhiên.', body: 'Sự tự tin đến từ những lần thực hành nhỏ và đều đặn, trong môi trường không sợ mắc lỗi.', featured: true },
+        { ...publicMeta('article-progress', 'article-progress', 2), categoryId: 'category-parent', slug: 'doc-bao-cao-tien-bo', title: 'Hiểu đúng báo cáo tiến bộ của học viên', summary: 'Cách đọc chuyên cần, kỹ năng và việc cần làm tiếp theo.', body: 'Báo cáo tốt cần cho thấy bằng chứng, xu hướng và hành động cụ thể cho giai đoạn tiếp theo.', featured: false },
+      ],
+      publicEvents: [
+        { ...publicMeta('public-event-placement', 'event-placement', 1), slug: 'kiem-tra-dau-vao-thang-9', title: 'Kiểm tra đầu vào và tư vấn lộ trình', summary: 'Đánh giá năng lực, trao đổi mục tiêu và nhận khuyến nghị lớp phù hợp.', startsAt: at(4, 9), endsAt: at(4, 11), branchId: 'branch-q3', location: 'Cơ sở Quận 3', registrationHref: '/lien-he' },
+        { ...publicMeta('public-event-open-class', 'event-open-class', 2), slug: 'lop-hoc-trai-nghiem', title: 'Lớp học trải nghiệm cuối tuần', summary: 'Một buổi học tương tác để học viên làm quen với giáo viên và phương pháp.', startsAt: at(9, 9), endsAt: at(9, 10, 30), branchId: 'branch-td', location: 'Cơ sở Thủ Đức', registrationHref: '/lien-he' },
+      ],
+      staticPages: [
+        { ...publicMeta('page-about', 'page-about', 1), slug: 've-co-yen', title: 'Về Cô Yến', eyebrow: 'Câu chuyện lớp học', summary: 'Một lớp học gần gũi, có kỷ luật và theo sát từng mục tiêu.', body: 'Lớp Tiếng Anh Cô Yến xây dựng trải nghiệm học dựa trên tương tác thật, phản hồi kịp thời và sự phối hợp rõ ràng với gia đình.' },
+        { ...publicMeta('page-teachers', 'page-teachers', 2), slug: 'giao-vien', title: 'Đội ngũ giáo viên', eyebrow: 'Người đồng hành', summary: 'Đội ngũ có chuyên môn, hiểu người học và cùng sử dụng một chuẩn vận hành.', body: 'Mỗi giáo viên công khai trên website đều đã đồng ý hiển thị hồ sơ và được quản trị viên duyệt nội dung.' },
+      ],
+      contactChannels: [
+        { ...publicMeta('contact-hotline', 'contact-hotline', 1), type: 'HOTLINE', label: 'Hotline tư vấn', value: '0901 234 567', href: 'tel:0901234567', icon: 'phone' },
+        { ...publicMeta('contact-zalo', 'contact-zalo', 2), type: 'ZALO', label: 'Nhắn Zalo', value: 'Lớp Tiếng Anh Cô Yến', href: '/lien-he', icon: 'chat' },
+        { ...publicMeta('contact-email', 'contact-email', 3), type: 'EMAIL', label: 'Email', value: 'hello@coyen.demo', href: 'mailto:hello@coyen.demo', icon: 'mail' },
+      ],
     };
   }
 

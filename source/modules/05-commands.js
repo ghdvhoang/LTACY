@@ -2,6 +2,10 @@
   'use strict';
 
   const { clone, uid } = root.YC.utils;
+  const CMS_COLLECTIONS = Object.freeze([
+    'navigationGroups', 'navigationItems', 'heroBanners', 'publicProgramProfiles', 'publicBranchProfiles',
+    'publicTeacherProfiles', 'articles', 'articleCategories', 'publicEvents', 'staticPages', 'contactChannels',
+  ]);
 
   class CommandError extends Error {
     constructor(code, message, details = {}) {
@@ -75,6 +79,22 @@
       const reason = String(payload.reason || '').trim();
       if (!reason) throw new CommandError('REASON_REQUIRED', 'Cần ghi rõ lý do thay đổi quyền.');
       return reason;
+    }
+
+    function cmsCollection(draft, name) {
+      if (!CMS_COLLECTIONS.includes(name) || !Array.isArray(draft[name])) {
+        throw new CommandError('CMS_COLLECTION_INVALID', 'Loại nội dung website không hợp lệ.');
+      }
+      return draft[name];
+    }
+
+    function cmsItem(draft, payload) {
+      return required(cmsCollection(draft, payload.collection).find((item) => item.id === payload.contentId), 'SITE_CONTENT_NOT_FOUND', 'Không tìm thấy nội dung website.');
+    }
+
+    function contentFields(payload) {
+      const reserved = new Set(['collection', 'contentId', 'sourceContentId', 'reason', 'id', 'revision', 'status', 'createdBy', 'createdAt', 'updatedBy', 'updatedAt', 'publishedBy', 'publishedAt', 'archivedBy', 'archivedAt', 'approvalRequestId']);
+      return Object.fromEntries(Object.entries(payload).filter(([key]) => !reserved.has(key)).map(([key, value]) => [key, clone(value)]));
     }
 
     function validatePermissionInput(draft, payload) {
@@ -216,6 +236,99 @@
     }
 
     const handlers = {
+      SAVE_SITE_SETTINGS(draft, payload, context) {
+        requirePermission(draft, context, 'site.configure_contact');
+        const settings = required(draft.siteSettings?.[0], 'SITE_SETTINGS_NOT_FOUND', 'Chưa có cấu hình website.');
+        Object.assign(settings, contentFields(payload), { updatedBy: context.actor.id, updatedAt: nowIso(), revision: Number(settings.revision || 0) + 1 });
+        appendEvent(draft, context, 'SITE_SETTINGS_SAVED', 'SITE_SETTINGS', settings.id, 'Đã cập nhật cấu hình thương hiệu và kênh liên hệ.');
+        appendAudit(draft, context, 'SITE_SETTINGS_SAVED', 'SITE_SETTINGS', settings.id, 'Cập nhật cấu hình website.');
+        return { message: 'Đã lưu cấu hình website.', settingsId: settings.id };
+      },
+
+      CREATE_SITE_CONTENT_DRAFT(draft, payload, context) {
+        requirePermission(draft, context, 'site.edit');
+        const collection = cmsCollection(draft, payload.collection);
+        const source = payload.sourceContentId
+          ? required(collection.find((item) => item.id === payload.sourceContentId), 'SITE_CONTENT_NOT_FOUND', 'Không tìm thấy phiên bản nguồn.')
+          : null;
+        const base = source ? clone(source) : {};
+        ['id', 'status', 'createdBy', 'createdAt', 'updatedBy', 'updatedAt', 'publishedBy', 'publishedAt', 'archivedBy', 'archivedAt', 'approvalRequestId', 'effectiveTo'].forEach((key) => delete base[key]);
+        const fields = contentFields(payload);
+        const contentKey = String(fields.contentKey || source?.contentKey || uid('site-key'));
+        const revision = Math.max(0, ...collection.filter((item) => (item.contentKey || item.id) === contentKey).map((item) => Number(item.revision || 0))) + 1;
+        const item = {
+          ...base, ...fields, id: uid('site-content'), contentKey, revision, status: 'DRAFT',
+          sourceRevisionId: source?.id || null, effectiveFrom: fields.effectiveFrom || source?.effectiveFrom || nowIso(), effectiveTo: fields.effectiveTo || null,
+          createdBy: context.actor.id, createdAt: nowIso(), updatedBy: context.actor.id, updatedAt: nowIso(),
+        };
+        collection.push(item);
+        appendEvent(draft, context, 'SITE_CONTENT_DRAFT_CREATED', 'SITE_CONTENT', item.id, `${payload.collection} · phiên bản ${revision}.`);
+        appendAudit(draft, context, 'SITE_CONTENT_DRAFT_CREATED', 'SITE_CONTENT', item.id, `Tạo nháp ${payload.collection}.`);
+        return { message: 'Đã tạo bản nháp nội dung.', contentId: item.id, revision };
+      },
+
+      SUBMIT_SITE_CONTENT(draft, payload, context) {
+        requirePermission(draft, context, 'site.submit');
+        const reason = requireReason(payload);
+        const item = cmsItem(draft, payload);
+        if (item.status !== 'DRAFT') throw new CommandError('SITE_CONTENT_NOT_DRAFT', 'Chỉ nội dung nháp mới có thể gửi duyệt.');
+        item.status = 'SUBMITTED';
+        item.submittedBy = context.actor.id;
+        item.submittedAt = nowIso();
+        const request = {
+          id: uid('change-request'), resourceType: 'SITE_CONTENT', resourceId: item.id, collection: payload.collection,
+          operation: 'PUBLISH', status: 'SUBMITTED', requesterId: context.actor.id, reason,
+          beforeSnapshot: null, afterSnapshot: clone(item), submittedAt: nowIso(), eventIds: [],
+        };
+        item.approvalRequestId = request.id;
+        draft.changeRequests.push(request);
+        const event = appendEvent(draft, context, 'SITE_CONTENT_SUBMITTED', 'CHANGE_REQUEST', request.id, `${payload.collection} · ${reason}.`);
+        request.eventIds.push(event.id);
+        appendAudit(draft, context, 'SITE_CONTENT_SUBMITTED', 'SITE_CONTENT', item.id, reason);
+        notifyRole(draft, 'ADMIN', 'Có nội dung website chờ duyệt', `${context.actor.name}: ${item.title || item.name || item.label || payload.collection}.`, '/app/admin/site-content');
+        return { message: 'Đã gửi nội dung và đang chờ Admin duyệt.', contentId: item.id, requestId: request.id, status: item.status };
+      },
+
+      PUBLISH_SITE_CONTENT(draft, payload, context) {
+        requirePermission(draft, context, 'site.publish');
+        const collection = cmsCollection(draft, payload.collection);
+        const item = required(collection.find((entry) => entry.id === payload.contentId), 'SITE_CONTENT_NOT_FOUND', 'Không tìm thấy nội dung website.');
+        if (!['DRAFT', 'SUBMITTED'].includes(item.status)) throw new CommandError('SITE_CONTENT_NOT_PUBLISHABLE', 'Nội dung không ở trạng thái có thể xuất bản.');
+        const publishedAt = nowIso();
+        collection.filter((entry) => entry.id !== item.id && (entry.contentKey || entry.id) === (item.contentKey || item.id) && entry.status === 'PUBLISHED').forEach((entry) => {
+          entry.status = 'ARCHIVED';
+          entry.effectiveTo = publishedAt;
+          entry.archivedBy = context.actor.id;
+          entry.archivedAt = publishedAt;
+        });
+        item.status = 'PUBLISHED';
+        item.effectiveFrom = item.effectiveFrom || publishedAt;
+        item.publishedBy = context.actor.id;
+        item.publishedAt = publishedAt;
+        if (item.approvalRequestId) {
+          const request = draft.changeRequests.find((entry) => entry.id === item.approvalRequestId);
+          if (request) Object.assign(request, { status: 'APPROVED', reviewerId: context.actor.id, reviewedAt: publishedAt, appliedAt: publishedAt, reviewNote: String(payload.reviewNote || 'Đã duyệt nội dung để xuất bản.') });
+        }
+        appendEvent(draft, context, 'SITE_CONTENT_PUBLISHED', 'SITE_CONTENT', item.id, `${payload.collection} · phiên bản ${item.revision || 1}.`);
+        appendAudit(draft, context, 'SITE_CONTENT_PUBLISHED', 'SITE_CONTENT', item.id, `Xuất bản ${payload.collection}.`);
+        return { message: item.effectiveFrom > publishedAt ? 'Đã lên lịch xuất bản nội dung.' : 'Đã xuất bản nội dung.', contentId: item.id, status: item.status };
+      },
+
+      ARCHIVE_SITE_CONTENT(draft, payload, context) {
+        requirePermission(draft, context, 'site.archive');
+        const reason = requireReason(payload);
+        const item = cmsItem(draft, payload);
+        if (item.status === 'ARCHIVED') throw new CommandError('SITE_CONTENT_ALREADY_ARCHIVED', 'Nội dung đã được lưu trữ.');
+        item.status = 'ARCHIVED';
+        item.effectiveTo = nowIso();
+        item.archivedBy = context.actor.id;
+        item.archivedAt = nowIso();
+        item.archiveReason = reason;
+        appendEvent(draft, context, 'SITE_CONTENT_ARCHIVED', 'SITE_CONTENT', item.id, reason);
+        appendAudit(draft, context, 'SITE_CONTENT_ARCHIVED', 'SITE_CONTENT', item.id, reason);
+        return { message: 'Đã lưu trữ nội dung.', contentId: item.id, status: item.status };
+      },
+
       SET_ROLE_PERMISSION(draft, payload, context) {
         requirePermission(draft, context, 'access.manage_role');
         const reason = requireReason(payload);

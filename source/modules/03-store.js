@@ -6,6 +6,16 @@
   const V3_STORAGE_KEY = 'yen-center-lms-fe-state-v3';
   const LEGACY_STORAGE_KEY = 'yen-center-lms-fe-state-v2';
   const SESSION_KEY = 'yen-center-lms-fe-session-v4';
+  const CMS_COLLECTIONS = Object.freeze(['siteSettings', 'navigationGroups', 'navigationItems', 'heroBanners', 'publicProgramProfiles', 'publicBranchProfiles', 'publicTeacherProfiles', 'articles', 'articleCategories', 'publicEvents', 'staticPages', 'contactChannels']);
+
+  function hydrateV4(previous, clock = () => new Date()) {
+    const baseline = root.YC.seed.createSeed(clock);
+    const next = clone(previous);
+    CMS_COLLECTIONS.forEach((key) => {
+      if (!Array.isArray(next[key])) next[key] = clone(baseline[key]);
+    });
+    return next;
+  }
 
   function migrateV3(previous, clock = () => new Date()) {
     const baseline = root.YC.seed.createSeed(clock);
@@ -75,7 +85,7 @@
           const rawV4 = storage.getItem(STORAGE_KEY);
           if (rawV4) {
             const parsed = JSON.parse(rawV4);
-            if (parsed.schemaVersion === 4) return parsed;
+            if (parsed.schemaVersion === 4) return hydrateV4(parsed, clock);
           }
           const rawV3 = storage.getItem(V3_STORAGE_KEY);
           if (rawV3) {
@@ -121,5 +131,5 @@
     });
   }
 
-  root.YC.define('store', Object.freeze({ create, LEGACY_STORAGE_KEY, SESSION_KEY, STORAGE_KEY, V3_STORAGE_KEY, migrateV3 }));
+  root.YC.define('store', Object.freeze({ create, hydrateV4, LEGACY_STORAGE_KEY, SESSION_KEY, STORAGE_KEY, V3_STORAGE_KEY, migrateV3 }));
 })(globalThis);

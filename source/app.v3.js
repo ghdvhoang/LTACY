@@ -234,6 +234,7 @@
       competency: index < 6 ? 'LANGUAGE_USE' : 'READING',
       difficulty: index < 4 ? 'EASY' : index < 8 ? 'MEDIUM' : 'HARD',
     }));
+    const publicMeta = (id, contentKey, order = 0) => ({ id, contentKey, revision: 1, order, status: 'PUBLISHED', effectiveFrom: at(-30), effectiveTo: null, createdBy: 'admin-1', updatedBy: 'admin-1', publishedBy: 'admin-1', publishedAt: at(-30) });
 
     return {
       schemaVersion: 4,
@@ -419,6 +420,69 @@
         events: [{ id: 'event-1', title: 'Kiểm tra đầu vào miễn phí', startsAt: at(4, 9), location: 'Cơ sở Quận 3', status: 'PUBLISHED' }],
         documents: [{ id: 'document-1', title: 'Hướng dẫn cổng học tập', audience: 'Phụ huynh & Học viên', type: 'PDF', status: 'PUBLISHED' }],
       },
+      siteSettings: [{
+        ...publicMeta('site-settings-main', 'site-settings-main'), centerName: 'Lớp Tiếng Anh Cô Yến', shortName: 'Cô Yến',
+        tagline: 'Vững nền tảng, tự tin giao tiếp', description: 'Lộ trình tiếng Anh gần gũi, theo sát từng học viên và minh bạch tiến bộ với gia đình.',
+        primaryColor: '#182550', accentColor: '#c62d3e', locale: 'vi-VN', defaultSeoTitle: 'Lớp Tiếng Anh Cô Yến',
+      }],
+      navigationGroups: [
+        { ...publicMeta('nav-group-about', 'nav-about', 1), label: 'Về Cô Yến', key: 'ABOUT' },
+        { ...publicMeta('nav-group-programs', 'nav-programs', 2), label: 'Chương trình học', key: 'PROGRAMS', source: 'PROGRAMS' },
+        { ...publicMeta('nav-group-branches', 'nav-branches', 3), label: 'Cơ sở & lịch học', key: 'BRANCHES' },
+        { ...publicMeta('nav-group-news', 'nav-news', 4), label: 'Tin tức & sự kiện', key: 'NEWS' },
+        { ...publicMeta('nav-group-family', 'nav-family', 5), label: 'Góc phụ huynh', key: 'FAMILY' },
+      ],
+      navigationItems: [
+        { ...publicMeta('nav-about-story', 'nav-about-story', 1), groupId: 'nav-group-about', label: 'Câu chuyện Cô Yến', href: '/ve-co-yen' },
+        { ...publicMeta('nav-about-teachers', 'nav-about-teachers', 2), groupId: 'nav-group-about', label: 'Đội ngũ giáo viên', href: '/giao-vien' },
+        { ...publicMeta('nav-branches-list', 'nav-branches-list', 1), groupId: 'nav-group-branches', label: 'Hệ thống cơ sở', href: '/co-so' },
+        { ...publicMeta('nav-branches-schedule', 'nav-branches-schedule', 2), groupId: 'nav-group-branches', label: 'Lịch khai giảng', href: '/lich-hoc' },
+        { ...publicMeta('nav-news-list', 'nav-news-list', 1), groupId: 'nav-group-news', label: 'Tin mới', href: '/tin-tuc' },
+        { ...publicMeta('nav-events-list', 'nav-events-list', 2), groupId: 'nav-group-news', label: 'Sự kiện', href: '/su-kien' },
+        { ...publicMeta('nav-family-progress', 'nav-family-progress', 1), groupId: 'nav-group-family', label: 'Theo dõi tiến bộ', href: '/phu-huynh-hoc-sinh' },
+        { ...publicMeta('nav-family-faq', 'nav-family-faq', 2), groupId: 'nav-group-family', label: 'Câu hỏi thường gặp', href: '/cau-hoi-thuong-gap' },
+      ],
+      heroBanners: [{
+        ...publicMeta('hero-home-main', 'hero-home', 1), placement: 'HOME', eyebrow: 'Lớp học đồng hành cùng từng tiến bộ',
+        title: 'Học chắc hôm nay, tự tin nói tiếng Anh ngày mai',
+        description: 'Lộ trình vừa sức, lớp học tương tác và báo cáo rõ ràng để học viên biết mình đang tiến bộ ở đâu.',
+        primaryCtaLabel: 'Khám phá chương trình', primaryCtaHref: '/chuong-trinh', secondaryCtaLabel: 'Đăng ký tư vấn', secondaryCtaHref: '/lien-he',
+        image: './assets/yen-home-hero.png', imageAlt: 'Cô giáo đồng hành cùng học viên trong lớp tiếng Anh',
+      }],
+      publicProgramProfiles: [
+        { ...publicMeta('public-program-kids', 'program-kids', 1), programId: 'program-foundation', slug: 'tieng-anh-thieu-nhi', name: 'Tiếng Anh thiếu nhi', ageRange: '6–11 tuổi', summary: 'Xây nền phát âm, từ vựng và phản xạ qua hoạt động tương tác.', outcome: 'Tự tin sử dụng tiếng Anh trong học tập và đời sống.', accent: 'NAVY' },
+        { ...publicMeta('public-program-teens', 'program-teens', 2), programId: 'program-foundation', slug: 'tieng-anh-thieu-nien', name: 'Tiếng Anh thiếu niên', ageRange: '12–16 tuổi', summary: 'Củng cố học thuật, giao tiếp và kỹ năng trình bày.', outcome: 'Sẵn sàng cho mục tiêu học tập dài hạn.', accent: 'RED' },
+        { ...publicMeta('public-program-ielts', 'program-ielts', 3), programId: 'program-ielts', slug: 'luyen-thi-ielts', name: 'Lộ trình IELTS', ageRange: 'Từ 15 tuổi', summary: 'Lộ trình theo năng lực đầu vào và mục tiêu điểm số.', outcome: 'Tiến bộ cân bằng bốn kỹ năng với bằng chứng rõ ràng.', accent: 'GOLD' },
+      ],
+      publicBranchProfiles: [
+        { ...publicMeta('public-branch-q3', 'branch-q3', 1), branchId: 'branch-q3', slug: 'co-so-quan-3', name: 'Cơ sở Quận 3', address: '120 Võ Văn Tần, Quận 3', scheduleNote: 'Lớp chiều tối trong tuần và cuối tuần', mapLabel: 'Xem lớp đang mở' },
+        { ...publicMeta('public-branch-td', 'branch-td', 2), branchId: 'branch-td', slug: 'co-so-thu-duc', name: 'Cơ sở Thủ Đức', address: '48 Võ Văn Ngân, Thủ Đức', scheduleNote: 'Lớp thiếu niên và luyện thi', mapLabel: 'Xem lớp đang mở' },
+      ],
+      publicTeacherProfiles: [
+        { ...publicMeta('public-teacher-yen', 'teacher-yen', 1), teacherProfileId: 'teacher-profile-1', name: 'Cô Hoàng Yến', roleLabel: 'Giáo viên tiếng Anh', qualifications: ['TESOL', 'Giảng dạy thiếu nhi & thiếu niên'], quote: 'Mỗi học viên cần một cách khích lệ vừa đủ để dám nói.', publicOptIn: true },
+        { ...publicMeta('public-teacher-huong', 'teacher-huong', 2), teacherProfileId: 'teacher-profile-3', name: 'Cô Phạm Thu Hương', roleLabel: 'Giáo viên tiếng Anh', qualifications: ['TESOL', 'Lớp tương tác'], quote: 'Tiến bộ bền vững bắt đầu từ thói quen học tích cực.', publicOptIn: true },
+      ],
+      articleCategories: [
+        { ...publicMeta('category-method', 'category-method', 1), slug: 'phuong-phap-hoc', name: 'Phương pháp học' },
+        { ...publicMeta('category-parent', 'category-parent', 2), slug: 'goc-phu-huynh', name: 'Góc phụ huynh' },
+      ],
+      articles: [
+        { ...publicMeta('article-confidence', 'article-confidence', 1), categoryId: 'category-method', slug: 'giup-con-tu-tin-noi-tieng-anh', title: '5 cách giúp con tự tin nói tiếng Anh mỗi ngày', summary: 'Những hoạt động ngắn, dễ thực hiện để biến tiếng Anh thành phản xạ tự nhiên.', body: 'Sự tự tin đến từ những lần thực hành nhỏ và đều đặn, trong môi trường không sợ mắc lỗi.', featured: true },
+        { ...publicMeta('article-progress', 'article-progress', 2), categoryId: 'category-parent', slug: 'doc-bao-cao-tien-bo', title: 'Hiểu đúng báo cáo tiến bộ của học viên', summary: 'Cách đọc chuyên cần, kỹ năng và việc cần làm tiếp theo.', body: 'Báo cáo tốt cần cho thấy bằng chứng, xu hướng và hành động cụ thể cho giai đoạn tiếp theo.', featured: false },
+      ],
+      publicEvents: [
+        { ...publicMeta('public-event-placement', 'event-placement', 1), slug: 'kiem-tra-dau-vao-thang-9', title: 'Kiểm tra đầu vào và tư vấn lộ trình', summary: 'Đánh giá năng lực, trao đổi mục tiêu và nhận khuyến nghị lớp phù hợp.', startsAt: at(4, 9), endsAt: at(4, 11), branchId: 'branch-q3', location: 'Cơ sở Quận 3', registrationHref: '/lien-he' },
+        { ...publicMeta('public-event-open-class', 'event-open-class', 2), slug: 'lop-hoc-trai-nghiem', title: 'Lớp học trải nghiệm cuối tuần', summary: 'Một buổi học tương tác để học viên làm quen với giáo viên và phương pháp.', startsAt: at(9, 9), endsAt: at(9, 10, 30), branchId: 'branch-td', location: 'Cơ sở Thủ Đức', registrationHref: '/lien-he' },
+      ],
+      staticPages: [
+        { ...publicMeta('page-about', 'page-about', 1), slug: 've-co-yen', title: 'Về Cô Yến', eyebrow: 'Câu chuyện lớp học', summary: 'Một lớp học gần gũi, có kỷ luật và theo sát từng mục tiêu.', body: 'Lớp Tiếng Anh Cô Yến xây dựng trải nghiệm học dựa trên tương tác thật, phản hồi kịp thời và sự phối hợp rõ ràng với gia đình.' },
+        { ...publicMeta('page-teachers', 'page-teachers', 2), slug: 'giao-vien', title: 'Đội ngũ giáo viên', eyebrow: 'Người đồng hành', summary: 'Đội ngũ có chuyên môn, hiểu người học và cùng sử dụng một chuẩn vận hành.', body: 'Mỗi giáo viên công khai trên website đều đã đồng ý hiển thị hồ sơ và được quản trị viên duyệt nội dung.' },
+      ],
+      contactChannels: [
+        { ...publicMeta('contact-hotline', 'contact-hotline', 1), type: 'HOTLINE', label: 'Hotline tư vấn', value: '0901 234 567', href: 'tel:0901234567', icon: 'phone' },
+        { ...publicMeta('contact-zalo', 'contact-zalo', 2), type: 'ZALO', label: 'Nhắn Zalo', value: 'Lớp Tiếng Anh Cô Yến', href: '/lien-he', icon: 'chat' },
+        { ...publicMeta('contact-email', 'contact-email', 3), type: 'EMAIL', label: 'Email', value: 'hello@coyen.demo', href: 'mailto:hello@coyen.demo', icon: 'mail' },
+      ],
     };
   }
 
@@ -434,6 +498,16 @@
   const V3_STORAGE_KEY = 'yen-center-lms-fe-state-v3';
   const LEGACY_STORAGE_KEY = 'yen-center-lms-fe-state-v2';
   const SESSION_KEY = 'yen-center-lms-fe-session-v4';
+  const CMS_COLLECTIONS = Object.freeze(['siteSettings', 'navigationGroups', 'navigationItems', 'heroBanners', 'publicProgramProfiles', 'publicBranchProfiles', 'publicTeacherProfiles', 'articles', 'articleCategories', 'publicEvents', 'staticPages', 'contactChannels']);
+
+  function hydrateV4(previous, clock = () => new Date()) {
+    const baseline = root.YC.seed.createSeed(clock);
+    const next = clone(previous);
+    CMS_COLLECTIONS.forEach((key) => {
+      if (!Array.isArray(next[key])) next[key] = clone(baseline[key]);
+    });
+    return next;
+  }
 
   function migrateV3(previous, clock = () => new Date()) {
     const baseline = root.YC.seed.createSeed(clock);
@@ -503,7 +577,7 @@
           const rawV4 = storage.getItem(STORAGE_KEY);
           if (rawV4) {
             const parsed = JSON.parse(rawV4);
-            if (parsed.schemaVersion === 4) return parsed;
+            if (parsed.schemaVersion === 4) return hydrateV4(parsed, clock);
           }
           const rawV3 = storage.getItem(V3_STORAGE_KEY);
           if (rawV3) {
@@ -549,7 +623,7 @@
     });
   }
 
-  root.YC.define('store', Object.freeze({ create, LEGACY_STORAGE_KEY, SESSION_KEY, STORAGE_KEY, V3_STORAGE_KEY, migrateV3 }));
+  root.YC.define('store', Object.freeze({ create, hydrateV4, LEGACY_STORAGE_KEY, SESSION_KEY, STORAGE_KEY, V3_STORAGE_KEY, migrateV3 }));
 })(globalThis);
 
 /* 04-policy.js */
@@ -938,6 +1012,10 @@
   'use strict';
 
   const { clone, uid } = root.YC.utils;
+  const CMS_COLLECTIONS = Object.freeze([
+    'navigationGroups', 'navigationItems', 'heroBanners', 'publicProgramProfiles', 'publicBranchProfiles',
+    'publicTeacherProfiles', 'articles', 'articleCategories', 'publicEvents', 'staticPages', 'contactChannels',
+  ]);
 
   class CommandError extends Error {
     constructor(code, message, details = {}) {
@@ -1011,6 +1089,22 @@
       const reason = String(payload.reason || '').trim();
       if (!reason) throw new CommandError('REASON_REQUIRED', 'Cần ghi rõ lý do thay đổi quyền.');
       return reason;
+    }
+
+    function cmsCollection(draft, name) {
+      if (!CMS_COLLECTIONS.includes(name) || !Array.isArray(draft[name])) {
+        throw new CommandError('CMS_COLLECTION_INVALID', 'Loại nội dung website không hợp lệ.');
+      }
+      return draft[name];
+    }
+
+    function cmsItem(draft, payload) {
+      return required(cmsCollection(draft, payload.collection).find((item) => item.id === payload.contentId), 'SITE_CONTENT_NOT_FOUND', 'Không tìm thấy nội dung website.');
+    }
+
+    function contentFields(payload) {
+      const reserved = new Set(['collection', 'contentId', 'sourceContentId', 'reason', 'id', 'revision', 'status', 'createdBy', 'createdAt', 'updatedBy', 'updatedAt', 'publishedBy', 'publishedAt', 'archivedBy', 'archivedAt', 'approvalRequestId']);
+      return Object.fromEntries(Object.entries(payload).filter(([key]) => !reserved.has(key)).map(([key, value]) => [key, clone(value)]));
     }
 
     function validatePermissionInput(draft, payload) {
@@ -1152,6 +1246,99 @@
     }
 
     const handlers = {
+      SAVE_SITE_SETTINGS(draft, payload, context) {
+        requirePermission(draft, context, 'site.configure_contact');
+        const settings = required(draft.siteSettings?.[0], 'SITE_SETTINGS_NOT_FOUND', 'Chưa có cấu hình website.');
+        Object.assign(settings, contentFields(payload), { updatedBy: context.actor.id, updatedAt: nowIso(), revision: Number(settings.revision || 0) + 1 });
+        appendEvent(draft, context, 'SITE_SETTINGS_SAVED', 'SITE_SETTINGS', settings.id, 'Đã cập nhật cấu hình thương hiệu và kênh liên hệ.');
+        appendAudit(draft, context, 'SITE_SETTINGS_SAVED', 'SITE_SETTINGS', settings.id, 'Cập nhật cấu hình website.');
+        return { message: 'Đã lưu cấu hình website.', settingsId: settings.id };
+      },
+
+      CREATE_SITE_CONTENT_DRAFT(draft, payload, context) {
+        requirePermission(draft, context, 'site.edit');
+        const collection = cmsCollection(draft, payload.collection);
+        const source = payload.sourceContentId
+          ? required(collection.find((item) => item.id === payload.sourceContentId), 'SITE_CONTENT_NOT_FOUND', 'Không tìm thấy phiên bản nguồn.')
+          : null;
+        const base = source ? clone(source) : {};
+        ['id', 'status', 'createdBy', 'createdAt', 'updatedBy', 'updatedAt', 'publishedBy', 'publishedAt', 'archivedBy', 'archivedAt', 'approvalRequestId', 'effectiveTo'].forEach((key) => delete base[key]);
+        const fields = contentFields(payload);
+        const contentKey = String(fields.contentKey || source?.contentKey || uid('site-key'));
+        const revision = Math.max(0, ...collection.filter((item) => (item.contentKey || item.id) === contentKey).map((item) => Number(item.revision || 0))) + 1;
+        const item = {
+          ...base, ...fields, id: uid('site-content'), contentKey, revision, status: 'DRAFT',
+          sourceRevisionId: source?.id || null, effectiveFrom: fields.effectiveFrom || source?.effectiveFrom || nowIso(), effectiveTo: fields.effectiveTo || null,
+          createdBy: context.actor.id, createdAt: nowIso(), updatedBy: context.actor.id, updatedAt: nowIso(),
+        };
+        collection.push(item);
+        appendEvent(draft, context, 'SITE_CONTENT_DRAFT_CREATED', 'SITE_CONTENT', item.id, `${payload.collection} · phiên bản ${revision}.`);
+        appendAudit(draft, context, 'SITE_CONTENT_DRAFT_CREATED', 'SITE_CONTENT', item.id, `Tạo nháp ${payload.collection}.`);
+        return { message: 'Đã tạo bản nháp nội dung.', contentId: item.id, revision };
+      },
+
+      SUBMIT_SITE_CONTENT(draft, payload, context) {
+        requirePermission(draft, context, 'site.submit');
+        const reason = requireReason(payload);
+        const item = cmsItem(draft, payload);
+        if (item.status !== 'DRAFT') throw new CommandError('SITE_CONTENT_NOT_DRAFT', 'Chỉ nội dung nháp mới có thể gửi duyệt.');
+        item.status = 'SUBMITTED';
+        item.submittedBy = context.actor.id;
+        item.submittedAt = nowIso();
+        const request = {
+          id: uid('change-request'), resourceType: 'SITE_CONTENT', resourceId: item.id, collection: payload.collection,
+          operation: 'PUBLISH', status: 'SUBMITTED', requesterId: context.actor.id, reason,
+          beforeSnapshot: null, afterSnapshot: clone(item), submittedAt: nowIso(), eventIds: [],
+        };
+        item.approvalRequestId = request.id;
+        draft.changeRequests.push(request);
+        const event = appendEvent(draft, context, 'SITE_CONTENT_SUBMITTED', 'CHANGE_REQUEST', request.id, `${payload.collection} · ${reason}.`);
+        request.eventIds.push(event.id);
+        appendAudit(draft, context, 'SITE_CONTENT_SUBMITTED', 'SITE_CONTENT', item.id, reason);
+        notifyRole(draft, 'ADMIN', 'Có nội dung website chờ duyệt', `${context.actor.name}: ${item.title || item.name || item.label || payload.collection}.`, '/app/admin/site-content');
+        return { message: 'Đã gửi nội dung và đang chờ Admin duyệt.', contentId: item.id, requestId: request.id, status: item.status };
+      },
+
+      PUBLISH_SITE_CONTENT(draft, payload, context) {
+        requirePermission(draft, context, 'site.publish');
+        const collection = cmsCollection(draft, payload.collection);
+        const item = required(collection.find((entry) => entry.id === payload.contentId), 'SITE_CONTENT_NOT_FOUND', 'Không tìm thấy nội dung website.');
+        if (!['DRAFT', 'SUBMITTED'].includes(item.status)) throw new CommandError('SITE_CONTENT_NOT_PUBLISHABLE', 'Nội dung không ở trạng thái có thể xuất bản.');
+        const publishedAt = nowIso();
+        collection.filter((entry) => entry.id !== item.id && (entry.contentKey || entry.id) === (item.contentKey || item.id) && entry.status === 'PUBLISHED').forEach((entry) => {
+          entry.status = 'ARCHIVED';
+          entry.effectiveTo = publishedAt;
+          entry.archivedBy = context.actor.id;
+          entry.archivedAt = publishedAt;
+        });
+        item.status = 'PUBLISHED';
+        item.effectiveFrom = item.effectiveFrom || publishedAt;
+        item.publishedBy = context.actor.id;
+        item.publishedAt = publishedAt;
+        if (item.approvalRequestId) {
+          const request = draft.changeRequests.find((entry) => entry.id === item.approvalRequestId);
+          if (request) Object.assign(request, { status: 'APPROVED', reviewerId: context.actor.id, reviewedAt: publishedAt, appliedAt: publishedAt, reviewNote: String(payload.reviewNote || 'Đã duyệt nội dung để xuất bản.') });
+        }
+        appendEvent(draft, context, 'SITE_CONTENT_PUBLISHED', 'SITE_CONTENT', item.id, `${payload.collection} · phiên bản ${item.revision || 1}.`);
+        appendAudit(draft, context, 'SITE_CONTENT_PUBLISHED', 'SITE_CONTENT', item.id, `Xuất bản ${payload.collection}.`);
+        return { message: item.effectiveFrom > publishedAt ? 'Đã lên lịch xuất bản nội dung.' : 'Đã xuất bản nội dung.', contentId: item.id, status: item.status };
+      },
+
+      ARCHIVE_SITE_CONTENT(draft, payload, context) {
+        requirePermission(draft, context, 'site.archive');
+        const reason = requireReason(payload);
+        const item = cmsItem(draft, payload);
+        if (item.status === 'ARCHIVED') throw new CommandError('SITE_CONTENT_ALREADY_ARCHIVED', 'Nội dung đã được lưu trữ.');
+        item.status = 'ARCHIVED';
+        item.effectiveTo = nowIso();
+        item.archivedBy = context.actor.id;
+        item.archivedAt = nowIso();
+        item.archiveReason = reason;
+        appendEvent(draft, context, 'SITE_CONTENT_ARCHIVED', 'SITE_CONTENT', item.id, reason);
+        appendAudit(draft, context, 'SITE_CONTENT_ARCHIVED', 'SITE_CONTENT', item.id, reason);
+        return { message: 'Đã lưu trữ nội dung.', contentId: item.id, status: item.status };
+      },
+
       SET_ROLE_PERMISSION(draft, payload, context) {
         requirePermission(draft, context, 'access.manage_role');
         const reason = requireReason(payload);
@@ -2572,6 +2759,69 @@
   }
 
   root.YC.define('commands', Object.freeze({ CommandError, create }));
+})(globalThis);
+
+/* 06-public-content.js */
+(function definePublicContent(root) {
+  'use strict';
+
+  const COLLECTIONS = Object.freeze([
+    'siteSettings', 'navigationGroups', 'navigationItems', 'heroBanners', 'publicProgramProfiles',
+    'publicBranchProfiles', 'publicTeacherProfiles', 'articles', 'articleCategories',
+    'publicEvents', 'staticPages', 'contactChannels',
+  ]);
+
+  function published(type, state, at = null) {
+    if (!COLLECTIONS.includes(type) || !Array.isArray(state?.[type])) return [];
+    const moment = new Date(at || state.currentAt || state.seededAt || Date.now()).getTime();
+    const byKey = new Map();
+    state[type].forEach((item) => {
+      if (item.status !== 'PUBLISHED') return;
+      if (item.effectiveFrom && new Date(item.effectiveFrom).getTime() > moment) return;
+      if (item.effectiveTo && new Date(item.effectiveTo).getTime() <= moment) return;
+      const key = item.contentKey || item.id;
+      const current = byKey.get(key);
+      if (!current || Number(item.revision || 0) > Number(current.revision || 0)) byKey.set(key, item);
+    });
+    return [...byKey.values()].sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
+  }
+
+  function publicNavigation(state) {
+    const groups = published('navigationGroups', state);
+    const items = published('navigationItems', state);
+    const programs = published('publicProgramProfiles', state).map((item) => ({
+      id: `nav-${item.id}`, contentKey: `nav-${item.contentKey || item.id}`, groupId: 'nav-group-programs',
+      label: item.name, href: `/chuong-trinh/${item.slug}`, order: item.order, status: 'PUBLISHED', sourceId: item.id,
+    }));
+    return groups.map((group) => ({
+      ...group,
+      items: [...items.filter((item) => item.groupId === group.id), ...(group.source === 'PROGRAMS' ? programs : [])]
+        .sort((a, b) => Number(a.order || 0) - Number(b.order || 0)),
+    })).filter((group) => group.items.length > 0);
+  }
+
+  function homepage(state, actor = null) {
+    const contacts = published('contactChannels', state).filter((item) => String(item.value || '').trim() && item.status === 'PUBLISHED');
+    const programs = published('publicProgramProfiles', state).map((item) => ({
+      ...item,
+      saved: actor?.role === 'VISITOR' && (actor.savedProgramIds || []).includes(item.programId),
+    }));
+    return {
+      site: published('siteSettings', state)[0] || null,
+      hero: published('heroBanners', state).find((item) => item.placement === 'HOME') || null,
+      programs,
+      branches: published('publicBranchProfiles', state),
+      teachers: published('publicTeacherProfiles', state).filter((item) => item.publicOptIn === true),
+      categories: published('articleCategories', state),
+      articles: published('articles', state),
+      events: published('publicEvents', state),
+      contacts,
+      navigation: publicNavigation(state),
+      accountState: actor?.role === 'VISITOR' ? 'VISITOR' : actor ? 'LEARNER_OR_STAFF' : 'ANONYMOUS',
+    };
+  }
+
+  root.YC.define('publicContent', Object.freeze({ COLLECTIONS, homepage, publicNavigation, published }));
 })(globalThis);
 
 /* 06-remedial.js */
