@@ -6,7 +6,7 @@
   function createSeed(clock = () => new Date()) {
     const at = (days, hour = 9, minute = 0) => dateAt(clock, days, hour, minute);
     const learners = [
-      { id: 'student-canonical', code: 'HS6A001', name: 'Nguyễn Minh Anh', birthDate: '2013-04-18', status: 'PROSPECT', classId: null, branchId: 'branch-q3', goal: 'Giao tiếp tự tin và củng cố nền tảng A2' },
+      { id: 'student-canonical', code: 'HS6A001', name: 'Nguyễn Minh Anh', birthDate: '2013-04-18', status: 'ACTIVE', classId: 'class-6a', branchId: 'branch-q3', goal: 'Giao tiếp tự tin và củng cố nền tảng A2' },
       { id: 'student-02', code: 'HS6A002', name: 'Trần Gia Bảo', birthDate: '2013-07-09', status: 'ACTIVE', classId: 'class-6a', branchId: 'branch-q3', goal: 'Củng cố ngữ pháp' },
       { id: 'student-03', code: 'HS6A003', name: 'Lê Khánh Linh', birthDate: '2013-02-12', status: 'ACTIVE', classId: 'class-6a', branchId: 'branch-q3', goal: 'Phát triển kỹ năng nói' },
       { id: 'student-04', code: 'HS7B001', name: 'Phạm Đức Huy', birthDate: '2012-05-21', status: 'ACTIVE', classId: 'class-7b', branchId: 'branch-td', goal: 'Chuẩn bị B1' },
