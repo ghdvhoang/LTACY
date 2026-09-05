@@ -12,6 +12,7 @@
     TA: '/app/teacher/dashboard',
     STUDENT: '/app/student/dashboard',
     PARENT: '/app/parent/dashboard',
+    VISITOR: '/tai-khoan',
   });
 
   function byId(state, collection, id) {

@@ -28,12 +28,11 @@ def verify_static() -> dict[str, object]:
     css = (SOURCE / "styles.css").read_text(encoding="utf-8")
 
     module_files = sorted(MODULES.glob("*.js"))
-    require(len(module_files) == 16, f"Expected 16 runtime modules, found {len(module_files)}")
+    require(len(module_files) == 15, f"Expected 15 runtime modules, found {len(module_files)}")
     require([item.name for item in module_files] == [f"{index:02d}-{name}" for index, name in enumerate([
         "namespace.js", "utils.js", "seed.js", "store.js", "policy.js", "commands.js", "selectors.js",
         "ui-kit.js", "public-views.js", "learning-views.js", "operations-views.js", "management-views.js",
-        "demo-guide.js", "router.js", "actions.js", "bootstrap.js",
-    ])], "Runtime modules are missing or out of order")
+    ])] + ["13-router.js", "14-actions.js", "15-bootstrap.js"], "Runtime modules are missing or out of order")
     require(bundle == versioned_bundle, "app.js and app.v3.js differ")
     require(standalone == source_standalone, "Standalone artifacts differ")
     require("./styles.css" in index and "./app.js" in index, "Source index must load split assets")
@@ -41,11 +40,11 @@ def verify_static() -> dict[str, object]:
     require(not re.search(r'<link[^>]+href=["\']\./styles\.css', standalone), "Standalone links external CSS")
     require(not re.search(r'<script[^>]+src=["\']\./app\.js', standalone), "Standalone links external JavaScript")
     for token in [
-        "schemaVersion: 3", "canonical-run-all", "load-checkpoint", "export-csv", "print-view",
+        "schemaVersion: 3", "REGISTER_VISITOR", "register-visitor", "/dang-ky", "/tai-khoan", "export-csv", "print-view",
         "LEAD_CONTACTED", "PARENT_PROGRESS_VIEWED", "RENEWAL_ACCEPTED", "Không có quyền vào khu vực này",
     ]:
         require(token in bundle, f"Runtime token missing: {token}")
-    for token in ["checkpoint-bar", "course-player-layout", "role-switcher", "@media print"]:
+    for token in ["visitor-account", "course-player-layout", "role-switcher", "@media print"]:
         require(token in css, f"CSS token missing: {token}")
     require("Version: 3.0.0" in (PROJECT_ROOT / "VERSION.txt").read_text(encoding="utf-8"), "Release version is not 3.0.0")
     require((PROJECT_ROOT / "docs" / "HANDBOOK-COVERAGE-v1.1.md").exists(), "Handbook coverage matrix missing")

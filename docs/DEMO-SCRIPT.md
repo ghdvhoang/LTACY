@@ -2,7 +2,16 @@
 
 ## Chuẩn bị
 
-Mở `#/demo-guide`, bấm **Đặt lại demo** rồi chọn **Bắt đầu demo chính**. Không nhập dữ liệu thật. Nguyễn Minh Anh (`HS6A001`) là hồ sơ duy nhất được theo xuyên các tài khoản.
+Mở `#/` để bắt đầu từ trang chủ. Không nhập dữ liệu thật; toàn bộ trạng thái chỉ được lưu cục bộ trong trình duyệt.
+
+## Luồng khách — 4 bước
+
+1. Khi chưa đăng nhập, mở **Chương trình**, **Lịch khai giảng** và gửi một yêu cầu tư vấn.
+2. Chọn **Đăng ký**, tạo tài khoản khách và kiểm tra hệ thống tự mở **Tài khoản của tôi**.
+3. Lưu một chương trình, đăng ký một sự kiện và gửi thêm một yêu cầu tư vấn.
+4. Quay lại **Tài khoản của tôi** để kiểm tra chương trình đã lưu, sự kiện, yêu cầu tư vấn và thông báo.
+
+Kết quả mong đợi: khách chưa đăng nhập chỉ có trải nghiệm công khai; khách đã đăng nhập có khu cá nhân nhưng không nhìn thấy Course, điểm danh hay tiến độ của Học viên.
 
 ## Luồng chính — 3 bước
 
@@ -40,9 +49,7 @@ Kết quả mong đợi: trạng thái, kết quả, sự kiện và nhật ký 
 
 Các màn hình trên cùng đọc một dữ liệu chương trình. Phiên bản đã công bố là bất biến; thao tác tạo nội dung sinh bản nháp riêng.
 
-## Luồng nâng cao — 12 chặng
-
-Mở phần **Hành trình đầy đủ** trong Hướng dẫn demo khi cần trình bày từ khách hàng tiềm năng đến gia hạn. Có thể chạy từng checkpoint hoặc chạy tự động đến cuối.
+## Phạm vi nghiệp vụ đầy đủ
 
 Chuỗi đầy đủ gồm: tư vấn → đầu vào → thanh toán → xếp lớp → phân công giáo viên → giảng dạy → điểm danh/học bù → bài tập → đánh giá/kiểm duyệt → báo cáo/lên lớp → phụ huynh xác nhận → gia hạn.
 

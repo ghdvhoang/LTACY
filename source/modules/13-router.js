@@ -18,7 +18,7 @@
   });
 
   const ROLE_LABELS = Object.freeze({
-    ADMISSIONS: 'Tuyển sinh', FINANCE: 'Tài chính', ACADEMIC_MANAGER: 'Quản lý học thuật', STUDENT_SERVICE: 'Dịch vụ học viên', TEACHER: 'Giáo viên', TA: 'Trợ giảng', STUDENT: 'Học viên', PARENT: 'Phụ huynh', CENTER_MANAGER: 'Quản lý trung tâm', ADMIN: 'Quản trị viên',
+    ADMISSIONS: 'Tuyển sinh', FINANCE: 'Tài chính', ACADEMIC_MANAGER: 'Quản lý học thuật', STUDENT_SERVICE: 'Dịch vụ học viên', TEACHER: 'Giáo viên', TA: 'Trợ giảng', STUDENT: 'Học viên', PARENT: 'Phụ huynh', CENTER_MANAGER: 'Quản lý trung tâm', ADMIN: 'Quản trị viên', VISITOR: 'Khách hàng',
   });
 
   function normalize(path) {
@@ -28,13 +28,12 @@
 
   function render(path, ctx) {
     const clean = normalize(path);
-    if (clean === '/demo-guide') return root.YC.demoGuide.render({ ...ctx, path: clean });
     const renderers = [root.YC.publicViews, root.YC.learningViews, root.YC.operationsViews, root.YC.managementViews];
     for (const renderer of renderers) {
       const html = renderer.render(clean, { ...ctx, path: clean });
       if (html) return html;
     }
-    return `<main id="main-content" class="not-found"><div class="not-found-code">404</div><p class="eyebrow">Đường dẫn không tồn tại</p><h1>Không tìm thấy trang</h1><p>Đường dẫn <code>${escapeHtml(clean)}</code> không thuộc bản demo. Bạn có thể quay về trang chủ hoặc mở hành trình có hướng dẫn.</p><div class="inline"><a class="btn btn-primary" href="#/">Về trang chủ</a><a class="btn btn-secondary" href="#/demo-guide">Mở hướng dẫn demo</a></div></main>`;
+    return `<main id="main-content" class="not-found"><div class="not-found-code">404</div><p class="eyebrow">Đường dẫn không tồn tại</p><h1>Không tìm thấy trang</h1><p>Đường dẫn <code>${escapeHtml(clean)}</code> không tồn tại. Bạn có thể quay về trang chủ hoặc khám phá các chương trình đang mở.</p><div class="inline"><a class="btn btn-primary" href="#/">Về trang chủ</a><a class="btn btn-secondary" href="#/chuong-trinh">Xem chương trình</a></div></main>`;
   }
 
   function brand(light = false) {
@@ -42,12 +41,20 @@
   }
 
   function publicHeader(ctx) {
-    const actorLink = ctx.actor ? root.YC.selectors.roleHome(ctx.actor.role) : '/login';
-    return `<header class="public-header"><div class="container">${brand()}<nav aria-label="Điều hướng chính"><a href="#/chuong-trinh">Chương trình</a><a href="#/lich-hoc">Lịch khai giảng</a><a href="#/phu-huynh-hoc-sinh">Phụ huynh & học viên</a><a href="#/giai-phap-trung-tam">Giải pháp trung tâm</a></nav><div class="public-actions"><a class="header-search" href="#/chuong-trinh" aria-label="Tìm kiếm">${icon('search')}</a><a class="btn btn-ghost" href="#${actorLink}">${ctx.actor ? 'Khu vực làm việc' : 'Đăng nhập'}</a><a class="btn btn-primary" href="#/demo-guide">Hướng dẫn demo</a></div><button class="mobile-menu" type="button" data-action="toggle-mobile-nav" aria-label="Mở menu">☰</button></div></header>`;
+    let accountActions = '<a class="btn btn-secondary auth-action" href="#/login">Đăng nhập</a><a class="btn btn-primary auth-action" href="#/dang-ky">Đăng ký</a>';
+    if (ctx.actor?.role === 'VISITOR') accountActions = '<a class="btn btn-secondary auth-action" href="#/tai-khoan">Tài khoản của tôi</a><button class="btn btn-ghost auth-action" type="button" data-action="logout">Đăng xuất</button>';
+    else if (ctx.actor) {
+      const label = ['STUDENT', 'PARENT'].includes(ctx.actor.role) ? 'Khu vực học tập' : 'Khu vực làm việc';
+      accountActions = `<a class="btn btn-primary auth-action" href="#${root.YC.selectors.roleHome(ctx.actor.role)}">${label}</a>`;
+    }
+    return `<header class="public-header"><div class="container">${brand()}<nav aria-label="Điều hướng chính"><a href="#/chuong-trinh">Chương trình</a><a href="#/lich-hoc">Lịch khai giảng</a><a href="#/phu-huynh-hoc-sinh">Phụ huynh & học viên</a><a href="#/giai-phap-trung-tam">Giải pháp trung tâm</a></nav><div class="public-actions"><a class="header-search" href="#/chuong-trinh" aria-label="Tìm kiếm">${icon('search')}</a>${accountActions}</div><button class="mobile-menu" type="button" data-action="toggle-mobile-nav" aria-label="Mở menu">☰</button></div></header>`;
   }
 
-  function publicFooter() {
-    return `<footer class="public-footer"><div class="container"><div>${brand(true)}<p>Hành trình ngoại ngữ dựa trên bằng chứng.</p><small>Bản minh họa giao diện · Dữ liệu và tích hợp đều là mô phỏng.</small></div><div><strong>Khám phá</strong><a href="#/chuong-trinh">Chương trình</a><a href="#/lich-hoc">Lịch học</a><a href="#/demo-guide">Hành trình đầy đủ</a></div><div><strong>Cổng học tập</strong><a href="#/login">Học viên</a><a href="#/login">Phụ huynh</a><a href="#/login">Nhân sự</a></div><div><strong>Thông tin</strong><a href="#/giai-phap-trung-tam">Mô hình vận hành</a><a href="#/lien-he">Liên hệ</a><span>© 2026 Yen Center Demo</span></div></div></footer>`;
+  function publicFooter(ctx) {
+    let accountLinks = '<a href="#/login">Đăng nhập</a><a href="#/dang-ky">Đăng ký</a>';
+    if (ctx.actor?.role === 'VISITOR') accountLinks = '<a href="#/tai-khoan">Tài khoản của tôi</a><button class="footer-action" type="button" data-action="logout">Đăng xuất</button>';
+    else if (ctx.actor) accountLinks = `<a href="#${root.YC.selectors.roleHome(ctx.actor.role)}">${['STUDENT', 'PARENT'].includes(ctx.actor.role) ? 'Khu vực học tập' : 'Khu vực làm việc'}</a>`;
+    return `<footer class="public-footer"><div class="container"><div>${brand(true)}<p>Hành trình ngoại ngữ dựa trên bằng chứng.</p><small>Bản minh họa giao diện · Dữ liệu và tích hợp đều là mô phỏng.</small></div><div><strong>Khám phá</strong><a href="#/chuong-trinh">Chương trình</a><a href="#/lich-hoc">Lịch học</a><a href="#/su-kien">Sự kiện</a></div><div><strong>Tài khoản</strong>${accountLinks}</div><div><strong>Thông tin</strong><a href="#/giai-phap-trung-tam">Mô hình vận hành</a><a href="#/lien-he">Liên hệ</a><span>© 2026 Yen Center</span></div></div></footer>`;
   }
 
   function notifications(ctx) {
@@ -58,12 +65,12 @@
 
   function appShell(content, path, ctx) {
     const actor = ctx.actor;
-    if (!actor) return `<main class="auth-required">${brand()}<h1>Cần chọn vai trò demo</h1><p>Chọn tài khoản để vào đúng khu vực và phạm vi làm việc.</p><a class="btn btn-primary" href="#/login">Chọn vai trò</a></main>`;
+    if (!actor) return `<main class="auth-required">${brand()}<h1>Cần đăng nhập</h1><p>Đăng nhập để vào đúng khu vực và phạm vi làm việc.</p><a class="btn btn-primary" href="#/login">Đăng nhập</a></main>`;
     const nav = NAV[actor.role] || NAV.ADMIN;
     const unread = ctx.state.notifications.filter((item) => item.userId === actor.id && !item.read).length;
     const initials = actor.name.split(' ').slice(-2).map((part) => part[0]).join('').toUpperCase();
-    return `<div class="app-shell" data-role="${escapeHtml(actor.role)}"><aside class="app-sidebar">${brand(true)}<div class="workspace-label"><span>${escapeHtml(ROLE_LABELS[actor.role] || actor.role)}</span><small>Yen Center · Demo</small></div><nav aria-label="Điều hướng khu vực làm việc">${nav.map(([label, href, iconName]) => `<a class="${path === href || (href.endsWith('/sessions') && path.startsWith(`${href}/`)) ? 'active' : ''}" href="#${href}">${icon(iconName)}<span>${escapeHtml(label)}</span></a>`).join('')}</nav><div class="sidebar-guide"><span>${icon('spark')}</span><p><strong>Hành trình đầy đủ</strong><small>Khách hàng → Gia hạn</small></p><a href="#/demo-guide">Mở hướng dẫn</a></div><button class="sidebar-collapse" type="button" data-action="toggle-sidebar">‹ <span>Thu gọn</span></button></aside>
-      <div class="app-main"><header class="app-topbar"><button class="mobile-menu dark-menu" type="button" data-action="toggle-sidebar" aria-label="Mở thanh điều hướng">☰</button><div class="context-crumb"><span>Yen Center</span><b>/</b><strong>${escapeHtml(ROLE_LABELS[actor.role] || actor.role)}</strong></div><div class="topbar-search">${icon('search')}<input type="search" placeholder="Tìm học viên, lớp, hồ sơ…" aria-label="Tìm trong khu vực làm việc"></div><div class="topbar-actions">${notifications(ctx)}<a class="topbar-guide" href="#/demo-guide">${icon('spark')} Hướng dẫn</a><button type="button" class="user-menu" data-action="open-role-switcher"><span class="avatar">${escapeHtml(initials)}</span><span><strong>${escapeHtml(actor.name)}</strong><small>${escapeHtml(ROLE_LABELS[actor.role] || actor.role)}</small></span><span>⌄</span></button></div></header><main id="main-content" class="app-content">${content}</main></div>
+    return `<div class="app-shell" data-role="${escapeHtml(actor.role)}"><aside class="app-sidebar">${brand(true)}<div class="workspace-label"><span>${escapeHtml(ROLE_LABELS[actor.role] || actor.role)}</span><small>Yen Center</small></div><nav aria-label="Điều hướng khu vực làm việc">${nav.map(([label, href, iconName]) => `<a class="${path === href || (href.endsWith('/sessions') && path.startsWith(`${href}/`)) ? 'active' : ''}" href="#${href}">${icon(iconName)}<span>${escapeHtml(label)}</span></a>`).join('')}</nav><button class="sidebar-collapse" type="button" data-action="toggle-sidebar">‹ <span>Thu gọn</span></button></aside>
+      <div class="app-main"><header class="app-topbar"><button class="mobile-menu dark-menu" type="button" data-action="toggle-sidebar" aria-label="Mở thanh điều hướng">☰</button><div class="context-crumb"><span>Yen Center</span><b>/</b><strong>${escapeHtml(ROLE_LABELS[actor.role] || actor.role)}</strong></div><div class="topbar-search">${icon('search')}<input type="search" placeholder="Tìm học viên, lớp, hồ sơ…" aria-label="Tìm trong khu vực làm việc"></div><div class="topbar-actions">${notifications(ctx)}<button type="button" class="user-menu" data-action="open-role-switcher"><span class="avatar">${escapeHtml(initials)}</span><span><strong>${escapeHtml(actor.name)}</strong><small>${escapeHtml(ROLE_LABELS[actor.role] || actor.role)}</small></span><span>⌄</span></button></div></header><main id="main-content" class="app-content">${content}</main></div>
       <div class="role-switcher" data-role-switcher hidden><div class="role-switcher-backdrop" data-action="close-role-switcher"></div><section><div class="panel-heading"><div><h2>Chuyển tài khoản</h2><p>Truy cập nhanh bốn tài khoản chính của bản demo.</p></div><button class="icon-btn" data-action="close-role-switcher">×</button></div>${ctx.state.users.filter((user) => ['teacher-1', 'ta-1', 'student-login-1', 'admin-1'].includes(user.id)).map((user) => `<button type="button" class="role-option ${user.id === actor.id ? 'active' : ''}" data-action="login" data-actor-id="${escapeHtml(user.id)}"><span class="avatar">${escapeHtml(user.name.split(' ').slice(-2).map((part) => part[0]).join(''))}</span><span><strong>${escapeHtml(user.name)}</strong><small>${escapeHtml(ROLE_LABELS[user.role] || user.role)}</small></span>${user.id === actor.id ? '✓' : icon('arrow')}</button>`).join('')}<a class="text-link" href="#/login">Về trang đăng nhập</a><button type="button" class="text-link logout-link" data-action="logout">Đăng xuất</button></section></div>
       <div class="notification-drawer" data-notification-drawer hidden><div class="role-switcher-backdrop" data-action="close-notifications"></div><section><div class="panel-heading"><div><h2>Thông báo</h2><p>${unread} chưa đọc</p></div><button class="icon-btn" data-action="close-notifications">×</button></div>${ctx.state.notifications.filter((item) => item.userId === actor.id).slice(0, 8).map((item) => `<a href="#${escapeHtml(item.link || path)}" class="notification-item ${item.read ? '' : 'unread'}"><span>${icon('spark')}</span><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.body)}</p><small>${escapeHtml(item.createdAt)}</small></div></a>`).join('') || '<p class="muted">Chưa có thông báo.</p>'}</section></div></div>`;
   }
@@ -87,12 +94,13 @@
     if (clean.startsWith('/app/')) {
       if (!ctx.actor) return appShell('', clean, ctx);
       const allowed = allowedWorkspaceRoles(clean);
+      if (ctx.actor.role === 'VISITOR') return `<div class="public-page">${publicHeader(ctx)}${accessDenied(clean, ctx.actor)}${publicFooter(ctx)}</div>`;
       if (allowed.length && !allowed.includes(ctx.actor.role)) return appShell(accessDenied(clean, ctx.actor), clean, ctx);
       return appShell(render(clean, ctx), clean, ctx);
     }
     const content = render(clean, ctx);
-    if (clean === '/login') return content;
-    return `<div class="public-page">${publicHeader(ctx)}${content}${publicFooter()}</div>`;
+    if (['/login', '/dang-ky', '/forgot-password', '/verify-otp', '/select-profile'].includes(clean)) return content;
+    return `<div class="public-page">${publicHeader(ctx)}${content}${publicFooter(ctx)}</div>`;
   }
 
   root.YC.define('router', Object.freeze({ NAV, ROLE_LABELS, frame, normalize, render }));

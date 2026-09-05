@@ -4,8 +4,8 @@
   const { badge, button, empty, icon, link, metric, money, pageHeader, person, progress, section, table, valueLabel } = root.YC.ui;
   const { escapeHtml, formatDate } = root.YC.utils;
 
-  function canonicalAction(label = 'Chạy bước canonical') {
-    return button(label, 'canonical-next', { icon: 'arrow' });
+  function canonicalAction() {
+    return '';
   }
 
   function admissionsDashboard(ctx) {
@@ -121,7 +121,7 @@
     const profile = ctx.state.teacherProfiles.find((item) => item.userId === ctx.actor?.id) || ctx.state.teacherProfiles[0];
     const classIds = ctx.state.teacherAssignments.filter((item) => item.teacherProfileId === profile.id && ['PROPOSED', 'ACTIVE'].includes(item.status)).map((item) => item.classId);
     const cohorts = ctx.state.classes.filter((item) => classIds.includes(item.id));
-    return `<div class="workspace-page">${pageHeader('Giáo viên · Lớp học', 'Lớp của tôi', 'Danh sách học viên, lịch học, nội dung và điểm danh dùng cùng dữ liệu phân công.')}${section('Danh sách lớp', table([{ label: 'Lớp', render: (row) => `<a class="table-link" href="#/app/teacher/classes/${row.id}"><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.code)}</small></a>` }, { label: 'Lịch học', key: 'scheduleLabel' }, { label: 'Phòng', key: 'room' }, { label: 'Học viên', render: (row) => ctx.state.enrollments.filter((item) => item.classId === row.id && item.status === 'ACTIVE').length }, { label: 'Trạng thái', render: (row) => badge(row.status) }], cohorts, { emptyTitle: 'Chưa có lớp được phân công', emptyBody: 'Mở Hướng dẫn demo để chuẩn bị ca học mẫu cho giáo viên.' }))}</div>`;
+    return `<div class="workspace-page">${pageHeader('Giáo viên · Lớp học', 'Lớp của tôi', 'Danh sách học viên, lịch học, nội dung và điểm danh dùng cùng dữ liệu phân công.')}${section('Danh sách lớp', table([{ label: 'Lớp', render: (row) => `<a class="table-link" href="#/app/teacher/classes/${row.id}"><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.code)}</small></a>` }, { label: 'Lịch học', key: 'scheduleLabel' }, { label: 'Phòng', key: 'room' }, { label: 'Học viên', render: (row) => ctx.state.enrollments.filter((item) => item.classId === row.id && item.status === 'ACTIVE').length }, { label: 'Trạng thái', render: (row) => badge(row.status) }], cohorts, { emptyTitle: 'Chưa có lớp được phân công', emptyBody: 'Lớp sẽ xuất hiện khi giáo viên có phân công đang hiệu lực.' }))}</div>`;
   }
 
   function teacherClassDetail(ctx, classId) {

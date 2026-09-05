@@ -36,7 +36,7 @@ Package là frontend working demonstrator, không phải full-stack MVP.
 2. Public, learner, parent và mọi staff workspace render được.
 3. Direct-route mismatch bị chặn theo role demo.
 4. Canonical journey chạy được từ lead đến renewal.
-5. 12 checkpoint có thể tải lại an toàn.
+5. Khách đăng ký cục bộ có thể lưu chương trình, sự kiện và yêu cầu tư vấn trong một tài khoản.
 6. Domain command thất bại không để lại partial state.
 7. Event, audit, notification và evidence nối đúng handoff.
 8. CSV audit và browser print hoạt động.

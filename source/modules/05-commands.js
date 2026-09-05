@@ -73,7 +73,7 @@
 
     const handlers = {
       CREATE_PUBLIC_LEAD(draft, payload, context) {
-        requireRole(context.actor, ['PUBLIC']);
+        requireRole(context.actor, ['PUBLIC', 'VISITOR']);
         const type = String(payload.type || 'B2C').toUpperCase();
         if (!['B2C', 'B2B', 'SUPPORT'].includes(type)) throw new CommandError('INVALID_LEAD_TYPE', 'Loại yêu cầu không hợp lệ.');
         const name = String(payload.name || '').trim();
@@ -86,13 +86,17 @@
           id: uid('lead'), code: `YC-${type}-${String(count).padStart(4, '0')}`, type, name,
           studentName: String(payload.studentName || '').trim(), organization: String(payload.organization || '').trim(),
           phone, email, message, goal: String(payload.goal || message).trim(), availability: [],
-          branchId: payload.branchId || 'branch-q3', learnerId: null, status: 'NEW', ownerId: 'admissions-1', createdAt: nowIso(),
+          branchId: payload.branchId || 'branch-q3', learnerId: null, visitorUserId: context.actor.role === 'VISITOR' ? context.actor.id : null,
+          status: 'NEW', ownerId: 'admissions-1', createdAt: nowIso(),
         };
         draft.leads.unshift(lead);
         draft.outboundMessages.unshift({ id: uid('outbound'), channel: 'IN_APP', recipient: email || phone, template: type === 'SUPPORT' ? 'SUPPORT_ACKNOWLEDGED' : 'CONTACT_ACKNOWLEDGED', status: 'MOCKED', createdAt: nowIso() });
         appendEvent(draft, context, 'PUBLIC_REQUEST_CREATED', 'LEAD', lead.id, `${lead.code} · ${lead.name}.`);
         appendAudit(draft, context, 'PUBLIC_REQUEST_CREATED', 'LEAD', lead.id, `${type} · ${message}`);
         notifyRole(draft, 'ADMISSIONS', 'Có yêu cầu mới', `${lead.code} · ${lead.name}.`, '/app/admissions/leads');
+        if (context.actor.role === 'VISITOR') {
+          draft.notifications.unshift({ id: uid('notification'), userId: context.actor.id, title: 'Đã tiếp nhận yêu cầu', body: `${lead.code} · Trung tâm sẽ liên hệ với bạn.`, link: '/tai-khoan', read: false, createdAt: nowIso() });
+        }
         return { message: `Đã tiếp nhận yêu cầu ${lead.code}.`, code: lead.code, leadId: lead.id };
       },
 
@@ -161,6 +165,51 @@
         appendEvent(draft, context, 'DEMO_SETTINGS_UPDATED', 'SETTINGS', draft.settings.organizationId, 'Đã cập nhật quy tắc học tập của bản demo.');
         appendAudit(draft, context, 'DEMO_SETTINGS_UPDATED', 'SETTINGS', draft.settings.organizationId, Object.entries(next).map(([key, value]) => `${key}=${value}`).join(' · '));
         return { message: 'Đã lưu thiết lập demo.' };
+      },
+
+      REGISTER_VISITOR(draft, payload, context) {
+        requireRole(context.actor, ['PUBLIC']);
+        const name = String(payload.name || '').trim();
+        const email = String(payload.email || '').trim().toLowerCase();
+        const phone = String(payload.phone || '').replace(/\s+/g, '');
+        const secret = String(payload.secret || '');
+        if (!name || !email || !phone || !secret) throw new CommandError('REGISTRATION_REQUIRED', 'Cần nhập đầy đủ họ tên, email, số điện thoại và mật khẩu.');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new CommandError('INVALID_EMAIL', 'Email không hợp lệ.');
+        if (secret.length < 6) throw new CommandError('WEAK_SECRET', 'Mật khẩu cần có ít nhất 6 ký tự.');
+        const identifiers = [email, phone];
+        const duplicate = draft.users.some((user) => (user.identifiers || []).some((value) => identifiers.includes(String(value).toLowerCase())));
+        if (duplicate) throw new CommandError('IDENTIFIER_EXISTS', 'Email hoặc số điện thoại đã được sử dụng.');
+        const visitor = {
+          id: uid('visitor'), role: 'VISITOR', name, identifiers, secret, status: 'ACTIVE', branchIds: [],
+          savedProgramIds: [], registeredEventIds: [], createdAt: nowIso(),
+        };
+        draft.users.push(visitor);
+        draft.notifications.unshift({ id: uid('notification'), userId: visitor.id, title: 'Chào mừng đến Yen Center', body: 'Bạn có thể lưu chương trình, đăng ký sự kiện và theo dõi yêu cầu tư vấn tại đây.', link: '/tai-khoan', read: false, createdAt: nowIso() });
+        appendEvent(draft, context, 'VISITOR_REGISTERED', 'USER', visitor.id, `${visitor.name} đã tạo tài khoản khách.`);
+        appendAudit(draft, context, 'VISITOR_REGISTERED', 'USER', visitor.id, 'Tài khoản được tạo trong bộ nhớ trình duyệt.');
+        return { message: 'Đăng ký tài khoản thành công.', actorId: visitor.id };
+      },
+
+      TOGGLE_PROGRAM_INTEREST(draft, payload, context) {
+        requireRole(context.actor, ['VISITOR']);
+        const program = required(draft.programs.find((item) => item.id === payload.programId && item.status === 'PUBLISHED'), 'PROGRAM_NOT_FOUND', 'Không tìm thấy chương trình.');
+        context.actor.savedProgramIds ||= [];
+        const index = context.actor.savedProgramIds.indexOf(program.id);
+        const saved = index === -1;
+        if (saved) context.actor.savedProgramIds.push(program.id);
+        else context.actor.savedProgramIds.splice(index, 1);
+        appendEvent(draft, context, saved ? 'PROGRAM_INTEREST_SAVED' : 'PROGRAM_INTEREST_REMOVED', 'PROGRAM', program.id, `${context.actor.name} · ${program.name}.`);
+        return { message: saved ? 'Đã lưu chương trình quan tâm.' : 'Đã bỏ lưu chương trình.', saved };
+      },
+
+      REGISTER_PUBLIC_EVENT(draft, payload, context) {
+        requireRole(context.actor, ['VISITOR']);
+        const event = required(draft.publicContent.events.find((item) => item.id === payload.eventId && item.status === 'PUBLISHED'), 'EVENT_NOT_FOUND', 'Không tìm thấy sự kiện.');
+        context.actor.registeredEventIds ||= [];
+        if (!context.actor.registeredEventIds.includes(event.id)) context.actor.registeredEventIds.push(event.id);
+        draft.notifications.unshift({ id: uid('notification'), userId: context.actor.id, title: 'Đăng ký sự kiện thành công', body: event.title, link: '/tai-khoan', read: false, createdAt: nowIso() });
+        appendEvent(draft, context, 'PUBLIC_EVENT_REGISTERED', 'EVENT', event.id, `${context.actor.name} · ${event.title}.`);
+        return { message: 'Đã đăng ký sự kiện.', eventId: event.id };
       },
 
       CONTACT_LEAD(draft, payload, context) {

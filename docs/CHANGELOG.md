@@ -8,6 +8,9 @@
 - Bổ sung điểm danh thủ công, học bù, trình phát video, bài kiểm tra 10 câu, kết quả và vòng đời liên kết.
 - Chuyển giao diện sang tiếng Việt, rút luồng demo chính còn ba bước và giữ hành trình 12 chặng trong phần nâng cao.
 - Bổ sung biểu mẫu quản trị cấu hình, tìm kiếm trong trang và sao chép liên kết khi chạy bằng `file://`.
+- Bỏ trang hướng dẫn và các nút chạy luồng tự động khỏi sản phẩm.
+- Thêm đăng ký tài khoản khách, khu **Tài khoản của tôi**, lưu chương trình, đăng ký sự kiện và theo dõi yêu cầu tư vấn.
+- Làm rõ **Đăng nhập** và **Đăng ký** trên trang chủ ở cả desktop lẫn mobile.
 
 ## v3.0.0 — Full Journey Frontend Demo (2026-09-05)
 

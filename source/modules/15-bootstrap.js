@@ -132,7 +132,7 @@
         }, 500);
         return;
       }
-      const data = { ...payloadFrom(trigger), actorId: trigger.dataset.actorId, learnerId: trigger.dataset.learnerId, sessionId: trigger.dataset.sessionId, assignmentId: trigger.dataset.assignmentId, documentId: trigger.dataset.documentId, status: trigger.dataset.status, progress: trigger.dataset.progress };
+      const data = { ...payloadFrom(trigger), actorId: trigger.dataset.actorId, learnerId: trigger.dataset.learnerId, sessionId: trigger.dataset.sessionId, assignmentId: trigger.dataset.assignmentId, documentId: trigger.dataset.documentId, programId: trigger.dataset.programId, eventId: trigger.dataset.eventId, status: trigger.dataset.status, progress: trigger.dataset.progress };
       if (action === 'revoke-remedial-link') {
         if (root.confirm && !root.confirm('Thu hồi liên kết học bù này? Học viên sẽ không thể mở liên kết hiện tại.')) return;
         data.reason = 'Giáo viên xác nhận thu hồi từ màn quản lý.';
@@ -160,6 +160,7 @@
       let action = '';
       let data = {};
       if (form.dataset.form === 'login') { action = 'credential-login'; data = { identifier: values.get('identifier'), secret: values.get('secret') }; }
+      if (form.dataset.form === 'register-visitor') { action = 'register-visitor'; data = { name: values.get('name'), email: values.get('email'), phone: values.get('phone'), secret: values.get('secret') }; }
       if (form.dataset.form === 'forgot') { action = 'request-otp'; data = { identifier: values.get('identifier') }; }
       if (form.dataset.form === 'otp') { action = 'verify-otp'; data = { otp: values.get('otp') }; }
       if (form.dataset.form === 'quiz') { action = 'submit-quiz'; data = { assignmentId: form.dataset.assignmentId, answers: Array.from(form.querySelectorAll('.question-card'), (_card, index) => { const selected = form.querySelector(`input[name="answer-${index}"]:checked`); return selected ? Number(selected.value) : null; }) }; }

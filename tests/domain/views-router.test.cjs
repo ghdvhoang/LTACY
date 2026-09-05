@@ -15,7 +15,7 @@ function context(YC, role, path) {
 test('router resolves every documented route to meaningful content', () => {
   const YC = loadYC(['seed', 'router']);
   const paths = [
-    '/', '/chuong-trinh', '/chuong-trinh/program-foundation', '/lich-hoc', '/phu-huynh-hoc-sinh', '/giai-phap-trung-tam', '/lien-he', '/login', '/demo-guide',
+    '/', '/chuong-trinh', '/chuong-trinh/program-foundation', '/lich-hoc', '/phu-huynh-hoc-sinh', '/giai-phap-trung-tam', '/lien-he', '/login', '/dang-ky', '/tai-khoan',
     '/app/admissions/dashboard', '/app/admissions/leads', '/app/admissions/leads/lead-canonical', '/app/admissions/placement', '/app/admissions/offers', '/app/admissions/renewals',
     '/app/finance/dashboard', '/app/finance/invoices', '/app/finance/payments',
     '/app/academic/dashboard', '/app/academic/curriculum', '/app/academic/teachers', '/app/academic/assignments', '/app/academic/moderation', '/app/academic/progress-reviews',

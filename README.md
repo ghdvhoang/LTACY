@@ -13,12 +13,12 @@ cd source
 python3 -m http.server 4173
 ```
 
-Sau đó mở `http://localhost:4173/#/demo-guide`.
+Sau đó mở `http://localhost:4173/#/`.
 
 ## Proof points chính
 
-- Luồng kiểm tra chính chỉ có 3 bước: Giáo viên điểm danh vắng → Học viên hoàn thành bài học bù → Quản trị viên kiểm tra bằng chứng.
-- Luồng đầy đủ 12 chặng vẫn có checkpoint độc lập và nút chạy tự động đến cuối trong phần nâng cao.
+- Trang chủ công khai có Đăng nhập và Đăng ký rõ ràng trên desktop lẫn mobile.
+- Khách có thể tạo tài khoản cục bộ, lưu chương trình, đăng ký sự kiện, gửi yêu cầu tư vấn và theo dõi tất cả trong **Tài khoản của tôi**.
 - Trang đăng nhập chỉ hiển thị 4 tài khoản nhanh: Giáo viên, Trợ giảng, Học viên và Quản trị viên; tất cả cùng dùng hồ sơ Nguyễn Minh Anh.
 - Course hoàn chỉnh xuyên bốn bề mặt: danh mục công khai, khu học của Học viên, Content Studio của Giáo viên và quản trị khóa học của Admin.
 - Trạng thái chuẩn hóa dùng chung cho các vai trò và hai chi nhánh; thao tác ở tài khoản Giáo viên xuất hiện ngay khi đăng nhập tài khoản Học viên.
@@ -32,7 +32,7 @@ Sau đó mở `http://localhost:4173/#/demo-guide`.
 
 ## Cấu trúc kỹ thuật
 
-- `source/modules/00-*.js` đến `15-*.js`: module nguồn, chạy không bundler.
+- `source/modules/00-*.js` đến `15-*.js`: module nguồn, chạy không bundler (không dùng số 12 sau khi bỏ trang hướng dẫn cũ).
 - `source/app.js` và `source/app.v3.js`: bundle được sinh tự động.
 - `OPEN-DEMO.html`: release standalone.
 - `scripts/build_standalone.py`: build/check artifact có tính lặp lại.

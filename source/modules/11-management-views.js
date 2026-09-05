@@ -4,8 +4,8 @@
   const { badge, button, icon, link, metric, money, pageHeader, person, progress, section, table, valueLabel } = root.YC.ui;
   const { escapeHtml, formatDate } = root.YC.utils;
 
-  function canonicalAction(label = 'Thực hiện bước học thuật') {
-    return button(label, 'canonical-next', { icon: 'arrow' });
+  function canonicalAction() {
+    return '';
   }
 
   function academicDashboard(ctx) {

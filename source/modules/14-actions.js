@@ -29,7 +29,6 @@
   }
 
   function create({ store, bus, storage, location, onChange = () => {}, onToast = () => {}, onDownload = () => {}, onPrint = () => {}, onCopy = () => {} }) {
-    const checkpointCache = new Map();
     const attendanceDrafts = new Map();
 
     function state() {
@@ -49,103 +48,24 @@
       return { ok: true, actorId: actor.id, needsProfile };
     }
 
-    function runCommands(commands) {
-      const completed = [];
-      for (const item of commands) {
-        const result = bus.dispatch(item.name, item.payload, item.actorId);
-        if (!result.ok) {
-          onToast(result.message, 'error');
-          onChange();
-          return { ...result, completed };
-        }
-        completed.push({ name: item.name, result });
-      }
-      return { ok: true, completed };
-    }
-
     function getAttendanceDraft(sessionId) {
       return { ...(attendanceDrafts.get(sessionId) || {}) };
     }
 
-    function runCanonicalNext({ navigate = true } = {}) {
-      const step = root.YC.demoGuide.nextStep(state());
-      if (!step.commands.length) {
-        onToast('Hành trình canonical đã hoàn tất.', 'success');
-        onChange();
-        return { ok: true, done: true, message: 'Hành trình canonical đã hoàn tất.' };
-      }
-      const result = runCommands(step.commands);
-      if (!result.ok) return result;
-      persistActor(step.actorId);
-      if (navigate && location && !String(location.hash || '').includes('/demo-guide')) location.hash = `#${step.route}`;
-      onToast(`${step.label}: đã lưu bằng chứng.`, 'success');
-      onChange();
-      return { ok: true, message: `${step.label}: đã lưu bằng chứng.`, step, completed: result.completed };
-    }
-
-    function runCanonicalAll() {
-      const completed = [];
-      for (let index = 0; index < 32; index += 1) {
-        const step = root.YC.demoGuide.nextStep(state());
-        if (!step.commands.length) {
-          onToast('Hành trình mẫu đã hoàn tất từ tư vấn đến gia hạn.', 'success');
-          onChange();
-          return { ok: true, done: true, completed, message: 'Hành trình mẫu đã hoàn tất từ tư vấn đến gia hạn.' };
-        }
-        const result = runCommands(step.commands);
-        if (!result.ok) return result;
-        completed.push(...result.completed);
-        persistActor(step.actorId);
-      }
-      const result = { ok: false, code: 'DEMO_LOOP_GUARD', message: 'Demo dừng vì vượt quá số bước an toàn.' };
-      onToast(result.message, 'error');
-      return result;
-    }
-
-    function loadCheckpoint(checkpoint) {
-      const allowed = new Set(['LEAD', 'PLACEMENT', 'PAID', 'ENROLLED', 'TEACHER_ASSIGNED', 'SESSION_DELIVERED', 'REMEDIAL_ASSIGNED', 'REMEDIAL_COMPLETED', 'MODERATED', 'PROGRESS_PUBLISHED', 'PARENT_REVIEWED', 'RENEWED']);
-      if (!allowed.has(checkpoint)) return { ok: false, code: 'CHECKPOINT_NOT_FOUND', message: 'Checkpoint demo không hợp lệ.' };
-      if (checkpointCache.has(checkpoint)) {
-        store.replace(checkpointCache.get(checkpoint));
-        const cachedNext = root.YC.demoGuide.nextStep(state());
-        persistActor(cachedNext.actorId);
-        onToast(`Đã tải checkpoint ${checkpoint}.`, 'success');
-        onChange();
-        return { ok: true, checkpoint, cached: true };
-      }
-      store.reset();
-      for (let index = 0; index < 32 && root.YC.selectors.journey(state()).status !== checkpoint; index += 1) {
-        const step = root.YC.demoGuide.nextStep(state());
-        if (!step.commands.length) break;
-        const result = runCommands(step.commands);
-        if (!result.ok) return result;
-      }
-      if (root.YC.selectors.journey(state()).status !== checkpoint) return { ok: false, code: 'CHECKPOINT_UNREACHABLE', message: 'Không thể tạo checkpoint từ seed hiện tại.' };
-      checkpointCache.set(checkpoint, root.YC.utils.clone(state()));
-      const next = root.YC.demoGuide.nextStep(state());
-      persistActor(next.actorId);
-      onToast(`Đã tải checkpoint ${checkpoint}.`, 'success');
-      onChange();
-      return { ok: true, checkpoint };
-    }
-
     function execute(action, data = {}) {
-      if (action === 'canonical-next') return runCanonicalNext({ navigate: true });
-      if (action === 'canonical-run-all') return runCanonicalAll();
-      if (action === 'load-checkpoint') return loadCheckpoint(data.checkpoint);
-      if (action === 'prepare-core-demo') {
-        const result = loadCheckpoint('REMEDIAL_ASSIGNED');
-        if (!result.ok) return result;
-        persistActor('teacher-1');
-        if (location) location.hash = '#/app/teacher/sessions/session-canonical/attendance';
-        onToast('Ca học đã sẵn sàng. Hãy điểm danh Nguyễn Minh Anh vắng.', 'success');
-        onChange();
-        return { ...result, message: 'Đã chuẩn bị luồng điểm danh chính.' };
-      }
       if (action === 'login') {
         const actor = state().users.find((item) => item.id === data.actorId);
         if (!actor) return { ok: false, code: 'ACTOR_NOT_FOUND', message: 'Không tìm thấy vai trò demo.' };
         return loginActor(actor);
+      }
+      if (action === 'register-visitor') {
+        const result = bus.dispatch('REGISTER_VISITOR', data, 'public-1');
+        if (!result.ok) {
+          onToast(result.message, 'error');
+          return result;
+        }
+        const visitor = state().users.find((item) => item.id === result.actorId);
+        return { ...loginActor(visitor), message: result.message };
       }
       if (action === 'credential-login') {
         const identifier = String(data.identifier || '').trim().toLowerCase();
@@ -154,8 +74,9 @@
         return loginActor(actor, { chooseProfile: true });
       }
       if (action === 'logout') {
+        const currentActor = state().users.find((item) => item.id === storage?.getItem(ACTOR_KEY));
         if (storage) { storage.removeItem(ACTOR_KEY); storage.removeItem(LEARNER_KEY); }
-        if (location) location.hash = '#/login';
+        if (location) location.hash = currentActor?.role === 'VISITOR' ? '#/' : '#/login';
         onToast('Đã đăng xuất khỏi phiên demo.', 'success');
         onChange();
         return { ok: true };
@@ -304,7 +225,23 @@
         return { ok: true, mocked: true };
       }
       if (action === 'submit-public-lead') {
-        const result = bus.dispatch('CREATE_PUBLIC_LEAD', data, 'public-1');
+        const currentActor = state().users.find((item) => item.id === storage?.getItem(ACTOR_KEY));
+        const actorId = currentActor?.role === 'VISITOR' ? currentActor.id : 'public-1';
+        const result = bus.dispatch('CREATE_PUBLIC_LEAD', data, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'toggle-program-interest') {
+        const actorId = storage?.getItem(ACTOR_KEY);
+        const result = bus.dispatch('TOGGLE_PROGRAM_INTEREST', { programId: data.programId }, actorId);
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'register-public-event') {
+        const actorId = storage?.getItem(ACTOR_KEY);
+        const result = bus.dispatch('REGISTER_PUBLIC_EVENT', { eventId: data.eventId }, actorId);
         onToast(result.message, result.ok ? 'success' : 'error');
         onChange();
         return result;
@@ -363,7 +300,7 @@
       return { ok: false, code: 'UNKNOWN_UI_ACTION', message: `UI action không tồn tại: ${action}` };
     }
 
-    return Object.freeze({ execute, getAttendanceDraft, loadCheckpoint, runCanonicalAll, runCanonicalNext });
+    return Object.freeze({ execute, getAttendanceDraft });
   }
 
   root.YC.define('actions', Object.freeze({ ACTOR_KEY, LEARNER_KEY, auditCsv, create, exportDataset }));

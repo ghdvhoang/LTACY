@@ -82,7 +82,7 @@ Không giả lập là đã hoàn thành: advanced CRM automation, AI Tutor/Spea
 
 `Create learner → Placement → Sell package → Allocate class → Assign teacher → Run session → Attendance → Homework → Assessment → Publish progress → Recommend next level`
 
-Toàn bộ chuỗi trên chạy từ seed đến `RENEWED` bằng **Chạy tự động đến cuối** và được bảo vệ bằng automated canonical journey test. Demo bổ sung parent acknowledgement, moderation, remedial learning và renewal để chứng minh handoff xuyên domain.
+Toàn bộ chuỗi trên được bảo vệ bằng kiểm thử nghiệp vụ tự động từ seed đến `RENEWED`. Demo bổ sung xác nhận của phụ huynh, kiểm duyệt, học bù và gia hạn để chứng minh bàn giao xuyên miền nghiệp vụ.
 
 ## Không được suy diễn từ demo
 

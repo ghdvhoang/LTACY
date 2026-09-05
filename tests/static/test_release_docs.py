@@ -19,7 +19,7 @@ class ReleaseDocumentationTests(unittest.TestCase):
         self.assertIn("frontend", readme.lower())
         self.assertIn("OPEN-DEMO.html", readme)
 
-    def test_handoff_docs_cover_roles_checkpoints_and_scope_boundary(self):
+    def test_handoff_docs_cover_roles_visitor_access_and_scope_boundary(self):
         start = (ROOT / "START-HERE.md").read_text(encoding="utf-8")
         coverage = (ROOT / "docs" / "HANDBOOK-COVERAGE-v1.1.md").read_text(encoding="utf-8")
         limitations = (ROOT / "docs" / "KNOWN-LIMITATIONS.md").read_text(encoding="utf-8")
@@ -30,7 +30,9 @@ class ReleaseDocumentationTests(unittest.TestCase):
             "manager@yencenter.demo", "admin@yencenter.demo",
         ]:
             self.assertIn(account, start)
-        self.assertIn("12 checkpoint", start)
+        self.assertIn("Khách chưa đăng nhập và khách đã đăng nhập", start)
+        self.assertIn("Tài khoản của tôi", start)
+        self.assertNotIn("Hướng dẫn demo", start)
         self.assertIn("Release 1", coverage)
         self.assertIn("Release 2", coverage)
         self.assertIn("Release 3+", coverage)
@@ -44,6 +46,7 @@ class ReleaseDocumentationTests(unittest.TestCase):
             "OPEN-DEMO.html", "source/app.js", "source/app.v3.js", "source/styles.css",
             "source/modules/00-namespace.js", "source/modules/15-bootstrap.js",
             "docs/HANDBOOK-COVERAGE-v1.1.md", "tests/domain/canonical-journey.test.cjs",
+            "tests/domain/visitor-auth.test.cjs",
         }
         self.assertTrue(required.issubset(entries), required - entries)
 

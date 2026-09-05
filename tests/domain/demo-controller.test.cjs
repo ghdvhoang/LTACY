@@ -12,21 +12,8 @@ function createController() {
   const downloads = [];
   let printCount = 0;
   const controller = YC.actions.create({ store, bus, storage, location, onChange() {}, onToast(message, kind) { notices.push({ message, kind }); }, onDownload(name, content) { downloads.push({ name, content }); }, onPrint() { printCount += 1; } });
-  return { YC, store, storage, location, notices, downloads, get printCount() { return printCount; }, controller };
+  return { YC, store, bus, storage, location, notices, downloads, get printCount() { return printCount; }, controller };
 }
-
-test('demo controller can advance the canonical story to renewal', () => {
-  const runtime = createController();
-
-  const result = runtime.controller.runCanonicalAll();
-
-  assert.equal(result.ok, true, result.message);
-  assert.equal(runtime.YC.selectors.journey(runtime.store.getState()).status, 'RENEWED');
-  assert.equal(runtime.YC.selectors.journey(runtime.store.getState()).complete, true);
-  assert.equal(runtime.store.getState().homeworkAssignments.find((item) => item.learnerId === 'student-canonical').status, 'ACCEPTED');
-  assert.ok(runtime.store.getState().auditLogs.length > 8);
-  assert.match(runtime.notices.at(-1).message, /hoàn tất/i);
-});
 
 test('role login persists the actor and navigates to its role home', () => {
   const runtime = createController();
@@ -40,7 +27,7 @@ test('role login persists the actor and navigates to its role home', () => {
 
 test('reset restores the canonical lead without retaining journey events', () => {
   const runtime = createController();
-  runtime.controller.runCanonicalNext();
+  assert.equal(runtime.bus.dispatch('CONTACT_LEAD', { leadId: 'lead-canonical', note: 'Đã gọi xác nhận.' }, 'admissions-1').ok, true);
 
   const result = runtime.controller.execute('reset-demo');
 
@@ -49,30 +36,9 @@ test('reset restores the canonical lead without retaining journey events', () =>
   assert.equal(runtime.store.getState().domainEvents.length, 0);
 });
 
-test('documented checkpoints are deterministic', () => {
-  const runtime = createController();
-
-  assert.equal(runtime.controller.execute('load-checkpoint', { checkpoint: 'ENROLLED' }).ok, true);
-  const first = JSON.stringify(runtime.store.getState());
-  assert.equal(runtime.YC.selectors.journey(runtime.store.getState()).status, 'ENROLLED');
-  assert.equal(runtime.controller.execute('load-checkpoint', { checkpoint: 'ENROLLED' }).ok, true);
-
-  assert.equal(JSON.stringify(runtime.store.getState()), first);
-});
-
-test('renewed checkpoint opens the renewal milestone without claiming the journey is complete', () => {
-  const runtime = createController();
-
-  assert.equal(runtime.controller.execute('load-checkpoint', { checkpoint: 'RENEWED' }).ok, true);
-
-  assert.equal(runtime.YC.selectors.journey(runtime.store.getState()).status, 'RENEWED');
-  assert.equal(runtime.YC.selectors.journey(runtime.store.getState()).complete, false);
-  assert.equal(runtime.store.getState().renewals.length, 0);
-});
-
 test('audit export uses a spreadsheet-safe UTF-8 CSV and print delegates to the host', () => {
   const runtime = createController();
-  runtime.controller.runCanonicalNext();
+  assert.equal(runtime.bus.dispatch('CONTACT_LEAD', { leadId: 'lead-canonical', note: 'Đã gọi xác nhận.' }, 'admissions-1').ok, true);
 
   assert.equal(runtime.controller.execute('export-csv', { type: 'audit' }).ok, true);
   assert.equal(runtime.downloads.length, 1);
@@ -81,31 +47,4 @@ test('audit export uses a spreadsheet-safe UTF-8 CSV and print delegates to the 
   assert.match(runtime.downloads[0].content, /LEAD_CONTACTED/);
   assert.equal(runtime.controller.execute('print-view').ok, true);
   assert.equal(runtime.printCount, 1);
-});
-
-test('core demo preparation opens manual attendance without creating the learner assignment early', () => {
-  const runtime = createController();
-
-  const result = runtime.controller.execute('prepare-core-demo');
-
-  assert.equal(result.ok, true, result.message);
-  assert.equal(runtime.storage.getItem('yc.demo.actorId'), 'teacher-1');
-  assert.equal(runtime.location.hash, '#/app/teacher/sessions/session-canonical/attendance');
-  assert.ok(runtime.store.getState().enrollments.some((item) => item.learnerId === 'student-canonical' && item.status === 'ACTIVE'));
-  assert.ok(runtime.store.getState().teacherAssignments.some((item) => item.classId === 'class-6a' && item.status === 'ACTIVE'));
-  assert.equal(runtime.store.getState().sessions.find((item) => item.id === 'session-canonical').status, 'COMPLETED');
-  assert.equal(runtime.store.getState().remedialAssignments.some((item) => item.learnerId === 'student-canonical'), false);
-});
-
-test('demo guide leads with three simple accounts and keeps the full journey collapsed', () => {
-  const runtime = createController();
-  const state = runtime.store.getState();
-  const html = runtime.YC.demoGuide.render({ state, actor: null, learnerId: 'student-canonical', path: '/demo-guide' });
-
-  assert.equal((html.match(/class="core-journey-step/g) || []).length, 3);
-  assert.match(html, /Giáo viên điểm danh/);
-  assert.match(html, /Học viên hoàn thành bài/);
-  assert.match(html, /Quản trị viên kiểm tra/);
-  assert.match(html, /<details class="advanced-journey">/);
-  assert.match(html, /Luồng đầy đủ từ tư vấn đến tái ghi danh/);
 });
