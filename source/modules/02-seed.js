@@ -248,7 +248,7 @@
         ...publicMeta('hero-home-main', 'hero-home', 1), placement: 'HOME', eyebrow: 'Lớp học đồng hành cùng từng tiến bộ',
         title: 'Học chắc hôm nay, tự tin nói tiếng Anh ngày mai',
         description: 'Lộ trình vừa sức, lớp học tương tác và báo cáo rõ ràng để học viên biết mình đang tiến bộ ở đâu.',
-        primaryCtaLabel: 'Khám phá chương trình', primaryCtaHref: '/chuong-trinh', secondaryCtaLabel: 'Đăng ký tư vấn', secondaryCtaHref: '/lien-he',
+        primaryCtaLabel: 'Khám phá chương trình', primaryCtaHref: '/chuong-trinh', secondaryCtaLabel: 'Xem lịch khai giảng', secondaryCtaHref: '/lich-hoc',
         image: './assets/yen-home-hero.png', imageAlt: 'Cô giáo đồng hành cùng học viên trong lớp tiếng Anh',
       }],
       publicProgramProfiles: [

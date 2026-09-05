@@ -48,3 +48,13 @@ test('header keeps the four account states distinct and removes demo guidance', 
   assert.match(staff, /Khu vực làm việc/);
   assert.doesNotMatch(anonymous, /Hướng dẫn demo|Bỏ qua/);
 });
+
+test('Homepage renders all business sections from published CMS state', () => {
+  const html = frame('/', 'VISITOR');
+  for (const label of ['Chương trình nổi bật', 'Vì sao chọn Cô Yến', 'Cách bắt đầu', 'Lịch khai giảng', 'Tiến bộ có thể theo dõi', 'Đội ngũ giáo viên', 'Tin mới nhất', 'Sự kiện sắp tới']) assert.match(html, new RegExp(label));
+  assert.match(html, /yen-home-hero\.png/);
+  assert.match(html, /toggle-program-interest/);
+  assert.match(html, /Cơ sở Quận 3/);
+  assert.match(html, /Cô Hoàng Yến/);
+  assert.doesNotMatch(html, /Bản nháp đang chờ hoàn thiện|Hướng dẫn demo|Bỏ qua/);
+});

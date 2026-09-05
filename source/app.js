@@ -446,7 +446,7 @@
         ...publicMeta('hero-home-main', 'hero-home', 1), placement: 'HOME', eyebrow: 'Lớp học đồng hành cùng từng tiến bộ',
         title: 'Học chắc hôm nay, tự tin nói tiếng Anh ngày mai',
         description: 'Lộ trình vừa sức, lớp học tương tác và báo cáo rõ ràng để học viên biết mình đang tiến bộ ở đâu.',
-        primaryCtaLabel: 'Khám phá chương trình', primaryCtaHref: '/chuong-trinh', secondaryCtaLabel: 'Đăng ký tư vấn', secondaryCtaHref: '/lien-he',
+        primaryCtaLabel: 'Khám phá chương trình', primaryCtaHref: '/chuong-trinh', secondaryCtaLabel: 'Xem lịch khai giảng', secondaryCtaHref: '/lich-hoc',
         image: './assets/yen-home-hero.png', imageAlt: 'Cô giáo đồng hành cùng học viên trong lớp tiếng Anh',
       }],
       publicProgramProfiles: [
@@ -3472,8 +3472,9 @@
   function programInterestAction(program, actor) {
     if (!actor) return link('Đăng nhập để lưu', '/login', { kind: 'ghost' });
     if (actor.role !== 'VISITOR') return '';
-    const saved = (actor.savedProgramIds || []).includes(program.id);
-    return `<button class="btn ${saved ? 'btn-secondary' : 'btn-ghost'}" type="button" data-action="toggle-program-interest" data-program-id="${escapeHtml(program.id)}">${saved ? 'Đã lưu' : 'Lưu quan tâm'}</button>`;
+    const programId = program.programId || program.id;
+    const saved = (actor.savedProgramIds || []).includes(programId);
+    return `<button class="btn ${saved ? 'btn-secondary' : 'btn-ghost'}" type="button" data-action="toggle-program-interest" data-program-id="${escapeHtml(programId)}">${saved ? 'Đã lưu' : 'Lưu quan tâm'}</button>`;
   }
 
   function programCards(state, actor) {
@@ -3488,26 +3489,45 @@
     }).join('')}</div>`;
   }
 
+  function homepageProgramCards(programs, actor) {
+    return `<div class="yen-program-grid">${programs.map((program, index) => `<article class="yen-program-card accent-${String(program.accent || 'NAVY').toLowerCase()}"><span class="yen-card-index">${String(index + 1).padStart(2, '0')}</span><p>${escapeHtml(program.ageRange)}</p><h3>${escapeHtml(program.name)}</h3><div>${escapeHtml(program.summary)}</div><small>${escapeHtml(program.outcome)}</small><footer><a class="text-link" href="#/chuong-trinh/${escapeHtml(program.slug)}">Xem lộ trình ${icon('arrow')}</a>${programInterestAction(program, actor)}</footer></article>`).join('')}</div>`;
+  }
+
+  function availableSeats(state, cohort) {
+    const enrolled = state.enrollments.filter((item) => item.classId === cohort.id && item.status === 'ACTIVE').length;
+    const sessionIds = state.sessions.filter((item) => item.classId === cohort.id).map((item) => item.id);
+    const reserved = state.makeUpBookings.filter((item) => sessionIds.includes(item.targetSessionId || item.sessionId) && ['HELD', 'BOOKED', 'NOTIFIED'].includes(item.status)).reduce((sum, item) => sum + Number(item.reservedSeats || 1), 0);
+    return Math.max(0, Number(cohort.capacity || 0) - enrolled - reserved);
+  }
+
   function home(ctx) {
-    const { state } = ctx;
-    return `<main id="main-content" class="public-main">
-      <section class="hero"><div class="container hero-grid"><div class="hero-copy"><p class="eyebrow on-dark">Lộ trình ngoại ngữ có bằng chứng</p>
-        <h1>Học đúng trình độ.<br><span>Tiến bộ nhìn thấy được.</span></h1>
-        <p>Lớp Tiếng Anh Cô Yến kết nối kiểm tra đầu vào, lớp học, bài tập, đánh giá và báo cáo phụ huynh trong một hành trình minh bạch.</p>
-        <div class="hero-actions">${link('Khám phá chương trình', '/chuong-trinh', { kind: 'primary' })}${ctx.actor?.role === 'VISITOR' ? link('Tài khoản của tôi', '/tai-khoan') : link('Đăng ký miễn phí', '/dang-ky')}</div>
-        <div class="hero-proof"><span>${icon('shield')} Dữ liệu demo minh bạch</span><span>${icon('people')} Nhiều vai trò cùng phối hợp</span></div></div>
-        <div class="hero-visual" aria-label="Minh họa lộ trình học"><div class="learning-window"><div class="window-bar"><span></span><span></span><span></span><small>GÓC HỌC TẬP</small></div>
-          <div class="window-content"><div class="lesson-kicker">TIẾNG ANH NỀN TẢNG · A2.1</div><h2>Tiếp tục hành trình của Minh Anh</h2><p>Học phần 4 · Trải nghiệm trong quá khứ</p>
-          <div class="hero-progress"><span style="width:68%"></span></div><div class="module-preview"><b>✓</b><span><strong>Video · Thì quá khứ đơn trong ngữ cảnh</strong><small>18 phút · Đã hoàn thành</small></span></div>
-          <div class="module-preview active"><b>▶</b><span><strong>Luyện tập · Kể chuyện theo cặp</strong><small>22 phút · Tiếp theo</small></span></div></div></div>
-          <div class="floating-stat"><strong>+18%</strong><span>Tự tin giao tiếp</span></div></div>
-      </div></section>
-      <section class="trust-strip"><div class="container"><span>HÀNH TRÌNH KẾT NỐI</span><strong>Đầu vào</strong><strong>Lớp học</strong><strong>Đánh giá</strong><strong>Tiến bộ</strong><strong>Gia hạn</strong></div></section>
-      <section class="public-section container"><div class="section-intro"><p class="eyebrow">Chương trình nổi bật</p><h2>Một mục tiêu, một lộ trình rõ ràng</h2><p>Mỗi chương trình gắn chuẩn đầu ra, khối lượng học và bằng chứng tiến bộ.</p></div>${programCards(state, ctx.actor)}</section>
-      <section class="public-section public-band"><div class="container feature-split"><div><p class="eyebrow">Không chỉ là điểm số</p><h2>Phụ huynh biết điều gì đã xảy ra và nên hỗ trợ gì tiếp theo.</h2><p>Báo cáo kết hợp chuyên cần, bài tập, sáu nhóm kỹ năng, nhận xét được phép chia sẻ và việc cần làm tiếp theo.</p>${link('Trải nghiệm cổng phụ huynh', '/phu-huynh-hoc-sinh', { kind: 'primary' })}</div>
-        <div class="evidence-card"><div class="evidence-top"><span class="avatar avatar-lg">MA</span><div><b>Nguyễn Minh Anh</b><small>Tiếng Anh nền tảng 6 · A2.1</small></div>${badge('ACTIVE')}</div>
-        ${['Nghe|76', 'Đọc|78', 'Tương tác nói|62', 'Viết|72'].map((item) => { const [label, score] = item.split('|'); return `<div class="skill-row"><span>${label}</span><div><i style="width:${score}%"></i></div><b>${score}</b></div>`; }).join('')}</div></div></section>
-      <section class="public-cta"><div class="container"><div><p class="eyebrow on-dark">Bắt đầu từ đúng trình độ</p><h2>Đặt lịch kiểm tra đầu vào miễn phí</h2><p>Nhận khuyến nghị chương trình theo sáu nhóm kỹ năng.</p></div>${link('Đăng ký tư vấn', '/lien-he', { kind: 'primary' })}</div></section>
+    const { state, actor } = ctx;
+    const content = root.YC.publicContent.homepage(state, actor);
+    const hero = content.hero;
+    const openClasses = state.classes.filter((item) => ['OPEN', 'ACTIVE'].includes(item.status)).slice(0, 3);
+    const featured = content.articles.find((item) => item.featured) || content.articles[0];
+    const articleList = content.articles.filter((item) => item.id !== featured?.id).slice(0, 3);
+    const heroSection = hero ? `<section class="yen-hero"><div class="container yen-hero-inner"><div class="yen-hero-copy"><p class="eyebrow">${escapeHtml(hero.eyebrow)}</p><h1>${escapeHtml(hero.title)}</h1><p>${escapeHtml(hero.description)}</p><div class="hero-actions">${link(hero.primaryCtaLabel, hero.primaryCtaHref, { kind: 'primary' })}${link(hero.secondaryCtaLabel, hero.secondaryCtaHref)}</div><div class="yen-hero-points"><span>${icon('check')} Kiểm tra đúng trình độ</span><span>${icon('check')} Theo sát từng tiến bộ</span></div></div><div class="yen-hero-media"><img src="${escapeHtml(hero.image)}" alt="${escapeHtml(hero.imageAlt)}"><span><b>6</b> nhóm kỹ năng được theo dõi</span></div></div></section>` : '';
+    return `<main id="main-content" class="public-main yen-home">
+      ${heroSection}
+      ${content.programs.length ? `<section class="yen-section container"><div class="yen-section-head"><div><p class="eyebrow">Chương trình nổi bật</p><h2>Chọn lộ trình phù hợp với tuổi và mục tiêu</h2></div><a class="text-link" href="#/chuong-trinh">Xem tất cả ${icon('arrow')}</a></div>${homepageProgramCards(content.programs, actor)}</section>` : ''}
+      <section class="yen-section yen-why"><div class="container"><div class="yen-section-head light"><div><p class="eyebrow">Vì sao chọn Cô Yến</p><h2>Một lớp học gần gũi, một hệ thống theo sát</h2></div></div><div class="yen-benefit-grid">${[
+        ['01', 'Lộ trình vừa sức', 'Kiểm tra đầu vào và xếp lớp theo năng lực thực tế.'],
+        ['02', 'Tương tác thật', 'Học viên được nói, thực hành và nhận phản hồi ngay trong buổi học.'],
+        ['03', 'Tiến bộ rõ ràng', 'Chuyên cần, bài tập và kỹ năng được nối thành bằng chứng dễ hiểu.'],
+        ['04', 'Gia đình cùng đồng hành', 'Phụ huynh nhận đúng thông tin cần biết và việc nên hỗ trợ tiếp theo.'],
+      ].map(([number, title, body]) => `<article><b>${number}</b><h3>${title}</h3><p>${body}</p></article>`).join('')}</div></div></section>
+      <section class="yen-section container yen-process"><div class="yen-section-head"><div><p class="eyebrow">Cách bắt đầu</p><h2>Ba bước để vào đúng lớp</h2></div></div><div class="yen-process-grid">${[
+        ['1', 'Đăng ký tư vấn', 'Chia sẻ độ tuổi, mục tiêu và lịch học phù hợp.'],
+        ['2', 'Kiểm tra đầu vào', 'Đánh giá năng lực và trao đổi khuyến nghị lộ trình.'],
+        ['3', 'Xếp lớp & bắt đầu', 'Chọn lớp còn chỗ, hoàn tất ghi danh và nhận lịch học.'],
+      ].map(([number, title, body]) => `<article><span>${number}</span><div><h3>${title}</h3><p>${body}</p></div></article>`).join('')}</div>${link('Đăng ký tư vấn', '/lien-he', { kind: 'primary' })}</section>
+      ${openClasses.length ? `<section class="yen-section yen-schedule"><div class="container"><div class="yen-section-head"><div><p class="eyebrow">Lịch khai giảng</p><h2>Lớp đang nhận học viên</h2></div><a class="text-link" href="#/lich-hoc">Xem toàn bộ lịch ${icon('arrow')}</a></div><div class="yen-schedule-list">${openClasses.map((cohort) => { const branch = state.branches.find((item) => item.id === cohort.branchId); const course = state.courseVersions.find((item) => item.id === cohort.courseVersionId); const seats = availableSeats(state, cohort); return `<article><div><p>${escapeHtml(branch?.name || '')}</p><h3>${escapeHtml(cohort.name)}</h3><small>${escapeHtml(course?.title || '')}</small></div><div><span>${icon('calendar')} ${escapeHtml(cohort.scheduleLabel || 'Đang cập nhật')}</span><span>${icon('grid')} ${escapeHtml(cohort.room || 'Trực tuyến')}</span></div><div><strong>${seats}</strong><small>chỗ còn lại</small></div>${link('Nhận tư vấn', '/lien-he')}</article>`; }).join('')}</div></div></section>` : ''}
+      <section class="yen-section container yen-progress"><div class="yen-progress-story"><p class="eyebrow">Tiến bộ có thể theo dõi</p><h2>Không chỉ biết điểm số, mà biết nên làm gì tiếp theo</h2><p>Cùng một hồ sơ học viên kết nối buổi học, điểm danh, bài tập, học bù và báo cáo. Khi giáo viên cập nhật, học viên và phụ huynh nhìn thấy đúng phần được phép chia sẻ.</p>${link('Khám phá góc phụ huynh', '/phu-huynh-hoc-sinh', { kind: 'primary' })}</div><div class="yen-progress-card"><header><span class="avatar avatar-lg">MA</span><div><strong>Nguyễn Minh Anh</strong><small>Hồ sơ học tập liên tục</small></div>${badge('ACTIVE')}</header>${[['Chuyên cần', 92], ['Hoàn thành bài tập', 84], ['Tự tin giao tiếp', 76]].map(([label, score]) => `<div class="yen-progress-row"><span>${label}</span><div><i style="width:${score}%"></i></div><b>${score}%</b></div>`).join('')}<footer><span>${icon('check')} Có bằng chứng</span><span>${icon('trend')} Có bước tiếp theo</span></footer></div></section>
+      ${content.teachers.length ? `<section class="yen-section yen-teachers"><div class="container"><div class="yen-section-head"><div><p class="eyebrow">Đội ngũ giáo viên</p><h2>Người đồng hành hiểu từng giai đoạn học</h2></div><a class="text-link" href="#/giao-vien">Xem đội ngũ ${icon('arrow')}</a></div><div class="yen-teacher-grid">${content.teachers.map((teacher) => `<article><span>${escapeHtml(teacher.name.split(' ').slice(-2).map((part) => part[0]).join(''))}</span><h3>${escapeHtml(teacher.name)}</h3><p>${escapeHtml(teacher.roleLabel)}</p><small>${escapeHtml((teacher.qualifications || []).join(' · '))}</small><blockquote>“${escapeHtml(teacher.quote)}”</blockquote></article>`).join('')}</div></div></section>` : ''}
+      ${featured ? `<section class="yen-section container yen-news"><div class="yen-section-head"><div><p class="eyebrow">Tin mới nhất</p><h2>Cùng học tốt hơn mỗi ngày</h2></div><a class="text-link" href="#/tin-tuc">Xem tất cả ${icon('arrow')}</a></div><div class="yen-news-grid"><a class="yen-featured-news" href="#/tin-tuc/${escapeHtml(featured.slug)}"><span>${escapeHtml(content.categories.find((item) => item.id === featured.categoryId)?.name || 'Tin mới')}</span><h3>${escapeHtml(featured.title)}</h3><p>${escapeHtml(featured.summary)}</p><b>Đọc bài viết ${icon('arrow')}</b></a><div>${articleList.map((article) => `<a class="yen-news-row" href="#/tin-tuc/${escapeHtml(article.slug)}"><div><small>${escapeHtml(content.categories.find((item) => item.id === article.categoryId)?.name || 'Tin mới')}</small><strong>${escapeHtml(article.title)}</strong><p>${escapeHtml(article.summary)}</p></div>${icon('arrow')}</a>`).join('')}</div></div></section>` : ''}
+      ${content.events.length ? `<section class="yen-section yen-events"><div class="container"><div class="yen-section-head"><div><p class="eyebrow">Sự kiện sắp tới</p><h2>Trải nghiệm trước khi chọn lộ trình</h2></div><a class="text-link" href="#/su-kien">Xem sự kiện ${icon('arrow')}</a></div><div class="yen-event-grid">${content.events.slice(0, 3).map((event) => `<article><time><b>${new Date(event.startsAt).getDate()}</b><span>Tháng ${new Date(event.startsAt).getMonth() + 1}</span></time><div><p>${escapeHtml(event.location)}</p><h3>${escapeHtml(event.title)}</h3><span>${formatDate(event.startsAt, true)}</span><small>${escapeHtml(event.summary)}</small></div>${link('Đăng ký', event.registrationHref || '/lien-he')}</article>`).join('')}</div></div></section>` : ''}
+      <section class="yen-final-cta"><div class="container"><div><p class="eyebrow">Sẵn sàng bắt đầu?</p><h2>Để Cô Yến cùng bạn chọn lộ trình phù hợp</h2><p>Đăng ký tư vấn để kiểm tra đầu vào, chọn lớp và nhận lịch học còn chỗ.</p></div><div>${link('Đăng ký tư vấn', '/lien-he', { kind: 'primary' })}${link('Xem chương trình', '/chuong-trinh')}</div></div></section>
     </main>`;
   }
 

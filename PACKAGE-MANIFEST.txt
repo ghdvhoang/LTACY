@@ -25,6 +25,7 @@ source/VERSION.txt
 source/app.js
 source/app.v3.js
 source/assets/yen-logo-horizontal.png
+source/assets/yen-home-hero.png
 source/index.html
 source/modules/00-namespace.js
 source/modules/01-utils.js
