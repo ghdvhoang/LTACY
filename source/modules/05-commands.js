@@ -153,6 +153,48 @@
       return collection.filter((item) => item.leadId === leadId).at(-1) || null;
     }
 
+    function activeMakeUpBooking(draft, caseId) {
+      return draft.makeUpBookings.find((item) => item.remedialCaseId === caseId && ['HELD', 'BOOKED', 'NOTIFIED'].includes(item.status)) || null;
+    }
+
+    function validateMakeUpTarget(draft, payload, context) {
+      const remedialCase = required(draft.remedialCases.find((item) => item.id === payload.caseId), 'REMEDIAL_CASE_NOT_FOUND', 'Không tìm thấy hồ sơ học bù.');
+      const targetSession = required(draft.sessions.find((item) => item.id === payload.targetSessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học đích.');
+      const candidate = required(root.YC.remedial.rankMakeUpTargets(draft, remedialCase.id).find((item) => item.sessionId === targetSession.id), 'MAKE_UP_TARGET_INELIGIBLE', 'Buổi học này không thể dùng làm lịch học bù.');
+      const failures = candidate.hardGates.filter((item) => !item.passed);
+      const nonMappingFailures = failures.filter((item) => item.key !== 'LESSON_TEMPLATE');
+      if (nonMappingFailures.length) {
+        throw new CommandError('MAKE_UP_TARGET_INELIGIBLE', nonMappingFailures.map((item) => item.label).join(' · '), {
+          alternatives: root.YC.remedial.rankMakeUpTargets(draft, remedialCase.id).filter((item) => item.eligible).slice(0, 3),
+        });
+      }
+      let contentMapping = { type: 'EXACT', sourceLessonTemplateId: remedialCase.sourceLessonTemplateId, targetLessonTemplateId: targetSession.lessonTemplateId, coverageNote: null, approvedBy: null, approvedAt: null };
+      if (failures.some((item) => item.key === 'LESSON_TEMPLATE')) {
+        if (context.actor.role !== 'ADMIN') throw new CommandError('CONTENT_MAPPING_APPROVAL_REQUIRED', 'Nội dung khác bài học gốc; cần Admin duyệt mapping.');
+        const overrideNote = String(payload.overrideNote || '').trim();
+        if (!overrideNote) throw new CommandError('OVERRIDE_NOTE_REQUIRED', 'Admin cần ghi rõ phạm vi nội dung tương đương.');
+        contentMapping = { ...contentMapping, type: 'ADMIN_EQUIVALENT', coverageNote: overrideNote, approvedBy: context.actor.id, approvedAt: nowIso() };
+      }
+      return { remedialCase, targetSession, targetClass: draft.classes.find((item) => item.id === targetSession.classId), candidate, contentMapping };
+    }
+
+    function makeUpBookingRecord(draft, validated, context, status) {
+      const confirmationDeadline = new Date(new Date(nowIso()).getTime() + 24 * 60 * 60 * 1000).toISOString();
+      const booking = {
+        id: uid('make-up'), remedialCaseId: validated.remedialCase.id, learnerId: validated.remedialCase.learnerId,
+        sourceAttendanceId: validated.remedialCase.sourceAttendanceId,
+        originalSessionId: validated.remedialCase.sourceSessionId, originalClassId: validated.remedialCase.sourceClassId,
+        targetSessionId: validated.targetSession.id, targetClassId: validated.targetSession.classId,
+        sessionId: validated.targetSession.id, reservedSeats: 1, rosterRole: 'MAKE_UP_GUEST',
+        contentMapping: validated.contentMapping, status, bookedBy: status === 'BOOKED' ? context.actor.id : null,
+        bookedAt: status === 'BOOKED' ? nowIso() : null, heldBy: status === 'HELD' ? context.actor.id : null,
+        heldAt: status === 'HELD' ? nowIso() : null, confirmationDeadline,
+        history: [{ fromStatus: 'CANDIDATE', toStatus: status, occurredAt: nowIso(), actorId: context.actor.id }],
+      };
+      draft.makeUpBookings.push(booking);
+      return booking;
+    }
+
     const handlers = {
       SET_ROLE_PERMISSION(draft, payload, context) {
         requirePermission(draft, context, 'access.manage_role');
@@ -1120,6 +1162,89 @@
         appendEvent(draft, context, 'SUBSTITUTION_CLOSED', 'SUBSTITUTION', substitution.id, 'Đã đóng yêu cầu dạy thay và giới hạn thời gian truy cập.');
         appendAudit(draft, context, 'SUBSTITUTION_CLOSED', 'SUBSTITUTION', substitution.id, 'Đã giữ lại bằng chứng bàn giao.');
         return { message: 'Đã đóng yêu cầu dạy thay.' };
+      },
+
+      HOLD_MAKE_UP_SEAT(draft, payload, context) {
+        requireRole(context.actor, ['STUDENT_SERVICE']);
+        const existing = activeMakeUpBooking(draft, payload.caseId);
+        if (existing) {
+          if (existing.targetSessionId === payload.targetSessionId && existing.status === 'HELD') return { message: 'Chỗ học bù đang được giữ.', bookingId: existing.id };
+          throw new CommandError('ACTIVE_MAKE_UP_BOOKING_EXISTS', 'Hồ sơ đã có một lịch học bù đang hoạt động.');
+        }
+        const validated = validateMakeUpTarget(draft, payload, context);
+        const booking = makeUpBookingRecord(draft, validated, context, 'HELD');
+        appendEvent(draft, context, 'MAKE_UP_SEAT_HELD', 'MAKE_UP_BOOKING', booking.id, `Giữ chỗ tại buổi ${booking.targetSessionId}.`, { learnerId: booking.learnerId });
+        appendAudit(draft, context, 'MAKE_UP_SEAT_HELD', 'MAKE_UP_BOOKING', booking.id, `Hạn xác nhận ${booking.confirmationDeadline}.`);
+        if (booking.contentMapping.type === 'ADMIN_EQUIVALENT') appendAudit(draft, context, 'MAKE_UP_MAPPING_OVERRIDDEN', 'MAKE_UP_BOOKING', booking.id, booking.contentMapping.coverageNote);
+        return { message: 'Đã giữ chỗ học bù trong 24 giờ.', bookingId: booking.id };
+      },
+
+      CONFIRM_MAKE_UP_BOOKING(draft, payload, context) {
+        requireRole(context.actor, ['STUDENT_SERVICE']);
+        const existing = activeMakeUpBooking(draft, payload.caseId);
+        if (existing && existing.targetSessionId !== payload.targetSessionId) throw new CommandError('ACTIVE_MAKE_UP_BOOKING_EXISTS', 'Hồ sơ đã có một lịch học bù đang hoạt động.');
+        if (existing && ['BOOKED', 'NOTIFIED'].includes(existing.status)) return { message: 'Lịch học bù đã được xác nhận.', bookingId: existing.id };
+        const validated = validateMakeUpTarget(draft, payload, context);
+        const booking = existing || makeUpBookingRecord(draft, validated, context, 'BOOKED');
+        if (existing) {
+          booking.history ||= [];
+          booking.history.push({ fromStatus: booking.status, toStatus: 'BOOKED', occurredAt: nowIso(), actorId: context.actor.id });
+          booking.status = 'BOOKED';
+          booking.bookedBy = context.actor.id;
+          booking.bookedAt = nowIso();
+          booking.contentMapping = validated.contentMapping;
+        }
+        appendEvent(draft, context, 'MAKE_UP_BOOKED', 'MAKE_UP_BOOKING', booking.id, `Đã xác nhận buổi học bù ${booking.targetSessionId}.`, { learnerId: booking.learnerId });
+        appendAudit(draft, context, 'MAKE_UP_BOOKED', 'MAKE_UP_BOOKING', booking.id, `Buổi đích ${booking.targetSessionId}.`);
+        if (booking.contentMapping.type === 'ADMIN_EQUIVALENT') appendAudit(draft, context, 'MAKE_UP_MAPPING_OVERRIDDEN', 'MAKE_UP_BOOKING', booking.id, booking.contentMapping.coverageNote);
+        const studentUser = draft.users.find((item) => item.role === 'STUDENT' && (item.linkedLearnerIds || []).includes(booking.learnerId));
+        if (studentUser) notifyUser(draft, studentUser.id, 'Lịch học bù đã được xác nhận', `Bạn sẽ tham dự buổi ${booking.targetSessionId} với tư cách khách học bù.`, `/app/student/remedial/${booking.remedialCaseId}`);
+        return { message: 'Đã xác nhận lịch học bù.', bookingId: booking.id };
+      },
+
+      CANCEL_MAKE_UP_BOOKING(draft, payload, context) {
+        requireRole(context.actor, ['STUDENT_SERVICE']);
+        const reason = String(payload.reason || '').trim();
+        if (!reason) throw new CommandError('REASON_REQUIRED', 'Hủy lịch học bù cần ghi rõ lý do.');
+        const booking = required(draft.makeUpBookings.find((item) => item.id === payload.bookingId), 'MAKE_UP_BOOKING_NOT_FOUND', 'Không tìm thấy lịch học bù.');
+        if (!['HELD', 'BOOKED', 'NOTIFIED'].includes(booking.status)) throw new CommandError('INVALID_MAKE_UP_STATE', 'Chỉ lịch đang giữ hoặc đã đặt mới được hủy.');
+        booking.history ||= [];
+        booking.history.push({ fromStatus: booking.status, toStatus: 'CANCELLED', occurredAt: nowIso(), actorId: context.actor.id, reason });
+        booking.status = 'CANCELLED';
+        booking.cancelledAt = nowIso();
+        booking.cancelledBy = context.actor.id;
+        booking.cancellationReason = reason;
+        appendEvent(draft, context, 'MAKE_UP_CANCELLED', 'MAKE_UP_BOOKING', booking.id, reason, { learnerId: booking.learnerId });
+        appendAudit(draft, context, 'MAKE_UP_CANCELLED', 'MAKE_UP_BOOKING', booking.id, reason);
+        return { message: 'Đã hủy lịch học bù và giữ lại lịch sử.' };
+      },
+
+      RECORD_MAKE_UP_ATTENDANCE(draft, payload, context) {
+        requireRole(context.actor, ['TEACHER', 'STUDENT_SERVICE', 'ACADEMIC_MANAGER']);
+        const booking = required(draft.makeUpBookings.find((item) => item.id === payload.bookingId), 'MAKE_UP_BOOKING_NOT_FOUND', 'Không tìm thấy lịch học bù.');
+        if (!['BOOKED', 'NOTIFIED'].includes(booking.status)) throw new CommandError('INVALID_MAKE_UP_STATE', 'Lịch học bù chưa ở trạng thái có thể điểm danh.');
+        const targetSession = required(draft.sessions.find((item) => item.id === booking.targetSessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học đích.');
+        if (!['IN_PROGRESS', 'COMPLETED'].includes(targetSession.status)) throw new CommandError('TARGET_SESSION_NOT_DELIVERED', 'Chỉ ghi nhận sau khi buổi học đích bắt đầu.');
+        if (context.actor.role === 'TEACHER') {
+          const profile = draft.teacherProfiles.find((item) => item.userId === context.actor.id);
+          if (!profile || !draft.teacherAssignments.some((item) => item.teacherProfileId === profile.id && item.classId === targetSession.classId && ['ACTIVE', 'ACCEPTED'].includes(item.status))) {
+            throw new CommandError('FORBIDDEN', 'Giáo viên không được phân công vào lớp đích.');
+          }
+        }
+        const nextStatus = String(payload.attendanceStatus || '').toUpperCase();
+        if (!['ATTENDED', 'NO_SHOW'].includes(nextStatus)) throw new CommandError('INVALID_ATTENDANCE_STATUS', 'Kết quả học bù phải là Đã tham dự hoặc Vắng buổi bù.');
+        const note = String(payload.note || '').trim();
+        if (nextStatus === 'NO_SHOW' && !note) throw new CommandError('REASON_REQUIRED', 'Vắng buổi bù cần ghi chú đối soát.');
+        booking.history ||= [];
+        booking.history.push({ fromStatus: booking.status, toStatus: nextStatus, occurredAt: nowIso(), actorId: context.actor.id, note });
+        booking.status = nextStatus;
+        booking.attendanceRecordedAt = nowIso();
+        booking.attendanceRecordedBy = context.actor.id;
+        booking.attendanceNote = note;
+        booking.rebookRequired = nextStatus === 'NO_SHOW';
+        appendEvent(draft, context, nextStatus === 'ATTENDED' ? 'MAKE_UP_ATTENDED' : 'MAKE_UP_NO_SHOW', 'MAKE_UP_BOOKING', booking.id, note || 'Đã xác nhận tham dự.', { learnerId: booking.learnerId });
+        appendAudit(draft, context, 'MAKE_UP_ATTENDANCE_RECORDED', 'MAKE_UP_BOOKING', booking.id, `${nextStatus}${note ? ` · ${note}` : ''}.`);
+        return { message: nextStatus === 'ATTENDED' ? 'Đã ghi nhận học viên tham dự buổi học bù.' : 'Đã ghi nhận vắng buổi bù; hồ sơ có thể được xếp lại lịch.' };
       },
 
       BOOK_MAKE_UP(draft, payload, context) {
