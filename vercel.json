@@ -1,1 +1,6 @@
-﻿{ "rootDirectory": "source" }
+﻿{
+  "rootDirectory": "source",
+  "buildCommand": null,
+  "outputDirectory": ".",
+  "framework": null
+}
