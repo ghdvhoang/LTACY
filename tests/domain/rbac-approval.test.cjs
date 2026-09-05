@@ -199,4 +199,117 @@ test('last active Admin cannot lose access management or approval decision autho
   }
 });
 
+test('teacher request does not mutate canonical data until Admin approval', () => {
+  const { bus, state } = runtimeWithTeacherAssignment();
+  const submitted = bus.dispatch('SUBMIT_CHANGE_REQUEST', {
+    resourceType: 'SESSION',
+    operation: 'CREATE',
+    baseVersion: 0,
+    proposedSnapshot: sessionProposal(),
+    reason: 'Bổ sung buổi ôn tập',
+  }, 'teacher-1');
+
+  assert.equal(submitted.ok, true);
+  assert.equal(state().sessions.some((item) => item.id === submitted.provisionalResourceId), false);
+  assert.equal(state().changeRequests.find((item) => item.id === submitted.requestId).status, 'SUBMITTED');
+  assert.equal(state().domainEvents[0].type, 'CHANGE_REQUEST_SUBMITTED');
+  assert.equal(state().auditLogs[0].action, 'CHANGE_REQUEST_SUBMITTED');
+
+  const approved = bus.dispatch('REVIEW_CHANGE_REQUEST', {
+    requestId: submitted.requestId,
+    decision: 'APPROVE',
+    note: 'Đủ điều kiện',
+  }, 'admin-1');
+  assert.equal(approved.ok, true);
+  assert.equal(approved.status, 'APPROVED');
+  assert.equal(state().sessions.some((item) => item.changeRequestId === submitted.requestId), true);
+  assert.equal(state().changeRequests.find((item) => item.id === submitted.requestId).appliedAt, FIXED_NOW);
+  assert.equal(state().auditLogs[0].action, 'CHANGE_REQUEST_APPROVED');
+});
+
+test('stale base version moves the request to conflicted without applying it', () => {
+  const { bus, store, state } = runtimeWithTeacherAssignment();
+  const current = state().sessions.find((item) => item.id === 'session-canonical');
+  const submitted = bus.dispatch('SUBMIT_CHANGE_REQUEST', {
+    resourceType: 'SESSION',
+    operation: 'RESCHEDULE',
+    resourceId: current.id,
+    baseVersion: current.version,
+    proposedSnapshot: { startsAt: '2026-09-10T11:00:00.000Z', endsAt: '2026-09-10T12:30:00.000Z', room: 'P.401' },
+    reason: 'Đổi lịch theo lịch thi của học viên',
+  }, 'teacher-1');
+  assert.equal(submitted.ok, true);
+  store.transact((draft) => {
+    draft.sessions.find((item) => item.id === current.id).version += 1;
+  });
+
+  const reviewed = bus.dispatch('REVIEW_CHANGE_REQUEST', {
+    requestId: submitted.requestId, decision: 'APPROVE', note: 'Đồng ý lịch mới',
+  }, 'admin-1');
+  assert.equal(reviewed.ok, true);
+  assert.equal(reviewed.status, 'CONFLICTED');
+  assert.equal(reviewed.applied, false);
+  assert.equal(state().changeRequests.find((item) => item.id === submitted.requestId).status, 'CONFLICTED');
+  assert.notEqual(state().sessions.find((item) => item.id === current.id).room, 'P.401');
+});
+
+test('rejection requires a review note and sender cannot review their own request', () => {
+  const first = runtimeWithTeacherAssignment();
+  const submitted = first.bus.dispatch('SUBMIT_CHANGE_REQUEST', {
+    resourceType: 'SESSION', operation: 'CREATE', baseVersion: 0,
+    proposedSnapshot: sessionProposal(), reason: 'Bổ sung buổi luyện nói',
+  }, 'teacher-1');
+  const rejected = first.bus.dispatch('REVIEW_CHANGE_REQUEST', {
+    requestId: submitted.requestId, decision: 'REJECT', note: '',
+  }, 'admin-1');
+  assert.equal(rejected.ok, false);
+  assert.equal(rejected.code, 'REVIEW_NOTE_REQUIRED');
+  assert.equal(first.state().changeRequests.find((item) => item.id === submitted.requestId).status, 'SUBMITTED');
+
+  const second = runtime();
+  const selfSubmitted = second.bus.dispatch('SUBMIT_CHANGE_REQUEST', {
+    resourceType: 'SESSION', operation: 'CREATE', baseVersion: 0,
+    proposedSnapshot: sessionProposal(), reason: 'Kiểm tra quy tắc bốn mắt',
+  }, 'admin-1');
+  assert.equal(selfSubmitted.ok, true);
+  const selfReviewed = second.bus.dispatch('REVIEW_CHANGE_REQUEST', {
+    requestId: selfSubmitted.requestId, decision: 'APPROVE', note: 'Tự duyệt',
+  }, 'admin-1');
+  assert.equal(selfReviewed.ok, false);
+  assert.equal(selfReviewed.code, 'SELF_REVIEW_FORBIDDEN');
+});
+
+test('approval is idempotent and withdrawal preserves the request history', () => {
+  const first = runtimeWithTeacherAssignment();
+  const submitted = first.bus.dispatch('SUBMIT_CHANGE_REQUEST', {
+    resourceType: 'SESSION', operation: 'CREATE', baseVersion: 0,
+    proposedSnapshot: sessionProposal(), reason: 'Bổ sung buổi củng cố',
+  }, 'teacher-1');
+  const approved = first.bus.dispatch('REVIEW_CHANGE_REQUEST', {
+    requestId: submitted.requestId, decision: 'APPROVE', note: 'Đã kiểm tra lịch',
+  }, 'admin-1');
+  assert.equal(approved.ok, true);
+  const auditCount = first.state().auditLogs.length;
+  const sessionCount = first.state().sessions.length;
+  const duplicate = first.bus.dispatch('REVIEW_CHANGE_REQUEST', {
+    requestId: submitted.requestId, decision: 'APPROVE', note: 'Duyệt lại',
+  }, 'admin-1');
+  assert.equal(duplicate.ok, true);
+  assert.equal(duplicate.idempotent, true);
+  assert.equal(first.state().auditLogs.length, auditCount);
+  assert.equal(first.state().sessions.length, sessionCount);
+
+  const second = runtimeWithTeacherAssignment();
+  const withdrawable = second.bus.dispatch('SUBMIT_CHANGE_REQUEST', {
+    resourceType: 'SESSION', operation: 'CREATE', baseVersion: 0,
+    proposedSnapshot: sessionProposal(), reason: 'Đề xuất cần rà soát thêm',
+  }, 'teacher-1');
+  const withdrawn = second.bus.dispatch('WITHDRAW_CHANGE_REQUEST', {
+    requestId: withdrawable.requestId, reason: 'Cần điều chỉnh lại thời lượng',
+  }, 'teacher-1');
+  assert.equal(withdrawn.ok, true);
+  assert.equal(second.state().changeRequests.find((item) => item.id === withdrawable.requestId).status, 'WITHDRAWN');
+  assert.equal(second.state().auditLogs[0].action, 'CHANGE_REQUEST_WITHDRAWN');
+});
+
 module.exports = { FIXED_NOW, activeAssignment, render, runtime, runtimeWithTeacherAssignment, sessionProposal };

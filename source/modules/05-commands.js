@@ -98,6 +98,19 @@
       if (!safe) throw new CommandError('LAST_ADMIN_GUARD', 'Phải còn ít nhất một Quản trị viên có quyền quản lý truy cập và phê duyệt.');
     }
 
+    function approvalCall(callback) {
+      try {
+        return callback();
+      } catch (error) {
+        throw new CommandError(error.code || 'APPROVAL_ERROR', error.message || 'Không thể xử lý yêu cầu phê duyệt.');
+      }
+    }
+
+    function notifyUser(draft, userId, title, body, link) {
+      if (!draft.users.some((item) => item.id === userId && item.status === 'ACTIVE')) return;
+      draft.notifications.unshift({ id: uid('notification'), userId, title, body, link, read: false, createdAt: nowIso() });
+    }
+
     function findLead(draft, leadId) {
       return required(draft.leads.find((item) => item.id === leadId), 'LEAD_NOT_FOUND', 'Không tìm thấy khách hàng.');
     }
@@ -176,6 +189,95 @@
         appendEvent(draft, context, 'USER_PERMISSION_OVERRIDE_REVOKED', 'USER_PERMISSION_OVERRIDE', record.id, reason);
         appendAudit(draft, context, 'USER_PERMISSION_OVERRIDE_REVOKED', 'USER_PERMISSION_OVERRIDE', record.id, reason);
         return { message: 'Đã thu hồi ngoại lệ quyền.', overrideId: record.id };
+      },
+
+      SUBMIT_CHANGE_REQUEST(draft, payload, context) {
+        required(context.actor, 'AUTH_REQUIRED', 'Cần đăng nhập để gửi yêu cầu.');
+        const reason = String(payload.reason || '').trim();
+        if (!reason) throw new CommandError('REASON_REQUIRED', 'Cần ghi rõ lý do đề xuất thay đổi.');
+        const resourceType = String(payload.resourceType || '').toUpperCase();
+        const operation = String(payload.operation || '').toUpperCase();
+        const permissionId = approvalCall(() => root.YC.approval.permissionFor(resourceType, operation));
+        const scope = root.YC.approval.resourceScope(payload, draft);
+        if (!root.YC.policy.can(context.actor, permissionId, scope, draft)) {
+          throw new CommandError('FORBIDDEN', 'Tài khoản hiện tại không có quyền gửi đề xuất này.');
+        }
+        const request = approvalCall(() => root.YC.approval.buildRequest({ ...payload, reason }, {
+          actorId: context.actor.id,
+          now: nowIso(),
+          state: draft,
+        }));
+        draft.changeRequests.push(request);
+        const event = appendEvent(draft, context, 'CHANGE_REQUEST_SUBMITTED', 'CHANGE_REQUEST', request.id, `${request.resourceType} · ${request.operation} · ${reason}.`);
+        request.eventIds.push(event.id);
+        appendAudit(draft, context, 'CHANGE_REQUEST_SUBMITTED', 'CHANGE_REQUEST', request.id, reason);
+        notifyRole(draft, 'ADMIN', 'Có yêu cầu chờ phê duyệt', `${context.actor.name}: ${request.resourceType} · ${request.operation}.`, `/app/admin/approvals/${request.id}`);
+        return {
+          message: 'Đã gửi yêu cầu và đang chờ Quản trị viên duyệt.',
+          requestId: request.id,
+          provisionalResourceId: request.provisionalResourceId,
+          status: request.status,
+        };
+      },
+
+      REVIEW_CHANGE_REQUEST(draft, payload, context) {
+        requirePermission(draft, context, 'approval.decide');
+        const request = required(draft.changeRequests.find((item) => item.id === payload.requestId), 'REQUEST_NOT_FOUND', 'Không tìm thấy yêu cầu phê duyệt.');
+        const inputDecision = String(payload.decision || '').toUpperCase();
+        const decisionMap = { APPROVE: 'APPROVED', REJECT: 'REJECTED', REQUEST_CHANGES: 'CHANGES_REQUESTED', CHANGES_REQUESTED: 'CHANGES_REQUESTED' };
+        const nextStatus = decisionMap[inputDecision];
+        if (!nextStatus) throw new CommandError('INVALID_REVIEW_DECISION', 'Quyết định duyệt không hợp lệ.');
+        if (request.status === nextStatus && ['APPROVED', 'REJECTED', 'CHANGES_REQUESTED'].includes(nextStatus)) {
+          return { message: 'Quyết định này đã được ghi nhận trước đó.', requestId: request.id, status: request.status, idempotent: true, applied: request.status === 'APPROVED' };
+        }
+        if (request.submittedBy === context.actor.id) throw new CommandError('SELF_REVIEW_FORBIDDEN', 'Người gửi không được tự duyệt yêu cầu của mình.');
+        const note = String(payload.note || '').trim();
+        if (['REJECTED', 'CHANGES_REQUESTED'].includes(nextStatus) && !note) {
+          throw new CommandError('REVIEW_NOTE_REQUIRED', 'Từ chối hoặc yêu cầu chỉnh sửa phải có ghi chú.');
+        }
+        approvalCall(() => root.YC.approval.assertReviewable(request, draft));
+        request.reviewerId = context.actor.id;
+        request.reviewNote = note || null;
+        request.reviewedAt = nowIso();
+
+        if (nextStatus === 'APPROVED' && root.YC.approval.stale(request, draft)) {
+          root.YC.approval.transition(request, 'CONFLICTED');
+          const event = appendEvent(draft, context, 'CHANGE_REQUEST_CONFLICTED', 'CHANGE_REQUEST', request.id, 'Dữ liệu gốc đã thay đổi; yêu cầu cần được cập nhật lại.');
+          request.eventIds.push(event.id);
+          appendAudit(draft, context, 'CHANGE_REQUEST_CONFLICTED', 'CHANGE_REQUEST', request.id, note || 'Phát hiện sai khác phiên bản dữ liệu gốc.');
+          notifyUser(draft, request.submittedBy, 'Yêu cầu cần cập nhật lại', `${request.resourceType} · dữ liệu gốc đã thay đổi.`, `/app/teacher/requests/${request.id}`);
+          return { message: 'Yêu cầu bị xung đột phiên bản và chưa được áp dụng.', requestId: request.id, status: request.status, applied: false };
+        }
+
+        if (nextStatus === 'APPROVED') {
+          const canonical = approvalCall(() => root.YC.approval.applyChange(request, draft));
+          root.YC.approval.transition(request, 'APPROVED');
+          request.appliedAt = nowIso();
+          request.resourceId = canonical.id;
+        } else {
+          root.YC.approval.transition(request, nextStatus);
+        }
+        const type = `CHANGE_REQUEST_${request.status}`;
+        const event = appendEvent(draft, context, type, 'CHANGE_REQUEST', request.id, `${request.resourceType} · ${request.status}${note ? ` · ${note}` : ''}.`);
+        request.eventIds.push(event.id);
+        appendAudit(draft, context, type, 'CHANGE_REQUEST', request.id, note || 'Đã duyệt và áp dụng dữ liệu trong cùng transaction.');
+        notifyUser(draft, request.submittedBy, `Yêu cầu: ${request.status}`, `${request.resourceType} · ${request.operation}.`, `/app/teacher/requests/${request.id}`);
+        return { message: nextStatus === 'APPROVED' ? 'Đã duyệt và áp dụng thay đổi.' : 'Đã ghi nhận quyết định.', requestId: request.id, resourceId: request.resourceId, status: request.status, applied: nextStatus === 'APPROVED' };
+      },
+
+      WITHDRAW_CHANGE_REQUEST(draft, payload, context) {
+        const request = required(draft.changeRequests.find((item) => item.id === payload.requestId), 'REQUEST_NOT_FOUND', 'Không tìm thấy yêu cầu phê duyệt.');
+        if (request.submittedBy !== context.actor.id) throw new CommandError('FORBIDDEN', 'Chỉ người gửi mới được rút yêu cầu.');
+        const reason = String(payload.reason || '').trim();
+        if (!reason) throw new CommandError('REASON_REQUIRED', 'Cần ghi rõ lý do rút yêu cầu.');
+        approvalCall(() => root.YC.approval.transition(request, 'WITHDRAWN'));
+        request.withdrawnAt = nowIso();
+        request.withdrawnBy = context.actor.id;
+        request.withdrawReason = reason;
+        const event = appendEvent(draft, context, 'CHANGE_REQUEST_WITHDRAWN', 'CHANGE_REQUEST', request.id, reason);
+        request.eventIds.push(event.id);
+        appendAudit(draft, context, 'CHANGE_REQUEST_WITHDRAWN', 'CHANGE_REQUEST', request.id, reason);
+        return { message: 'Đã rút yêu cầu và giữ lại lịch sử.', requestId: request.id, status: request.status };
       },
 
       CREATE_PUBLIC_LEAD(draft, payload, context) {
