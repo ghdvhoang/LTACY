@@ -47,7 +47,14 @@
       const label = ['STUDENT', 'PARENT'].includes(ctx.actor.role) ? 'Khu vực học tập' : 'Khu vực làm việc';
       accountActions = `<a class="btn btn-primary auth-action" href="#${root.YC.selectors.roleHome(ctx.actor.role)}">${label}</a>`;
     }
-    return `<header class="public-header"><div class="container">${brand()}<nav aria-label="Điều hướng chính"><a href="#/chuong-trinh">Chương trình</a><a href="#/lich-hoc">Lịch khai giảng</a><a href="#/phu-huynh-hoc-sinh">Phụ huynh & học viên</a><a href="#/giai-phap-trung-tam">Giải pháp trung tâm</a></nav><div class="public-actions"><a class="header-search" href="#/chuong-trinh" aria-label="Tìm kiếm">${icon('search')}</a>${accountActions}</div><button class="mobile-menu" type="button" data-action="toggle-mobile-nav" aria-label="Mở menu">☰</button></div></header>`;
+    const navigation = root.YC.publicContent.publicNavigation(ctx.state);
+    const desktopMenus = navigation.map((group) => {
+      const id = `public-menu-${String(group.key || group.id).toLowerCase().replace(/[^a-z0-9-]/g, '-')}`;
+      return `<div class="public-menu" data-public-menu><button type="button" data-action="toggle-public-menu" data-menu-id="${escapeHtml(id)}" aria-expanded="false" aria-controls="${escapeHtml(id)}">${escapeHtml(group.label)}<span aria-hidden="true">⌄</span></button><div class="public-menu-panel" id="${escapeHtml(id)}" hidden>${group.items.map((item) => `<a href="#${escapeHtml(item.href)}"><strong>${escapeHtml(item.label)}</strong>${item.summary ? `<small>${escapeHtml(item.summary)}</small>` : ''}</a>`).join('')}</div></div>`;
+    }).join('');
+    const mobileMenus = navigation.map((group) => `<section><strong>${escapeHtml(group.label)}</strong>${group.items.map((item) => `<a href="#${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>`).join('')}</section>`).join('');
+    const hotline = root.YC.publicContent.published('contactChannels', ctx.state).find((item) => item.type === 'HOTLINE' && item.value);
+    return `<header class="public-header"><div class="container">${brand()}<nav class="public-nav" aria-label="Điều hướng chính">${desktopMenus}</nav><div class="public-actions">${hotline ? `<a class="hotline-action" href="${escapeHtml(hotline.href || '/lien-he')}">${icon('phone')}<span>${escapeHtml(hotline.value)}</span></a>` : ''}${accountActions}</div><button class="mobile-menu" type="button" data-action="toggle-mobile-nav" aria-label="Mở menu" aria-expanded="false" aria-controls="mobile-public-nav">☰</button></div><div class="mobile-public-nav" id="mobile-public-nav" aria-hidden="true">${mobileMenus}<div class="mobile-account-actions">${accountActions}</div></div></header>`;
   }
 
   function publicFooter(ctx) {

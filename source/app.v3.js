@@ -3403,6 +3403,7 @@
       clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
       grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
       people: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+      phone: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2Z"/>',
       search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
       shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/>',
       spark: '<path d="m12 3-1.7 4.3L6 9l4.3 1.7L12 15l1.7-4.3L18 9l-4.3-1.7L12 3Z"/><path d="m5 16-.8 2.2L2 19l2.2.8L5 22l.8-2.2L8 19l-2.2-.8L5 16Z"/>',
@@ -4809,7 +4810,14 @@
       const label = ['STUDENT', 'PARENT'].includes(ctx.actor.role) ? 'Khu vực học tập' : 'Khu vực làm việc';
       accountActions = `<a class="btn btn-primary auth-action" href="#${root.YC.selectors.roleHome(ctx.actor.role)}">${label}</a>`;
     }
-    return `<header class="public-header"><div class="container">${brand()}<nav aria-label="Điều hướng chính"><a href="#/chuong-trinh">Chương trình</a><a href="#/lich-hoc">Lịch khai giảng</a><a href="#/phu-huynh-hoc-sinh">Phụ huynh & học viên</a><a href="#/giai-phap-trung-tam">Giải pháp trung tâm</a></nav><div class="public-actions"><a class="header-search" href="#/chuong-trinh" aria-label="Tìm kiếm">${icon('search')}</a>${accountActions}</div><button class="mobile-menu" type="button" data-action="toggle-mobile-nav" aria-label="Mở menu">☰</button></div></header>`;
+    const navigation = root.YC.publicContent.publicNavigation(ctx.state);
+    const desktopMenus = navigation.map((group) => {
+      const id = `public-menu-${String(group.key || group.id).toLowerCase().replace(/[^a-z0-9-]/g, '-')}`;
+      return `<div class="public-menu" data-public-menu><button type="button" data-action="toggle-public-menu" data-menu-id="${escapeHtml(id)}" aria-expanded="false" aria-controls="${escapeHtml(id)}">${escapeHtml(group.label)}<span aria-hidden="true">⌄</span></button><div class="public-menu-panel" id="${escapeHtml(id)}" hidden>${group.items.map((item) => `<a href="#${escapeHtml(item.href)}"><strong>${escapeHtml(item.label)}</strong>${item.summary ? `<small>${escapeHtml(item.summary)}</small>` : ''}</a>`).join('')}</div></div>`;
+    }).join('');
+    const mobileMenus = navigation.map((group) => `<section><strong>${escapeHtml(group.label)}</strong>${group.items.map((item) => `<a href="#${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>`).join('')}</section>`).join('');
+    const hotline = root.YC.publicContent.published('contactChannels', ctx.state).find((item) => item.type === 'HOTLINE' && item.value);
+    return `<header class="public-header"><div class="container">${brand()}<nav class="public-nav" aria-label="Điều hướng chính">${desktopMenus}</nav><div class="public-actions">${hotline ? `<a class="hotline-action" href="${escapeHtml(hotline.href || '/lien-he')}">${icon('phone')}<span>${escapeHtml(hotline.value)}</span></a>` : ''}${accountActions}</div><button class="mobile-menu" type="button" data-action="toggle-mobile-nav" aria-label="Mở menu" aria-expanded="false" aria-controls="mobile-public-nav">☰</button></div><div class="mobile-public-nav" id="mobile-public-nav" aria-hidden="true">${mobileMenus}<div class="mobile-account-actions">${accountActions}</div></div></header>`;
   }
 
   function publicFooter(ctx) {
@@ -5412,13 +5420,36 @@
       if (element) element.setAttribute('hidden', '');
     }
 
+    function closePublicMenus(exceptId = null) {
+      document.querySelectorAll('[data-public-menu] > button').forEach((button) => {
+        if (button.dataset.menuId === exceptId) return;
+        button.setAttribute('aria-expanded', 'false');
+        document.getElementById(button.dataset.menuId)?.setAttribute('hidden', '');
+      });
+    }
+
     document.addEventListener('click', (event) => {
       const trigger = event.target.closest('[data-action]');
-      if (!trigger) return;
+      if (!trigger) { if (!event.target.closest('[data-public-menu]')) closePublicMenus(); return; }
       const action = trigger.dataset.action;
       if (action === 'dismiss-toast') { toastRoot.innerHTML = ''; return; }
       if (action === 'toggle-sidebar') { document.body.classList.toggle('sidebar-collapsed'); return; }
-      if (action === 'toggle-mobile-nav') { document.body.classList.toggle('mobile-nav-open'); return; }
+      if (action === 'toggle-public-menu') {
+        const menuId = trigger.dataset.menuId;
+        const panel = document.getElementById(menuId);
+        const opening = trigger.getAttribute('aria-expanded') !== 'true';
+        closePublicMenus(menuId);
+        trigger.setAttribute('aria-expanded', String(opening));
+        if (panel) panel.toggleAttribute('hidden', !opening);
+        return;
+      }
+      if (action === 'toggle-mobile-nav') {
+        const opening = !document.body.classList.contains('mobile-nav-open');
+        document.body.classList.toggle('mobile-nav-open', opening);
+        trigger.setAttribute('aria-expanded', String(opening));
+        document.getElementById('mobile-public-nav')?.setAttribute('aria-hidden', String(!opening));
+        return;
+      }
       if (action === 'open-role-switcher') { const element = document.querySelector('[data-role-switcher]'); if (element) element.removeAttribute('hidden'); return; }
       if (action === 'close-role-switcher') { hide('[data-role-switcher]'); return; }
       if (action === 'show-notifications') { const element = document.querySelector('[data-notification-drawer]'); if (element) element.removeAttribute('hidden'); return; }
@@ -5510,6 +5541,15 @@
       document.querySelectorAll('#main-content tbody tr, #main-content .queue-card, #main-content .candidate-card, #main-content .learning-list > article, #main-content .lesson-plan, #main-content .lesson-row, #main-content .task-list > a').forEach((item) => {
         item.hidden = Boolean(query) && !normalize(item.textContent).includes(query);
       });
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      closePublicMenus();
+      document.body.classList.remove('mobile-nav-open');
+      const mobile = document.querySelector('[data-action="toggle-mobile-nav"]');
+      mobile?.setAttribute('aria-expanded', 'false');
+      document.getElementById('mobile-public-nav')?.setAttribute('aria-hidden', 'true');
     });
 
     root.addEventListener('hashchange', () => {

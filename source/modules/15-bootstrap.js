@@ -108,13 +108,36 @@
       if (element) element.setAttribute('hidden', '');
     }
 
+    function closePublicMenus(exceptId = null) {
+      document.querySelectorAll('[data-public-menu] > button').forEach((button) => {
+        if (button.dataset.menuId === exceptId) return;
+        button.setAttribute('aria-expanded', 'false');
+        document.getElementById(button.dataset.menuId)?.setAttribute('hidden', '');
+      });
+    }
+
     document.addEventListener('click', (event) => {
       const trigger = event.target.closest('[data-action]');
-      if (!trigger) return;
+      if (!trigger) { if (!event.target.closest('[data-public-menu]')) closePublicMenus(); return; }
       const action = trigger.dataset.action;
       if (action === 'dismiss-toast') { toastRoot.innerHTML = ''; return; }
       if (action === 'toggle-sidebar') { document.body.classList.toggle('sidebar-collapsed'); return; }
-      if (action === 'toggle-mobile-nav') { document.body.classList.toggle('mobile-nav-open'); return; }
+      if (action === 'toggle-public-menu') {
+        const menuId = trigger.dataset.menuId;
+        const panel = document.getElementById(menuId);
+        const opening = trigger.getAttribute('aria-expanded') !== 'true';
+        closePublicMenus(menuId);
+        trigger.setAttribute('aria-expanded', String(opening));
+        if (panel) panel.toggleAttribute('hidden', !opening);
+        return;
+      }
+      if (action === 'toggle-mobile-nav') {
+        const opening = !document.body.classList.contains('mobile-nav-open');
+        document.body.classList.toggle('mobile-nav-open', opening);
+        trigger.setAttribute('aria-expanded', String(opening));
+        document.getElementById('mobile-public-nav')?.setAttribute('aria-hidden', String(!opening));
+        return;
+      }
       if (action === 'open-role-switcher') { const element = document.querySelector('[data-role-switcher]'); if (element) element.removeAttribute('hidden'); return; }
       if (action === 'close-role-switcher') { hide('[data-role-switcher]'); return; }
       if (action === 'show-notifications') { const element = document.querySelector('[data-notification-drawer]'); if (element) element.removeAttribute('hidden'); return; }
@@ -206,6 +229,15 @@
       document.querySelectorAll('#main-content tbody tr, #main-content .queue-card, #main-content .candidate-card, #main-content .learning-list > article, #main-content .lesson-plan, #main-content .lesson-row, #main-content .task-list > a').forEach((item) => {
         item.hidden = Boolean(query) && !normalize(item.textContent).includes(query);
       });
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      closePublicMenus();
+      document.body.classList.remove('mobile-nav-open');
+      const mobile = document.querySelector('[data-action="toggle-mobile-nav"]');
+      mobile?.setAttribute('aria-expanded', 'false');
+      document.getElementById('mobile-public-nav')?.setAttribute('aria-hidden', 'true');
     });
 
     root.addEventListener('hashchange', () => {
