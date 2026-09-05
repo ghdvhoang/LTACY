@@ -17,6 +17,7 @@ docs/KNOWN-LIMITATIONS.md
 docs/PO-REVIEW.md
 docs/PRODUCT-SPEC.md
 docs/SCOPE-MINDMAP.png
+docs/V2-SUPERSET-SPEC.md
 docs/VERIFICATION.md
 scripts/build_standalone.py
 source/README.md
@@ -48,11 +49,17 @@ source/validation/verify_prototype.py
 source/yen-center-lms-demo.html
 tests/domain/academic-teacher-ops.test.cjs
 tests/domain/admissions-commerce.test.cjs
+tests/domain/attendance-ui.test.cjs
+tests/domain/auth-ui.test.cjs
 tests/domain/canonical-journey.test.cjs
+tests/domain/course-superset.test.cjs
 tests/domain/demo-controller.test.cjs
 tests/domain/foundation.test.cjs
 tests/domain/learning-outcomes.test.cjs
+tests/domain/remedial-ui.test.cjs
 tests/domain/store-policy.test.cjs
+tests/domain/v2-route-parity.test.cjs
+tests/domain/vietnamese-ui.test.cjs
 tests/domain/views-router.test.cjs
 tests/helpers/load-runtime.cjs
 tests/static/test_build.py

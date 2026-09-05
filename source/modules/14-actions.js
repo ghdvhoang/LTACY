@@ -78,9 +78,9 @@
       if (!result.ok) return result;
       persistActor(step.actorId);
       if (navigate && location && !String(location.hash || '').includes('/demo-guide')) location.hash = `#${step.route}`;
-      onToast(`${step.label}: đã lưu evidence.`, 'success');
+      onToast(`${step.label}: đã lưu bằng chứng.`, 'success');
       onChange();
-      return { ok: true, message: `${step.label}: đã lưu evidence.`, step, completed: result.completed };
+      return { ok: true, message: `${step.label}: đã lưu bằng chứng.`, step, completed: result.completed };
     }
 
     function runCanonicalAll() {
@@ -88,9 +88,9 @@
       for (let index = 0; index < 32; index += 1) {
         const step = root.YC.demoGuide.nextStep(state());
         if (!step.commands.length) {
-          onToast('Hành trình canonical đã hoàn tất từ lead đến renewal.', 'success');
+          onToast('Hành trình mẫu đã hoàn tất từ tư vấn đến gia hạn.', 'success');
           onChange();
-          return { ok: true, done: true, completed, message: 'Hành trình canonical đã hoàn tất từ lead đến renewal.' };
+          return { ok: true, done: true, completed, message: 'Hành trình mẫu đã hoàn tất từ tư vấn đến gia hạn.' };
         }
         const result = runCommands(step.commands);
         if (!result.ok) return result;
@@ -133,6 +133,15 @@
       if (action === 'canonical-next') return runCanonicalNext({ navigate: true });
       if (action === 'canonical-run-all') return runCanonicalAll();
       if (action === 'load-checkpoint') return loadCheckpoint(data.checkpoint);
+      if (action === 'prepare-core-demo') {
+        const result = loadCheckpoint('REMEDIAL_ASSIGNED');
+        if (!result.ok) return result;
+        persistActor('teacher-1');
+        if (location) location.hash = '#/app/teacher/sessions/session-canonical/attendance';
+        onToast('Ca học đã sẵn sàng. Hãy điểm danh Nguyễn Minh Anh vắng.', 'success');
+        onChange();
+        return { ...result, message: 'Đã chuẩn bị luồng điểm danh chính.' };
+      }
       if (action === 'login') {
         const actor = state().users.find((item) => item.id === data.actorId);
         if (!actor) return { ok: false, code: 'ACTOR_NOT_FOUND', message: 'Không tìm thấy vai trò demo.' };
@@ -257,10 +266,10 @@
       if (action === 'copy-remedial-link') {
         const assignment = state().remedialAssignments.find((item) => item.id === data.assignmentId);
         if (!assignment) return { ok: false, code: 'REMEDIAL_NOT_FOUND', message: 'Không tìm thấy bài học bù.' };
-        if (assignment.accessStatus === 'REVOKED') return { ok: false, code: 'LINK_REVOKED', message: 'Link đã bị thu hồi. Hãy tạo lại trước khi sao chép.' };
+        if (assignment.accessStatus === 'REVOKED') return { ok: false, code: 'LINK_REVOKED', message: 'Liên kết đã bị thu hồi. Hãy tạo lại trước khi sao chép.' };
         const href = `${location?.origin || ''}${location?.pathname || ''}#/app/student/remedial/${assignment.id}?token=${assignment.accessToken}`;
         onCopy(href);
-        onToast('Đã sao chép link bài học bù.', 'success');
+        onToast('Đã sao chép liên kết bài học bù.', 'success');
         return { ok: true, href };
       }
       if (action === 'regenerate-remedial-link') {
@@ -272,7 +281,7 @@
       }
       if (action === 'revoke-remedial-link') {
         const actorId = storage?.getItem(ACTOR_KEY) || 'teacher-1';
-        const result = bus.dispatch('REVOKE_REMEDIAL_LINK', { assignmentId: data.assignmentId, reason: data.reason || 'Giáo viên thu hồi link từ màn quản lý.' }, actorId);
+        const result = bus.dispatch('REVOKE_REMEDIAL_LINK', { assignmentId: data.assignmentId, reason: data.reason || 'Giáo viên thu hồi liên kết từ màn quản lý.' }, actorId);
         onToast(result.message, result.ok ? 'success' : 'error');
         onChange();
         return result;
@@ -327,6 +336,12 @@
         onChange();
         return result;
       }
+      if (action === 'update-settings') {
+        const result = bus.dispatch('UPDATE_SETTINGS', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
       if (action === 'export-csv') {
         const output = exportDataset(state(), data.type);
         if (!output) return { ok: false, code: 'EXPORT_NOT_FOUND', message: 'Chưa có dữ liệu xuất phù hợp.' };
@@ -337,7 +352,7 @@
       if (action === 'download-demo-document') {
         const item = state().publicContent.documents.find((document) => document.id === data.documentId);
         if (!item) return { ok: false, code: 'DOCUMENT_NOT_FOUND', message: 'Không tìm thấy tài liệu.' };
-        onDownload(`tai-lieu-${item.id}.csv`, csv(['Thuộc tính', 'Giá trị'], [['Tên tài liệu', item.title], ['Đối tượng', item.audience], ['Loại', item.type], ['Ghi chú', 'Bản tải mô phỏng trong frontend demo']]));
+        onDownload(`tai-lieu-${item.id}.csv`, csv(['Thuộc tính', 'Giá trị'], [['Tên tài liệu', item.title], ['Đối tượng', item.audience], ['Loại', item.type], ['Ghi chú', 'Bản tải mô phỏng trong bản giao diện']]));
         onToast('Đã tạo bản tải mô phỏng.', 'success');
         return { ok: true };
       }

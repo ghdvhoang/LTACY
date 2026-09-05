@@ -2,8 +2,8 @@
   "status": "PASS",
   "version": "3.0.0",
   "runtime_modules": 16,
-  "bundle_bytes": 249386,
-  "standalone_bytes": 379101,
+  "bundle_bytes": 338474,
+  "standalone_bytes": 474424,
   "standalone_inline": true,
   "bundle_parity": true,
   "handbook_coverage": true

@@ -11,7 +11,7 @@
       return `<article class="program-card accent-${accents[index % accents.length]}">
         <div class="program-art"><span>${String(index + 1).padStart(2, '0')}</span>${icon(index === 1 ? 'trend' : index === 2 ? 'people' : 'book')}</div>
         <div class="program-body"><p class="eyebrow">${escapeHtml(program.audience)}</p><h3>${escapeHtml(program.name)}</h3><p>${escapeHtml(program.outcome)}</p>
-        <div class="card-meta"><span>${courseCount || 1} lộ trình</span><span>Offline · Online</span></div>${link('Khám phá chương trình', `/chuong-trinh/${program.id}`, { kind: 'ghost' })}</div>
+        <div class="card-meta"><span>${courseCount || 1} lộ trình</span><span>Trực tiếp · Trực tuyến</span></div>${link('Khám phá chương trình', `/chuong-trinh/${program.id}`, { kind: 'ghost' })}</div>
       </article>`;
     }).join('')}</div>`;
   }
@@ -19,30 +19,30 @@
   function home(ctx) {
     const { state } = ctx;
     return `<main id="main-content" class="public-main">
-      <section class="hero"><div class="container hero-grid"><div class="hero-copy"><p class="eyebrow on-dark">Lộ trình ngoại ngữ có evidence</p>
+      <section class="hero"><div class="container hero-grid"><div class="hero-copy"><p class="eyebrow on-dark">Lộ trình ngoại ngữ có bằng chứng</p>
         <h1>Học đúng trình độ.<br><span>Tiến bộ nhìn thấy được.</span></h1>
         <p>Yen Center kết nối kiểm tra đầu vào, lớp học, bài tập, đánh giá và báo cáo phụ huynh trong một hành trình minh bạch.</p>
         <div class="hero-actions">${link('Khám phá chương trình', '/chuong-trinh', { kind: 'primary' })}${link('Xem demo vận hành', '/demo-guide')}</div>
         <div class="hero-proof"><span>${icon('shield')} Dữ liệu demo minh bạch</span><span>${icon('people')} Nhiều vai trò cùng phối hợp</span></div></div>
-        <div class="hero-visual" aria-label="Minh họa lộ trình học"><div class="learning-window"><div class="window-bar"><span></span><span></span><span></span><small>My Learning</small></div>
-          <div class="window-content"><div class="lesson-kicker">ENGLISH FOUNDATION · A2.1</div><h2>Tiếp tục hành trình của Minh Anh</h2><p>Unit 4 · Past experiences</p>
-          <div class="hero-progress"><span style="width:68%"></span></div><div class="module-preview"><b>✓</b><span><strong>Video · Past Simple in context</strong><small>18 phút · Đã hoàn thành</small></span></div>
-          <div class="module-preview active"><b>▶</b><span><strong>Practice · Pair storytelling</strong><small>22 phút · Tiếp theo</small></span></div></div></div>
-          <div class="floating-stat"><strong>+18%</strong><span>Speaking confidence</span></div></div>
+        <div class="hero-visual" aria-label="Minh họa lộ trình học"><div class="learning-window"><div class="window-bar"><span></span><span></span><span></span><small>GÓC HỌC TẬP</small></div>
+          <div class="window-content"><div class="lesson-kicker">TIẾNG ANH NỀN TẢNG · A2.1</div><h2>Tiếp tục hành trình của Minh Anh</h2><p>Học phần 4 · Trải nghiệm trong quá khứ</p>
+          <div class="hero-progress"><span style="width:68%"></span></div><div class="module-preview"><b>✓</b><span><strong>Video · Thì quá khứ đơn trong ngữ cảnh</strong><small>18 phút · Đã hoàn thành</small></span></div>
+          <div class="module-preview active"><b>▶</b><span><strong>Luyện tập · Kể chuyện theo cặp</strong><small>22 phút · Tiếp theo</small></span></div></div></div>
+          <div class="floating-stat"><strong>+18%</strong><span>Tự tin giao tiếp</span></div></div>
       </div></section>
-      <section class="trust-strip"><div class="container"><span>HÀNH TRÌNH KẾT NỐI</span><strong>Placement</strong><strong>Lớp học</strong><strong>Assessment</strong><strong>Progress</strong><strong>Renewal</strong></div></section>
-      <section class="public-section container"><div class="section-intro"><p class="eyebrow">Chương trình nổi bật</p><h2>Một mục tiêu, một lộ trình rõ ràng</h2><p>Mỗi chương trình gắn chuẩn đầu ra, khối lượng học và evidence tiến bộ.</p></div>${programCards(state)}</section>
-      <section class="public-section public-band"><div class="container feature-split"><div><p class="eyebrow">Không chỉ là điểm số</p><h2>Phụ huynh biết điều gì đã xảy ra và nên hỗ trợ gì tiếp theo.</h2><p>Báo cáo kết hợp attendance, homework, sáu nhóm kỹ năng, nhận xét được phép chia sẻ và next action.</p>${link('Trải nghiệm cổng phụ huynh', '/phu-huynh-hoc-sinh', { kind: 'primary' })}</div>
-        <div class="evidence-card"><div class="evidence-top"><span class="avatar avatar-lg">MA</span><div><b>Nguyễn Minh Anh</b><small>English Foundation 6 · A2.1</small></div>${badge('ACTIVE')}</div>
-        ${['Listening|76', 'Reading|78', 'Spoken interaction|62', 'Writing|72'].map((item) => { const [label, score] = item.split('|'); return `<div class="skill-row"><span>${label}</span><div><i style="width:${score}%"></i></div><b>${score}</b></div>`; }).join('')}</div></div></section>
+      <section class="trust-strip"><div class="container"><span>HÀNH TRÌNH KẾT NỐI</span><strong>Đầu vào</strong><strong>Lớp học</strong><strong>Đánh giá</strong><strong>Tiến bộ</strong><strong>Gia hạn</strong></div></section>
+      <section class="public-section container"><div class="section-intro"><p class="eyebrow">Chương trình nổi bật</p><h2>Một mục tiêu, một lộ trình rõ ràng</h2><p>Mỗi chương trình gắn chuẩn đầu ra, khối lượng học và bằng chứng tiến bộ.</p></div>${programCards(state)}</section>
+      <section class="public-section public-band"><div class="container feature-split"><div><p class="eyebrow">Không chỉ là điểm số</p><h2>Phụ huynh biết điều gì đã xảy ra và nên hỗ trợ gì tiếp theo.</h2><p>Báo cáo kết hợp chuyên cần, bài tập, sáu nhóm kỹ năng, nhận xét được phép chia sẻ và việc cần làm tiếp theo.</p>${link('Trải nghiệm cổng phụ huynh', '/phu-huynh-hoc-sinh', { kind: 'primary' })}</div>
+        <div class="evidence-card"><div class="evidence-top"><span class="avatar avatar-lg">MA</span><div><b>Nguyễn Minh Anh</b><small>Tiếng Anh nền tảng 6 · A2.1</small></div>${badge('ACTIVE')}</div>
+        ${['Nghe|76', 'Đọc|78', 'Tương tác nói|62', 'Viết|72'].map((item) => { const [label, score] = item.split('|'); return `<div class="skill-row"><span>${label}</span><div><i style="width:${score}%"></i></div><b>${score}</b></div>`; }).join('')}</div></div></section>
       <section class="public-cta"><div class="container"><div><p class="eyebrow on-dark">Bắt đầu từ đúng trình độ</p><h2>Đặt lịch kiểm tra đầu vào miễn phí</h2><p>Nhận khuyến nghị chương trình theo sáu nhóm kỹ năng.</p></div>${link('Đăng ký tư vấn', '/lien-he', { kind: 'primary' })}</div></section>
     </main>`;
   }
 
   function catalog(ctx) {
-    return `<main id="main-content" class="public-main"><section class="catalog-hero"><div class="container"><p class="eyebrow on-dark">Khám phá</p><h1>Chọn lộ trình phù hợp với mục tiêu</h1><p>Tìm theo độ tuổi, trình độ và hình thức học. Mọi khóa đều có chuẩn đầu ra và progress evidence.</p>
+    return `<main id="main-content" class="public-main"><section class="catalog-hero"><div class="container"><p class="eyebrow on-dark">Khám phá</p><h1>Chọn lộ trình phù hợp với mục tiêu</h1><p>Tìm theo độ tuổi, trình độ và hình thức học. Mọi khóa đều có chuẩn đầu ra và bằng chứng tiến bộ.</p>
       <label class="search-box">${icon('search')}<input type="search" placeholder="Tìm chương trình, kỹ năng hoặc trình độ" aria-label="Tìm chương trình"></label></div></section>
-      <section class="public-section container"><div class="filter-row"><button class="chip active">Tất cả</button><button class="chip">Young Learners</button><button class="chip">Teen</button><button class="chip">Adult</button><button class="chip">IELTS</button></div>${programCards(ctx.state)}</section></main>`;
+      <section class="public-section container"><div class="filter-row"><button class="chip active">Tất cả</button><button class="chip">Thiếu nhi</button><button class="chip">Thiếu niên</button><button class="chip">Người lớn</button><button class="chip">IELTS</button></div>${programCards(ctx.state)}</section></main>`;
   }
 
   function programDetail(ctx, programId) {
@@ -50,17 +50,17 @@
     const program = state.programs.find((item) => item.id === programId) || state.programs[0];
     const courses = state.courses.filter((item) => item.programId === program.id);
     const versions = courses.map((course) => state.courseVersions.find((item) => item.courseId === course.id)).filter(Boolean);
-    return `<main id="main-content" class="public-main"><section class="course-hero"><div class="container"><div><p class="eyebrow on-dark">${escapeHtml(program.audience)}</p><h1>${escapeHtml(program.name)}</h1><p>${escapeHtml(program.outcome)}. Học theo lộ trình rõ ràng với feedback và báo cáo tiến bộ định kỳ.</p>${link('Đăng ký placement', '/lien-he', { kind: 'primary' })}</div>
-      <aside class="course-summary"><span class="summary-mark">YC</span><h3>Bắt đầu bằng placement</h3><p>Xác định đúng level trước khi chọn lớp.</p>${link('Xem lịch khai giảng', '/lich-hoc')}</aside></div></section>
-      <section class="course-facts"><div class="container">${fact('trend', 'Trình độ', versions.map((item) => item.title.split('·').at(-1).trim()).join(' → ') || 'Theo placement')}${fact('clock', 'Thời lượng', `${versions[0]?.totalHours || 48} giờ / level`)}${fact('calendar', 'Hình thức', 'Offline · Online')}${fact('shield', 'Đầu ra', '6 skill evidence')}</div></section>
+    return `<main id="main-content" class="public-main"><section class="course-hero"><div class="container"><div><p class="eyebrow on-dark">${escapeHtml(program.audience)}</p><h1>${escapeHtml(program.name)}</h1><p>${escapeHtml(program.outcome)}. Học theo lộ trình rõ ràng với phản hồi và báo cáo tiến bộ định kỳ.</p>${link('Đăng ký kiểm tra đầu vào', '/lien-he', { kind: 'primary' })}</div>
+      <aside class="course-summary"><span class="summary-mark">YC</span><h3>Bắt đầu bằng kiểm tra đầu vào</h3><p>Xác định đúng cấp độ trước khi chọn lớp.</p>${link('Xem lịch khai giảng', '/lich-hoc')}</aside></div></section>
+      <section class="course-facts"><div class="container">${fact('trend', 'Trình độ', versions.map((item) => item.title.split('·').at(-1).trim()).join(' → ') || 'Theo đầu vào')}${fact('clock', 'Thời lượng', `${versions[0]?.totalHours || 48} giờ / cấp độ`)}${fact('calendar', 'Hình thức', 'Trực tiếp · Trực tuyến')}${fact('shield', 'Đầu ra', 'Bằng chứng 6 kỹ năng')}</div></section>
       <section class="public-section container course-layout"><div><div class="section-intro align-left"><p class="eyebrow">Lộ trình học</p><h2>Từ nền tảng đến sử dụng tự tin</h2></div>
-        <div class="course-levels">${versions.map((version, index) => `<details class="course-module" ${index === 0 ? 'open' : ''}><summary><span><small>LEVEL ${index + 1}</small><strong>${escapeHtml(version.title)}</strong></span><span>${version.totalHours} giờ ${icon('arrow')}</span></summary><div><p>Chuẩn đầu ra: attendance ≥ ${version.completionRule.attendanceMinimum}%, final ≥ ${version.completionRule.finalScoreMinimum}, từng skill ≥ ${version.completionRule.skillMinimum}.</p><ul><li>Live lesson và guided practice</li><li>Homework với feedback vòng lặp</li><li>Progress report và promotion decision</li></ul></div></details>`).join('')}</div></div>
-        <aside class="sticky-enroll"><p class="eyebrow">Bước tiếp theo</p><h3>Chưa chắc mình ở level nào?</h3><p>Placement đa kỹ năng giúp trung tâm xếp đúng lớp và lịch phù hợp.</p>${link('Đặt lịch miễn phí', '/lien-he', { kind: 'primary' })}<small>Không cần thanh toán ở bước này.</small></aside></section></main>`;
+        <div class="course-levels">${versions.map((version, index) => `<details class="course-module" ${index === 0 ? 'open' : ''}><summary><span><small>CẤP ĐỘ ${index + 1}</small><strong>${escapeHtml(version.title)}</strong></span><span>${version.totalHours} giờ ${icon('arrow')}</span></summary><div><p>Chuẩn đầu ra: chuyên cần ≥ ${version.completionRule.attendanceMinimum}%, cuối khóa ≥ ${version.completionRule.finalScoreMinimum}, từng kỹ năng ≥ ${version.completionRule.skillMinimum}.</p><ul><li>Bài học trực tiếp và luyện tập có hướng dẫn</li><li>Bài tập với vòng lặp phản hồi</li><li>Báo cáo tiến bộ và quyết định lên lớp</li></ul></div></details>`).join('')}</div></div>
+        <aside class="sticky-enroll"><p class="eyebrow">Bước tiếp theo</p><h3>Chưa chắc mình ở cấp độ nào?</h3><p>Kiểm tra đầu vào đa kỹ năng giúp trung tâm xếp đúng lớp và lịch phù hợp.</p>${link('Đặt lịch miễn phí', '/lien-he', { kind: 'primary' })}<small>Không cần thanh toán ở bước này.</small></aside></section></main>`;
   }
 
   function schedule(ctx) {
     const { state } = ctx;
-    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Lịch khai giảng</p><h1>Tìm lớp vừa mục tiêu, vừa lịch sống</h1><p>Lịch dưới đây là dữ liệu demo và số chỗ được tính từ enrollment hiện tại.</p></div></section><section class="public-section container">
+    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Lịch khai giảng</p><h1>Tìm lớp vừa mục tiêu, vừa lịch sống</h1><p>Lịch dưới đây là dữ liệu demo và số chỗ được tính từ ghi danh hiện tại.</p></div></section><section class="public-section container">
       <div class="schedule-list">${state.classes.map((cohort) => { const used = state.enrollments.filter((item) => item.classId === cohort.id && item.status === 'ACTIVE').length; return `<article class="schedule-row"><div><p>${escapeHtml(state.branches.find((item) => item.id === cohort.branchId)?.name || '')}</p><h3>${escapeHtml(cohort.name)}</h3><span>${escapeHtml(cohort.code)}</span></div><div><small>Lịch học</small><strong>${escapeHtml(cohort.scheduleLabel)}</strong><span>${escapeHtml(cohort.mode)} · ${escapeHtml(cohort.room)}</span></div><div><small>Số chỗ</small><strong>${Math.max(0, cohort.capacity - used)}/${cohort.capacity}</strong>${badge(cohort.status)}</div>${link('Nhận tư vấn', '/lien-he')}</article>`; }).join('')}</div></section></main>`;
   }
 
@@ -80,9 +80,9 @@
   }
 
   function centerSolution() {
-    return `<main id="main-content" class="public-main"><section class="simple-hero dark"><div class="container"><p class="eyebrow on-dark">Giải pháp trung tâm</p><h1>Một operating model từ lead đến renewal</h1><p>Quyết định dựa trên evidence, chuyển giao bằng event, truy vết bằng audit.</p></div></section><section class="public-section container"><div class="solution-grid">${[
-      ['Admissions & placement', 'Lead, consultation, placement, offer và mock commerce.'], ['Academic design', 'Course version immutable, lesson template và completion rule.'], ['Teacher operations', 'Eligibility, workload, assignment, delivery và grading.'], ['Student service', 'Allocation, make-up, transfer, substitution và case ownership.'], ['Learning outcomes', 'Homework loop, assessment, moderation và promotion.'], ['Parent & renewal', 'Published progress, visibility policy và next-level offer.'],
-    ].map(([title, text], index) => `<article><span>${String(index + 1).padStart(2, '0')}</span><h3>${title}</h3><p>${text}</p></article>`).join('')}</div>${section('Bản demo frontend trung thực', '<p>Xác thực, thanh toán, nhắn tin và tích hợp đều được mô phỏng rõ ràng. Không có dữ liệu thật được gửi ra bên ngoài.</p>', { className: 'notice-panel' })}</section><section class="public-section container contact-grid"><div><p class="eyebrow">Dành cho trung tâm</p><h2>Đặt lịch xem luồng vận hành</h2><p>Thông tin được lưu vào Hộp thư liên hệ để kiểm tra xuyên vai trò.</p></div>${publicLeadForm('B2B')}</section></main>`;
+    return `<main id="main-content" class="public-main"><section class="simple-hero dark"><div class="container"><p class="eyebrow on-dark">Giải pháp trung tâm</p><h1>Một mô hình vận hành từ khách hàng đến gia hạn</h1><p>Quyết định dựa trên bằng chứng, chuyển giao bằng sự kiện, truy vết bằng nhật ký.</p></div></section><section class="public-section container"><div class="solution-grid">${[
+      ['Tuyển sinh và đầu vào', 'Khách hàng, tư vấn, kiểm tra đầu vào, gói học và tài chính mô phỏng.'], ['Thiết kế học thuật', 'Phiên bản khóa học không thể sửa, mẫu bài học và quy tắc hoàn thành.'], ['Vận hành giáo viên', 'Điều kiện, khối lượng, phân công, giảng dạy và chấm bài.'], ['Dịch vụ học viên', 'Xếp lớp, học bù, chuyển lớp, dạy thay và người phụ trách vụ việc.'], ['Kết quả học tập', 'Vòng lặp bài tập, đánh giá, kiểm duyệt và lên lớp.'], ['Phụ huynh và gia hạn', 'Tiến bộ đã công bố, chính sách hiển thị và gói cấp độ tiếp theo.'],
+    ].map(([title, text], index) => `<article><span>${String(index + 1).padStart(2, '0')}</span><h3>${title}</h3><p>${text}</p></article>`).join('')}</div>${section('Bản demo giao diện trung thực', '<p>Xác thực, thanh toán, nhắn tin và tích hợp đều được mô phỏng rõ ràng. Không có dữ liệu thật được gửi ra bên ngoài.</p>', { className: 'notice-panel' })}</section><section class="public-section container contact-grid"><div><p class="eyebrow">Dành cho trung tâm</p><h2>Đặt lịch xem luồng vận hành</h2><p>Thông tin được lưu vào Hộp thư liên hệ để kiểm tra xuyên vai trò.</p></div>${publicLeadForm('B2B')}</section></main>`;
   }
 
   function contact() {
@@ -107,7 +107,7 @@
 
   function legal(kind) {
     const privacy = kind === 'privacy';
-    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Thông tin pháp lý</p><h1>${privacy ? 'Chính sách bảo mật' : 'Điều khoản sử dụng'}</h1><p>Bản demo frontend này không phải dịch vụ sản xuất và không tiếp nhận dữ liệu thật.</p></div></section><section class="public-section container"><div class="panel panel-body"><h2>${privacy ? 'Dữ liệu cục bộ' : 'Phạm vi sử dụng'}</h2><p>${privacy ? 'Dữ liệu nhập trong demo được lưu vào localStorage của trình duyệt và có thể xóa bằng thao tác đặt lại demo.' : 'Chỉ sử dụng để đánh giá luồng giao diện và nghiệp vụ mô phỏng. Thanh toán, nhắn tin và tích hợp không gọi hệ thống bên ngoài.'}</p></div></section></main>`;
+    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Thông tin pháp lý</p><h1>${privacy ? 'Chính sách bảo mật' : 'Điều khoản sử dụng'}</h1><p>Bản demo giao diện này không phải dịch vụ sản xuất và không tiếp nhận dữ liệu thật.</p></div></section><section class="public-section container"><div class="panel panel-body"><h2>${privacy ? 'Dữ liệu cục bộ' : 'Phạm vi sử dụng'}</h2><p>${privacy ? 'Dữ liệu nhập trong demo được lưu vào bộ nhớ trình duyệt và có thể xóa bằng thao tác đặt lại demo.' : 'Chỉ sử dụng để đánh giá luồng giao diện và nghiệp vụ mô phỏng. Thanh toán, nhắn tin và tích hợp không gọi hệ thống bên ngoài.'}</p></div></section></main>`;
   }
 
   function errorPage(code) {

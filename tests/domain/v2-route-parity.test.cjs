@@ -68,6 +68,25 @@ test('admin can add learner, update lead status, read notifications and record m
   assert.equal(store.getState().auditLogs[0].action, 'MOCK_SYNC_COMPLETED');
 });
 
+test('admin can update demo learning settings with validated values', () => {
+  const YC = loadYC(['store', 'commands']);
+  const store = YC.store.create({ storage: memoryStorage(), clock: () => '2026-09-05T02:00:00.000Z' });
+  const bus = YC.commands.create(store);
+
+  const result = bus.dispatch('UPDATE_SETTINGS', {
+    minimumVideoProgress: 90,
+    defaultPassingScore: 85,
+    remedialDeadlineDays: 10,
+  }, 'admin-1');
+
+  assert.equal(result.ok, true, result.message);
+  assert.equal(store.getState().settings.minimumVideoProgress, 90);
+  assert.equal(store.getState().settings.defaultPassingScore, 85);
+  assert.equal(store.getState().settings.remedialDeadlineDays, 10);
+  assert.equal(store.getState().auditLogs[0].action, 'DEMO_SETTINGS_UPDATED');
+  assert.equal(bus.dispatch('UPDATE_SETTINGS', { minimumVideoProgress: 101 }, 'admin-1').code, 'INVALID_SETTING');
+});
+
 test('legacy CSV exports produce the requested dataset', () => {
   const YC = loadYC(['store', 'commands', 'actions']);
   const storage = memoryStorage();
@@ -80,4 +99,3 @@ test('legacy CSV exports produce the requested dataset', () => {
   assert.ok(downloads.every((item) => item.content.startsWith('\uFEFF')));
   assert.ok(downloads.some((item) => /hoc-vien/.test(item.name) && /HS6A001/.test(item.content)));
 });
-

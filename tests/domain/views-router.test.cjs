@@ -40,7 +40,7 @@ test('learner course uses continue-learning and module affordances', () => {
   const html = YC.router.render('/app/student/course', context(YC, 'STUDENT', '/app/student/course'));
   assert.match(html, /Tiếp tục học/);
   assert.match(html, /course-module/);
-  assert.match(html, /Past Simple/);
+  assert.match(html, /quá khứ đơn/i);
 });
 
 test('parent views never render restricted feedback text', () => {
@@ -64,7 +64,7 @@ test('app frame blocks a mismatched workspace role without invoking the view', (
 
   const html = YC.router.frame('/app/parent/progress', ctx);
 
-  assert.match(html, /Không có quyền vào workspace này/);
+  assert.match(html, /Không có quyền vào khu vực này/);
   assert.match(html, /Chọn vai trò phù hợp/);
 });
 
@@ -72,6 +72,6 @@ test('admin data health renders the real schema version without undefined values
   const YC = loadYC(['seed', 'router']);
   const html = YC.router.render('/app/admin/dashboard', context(YC, 'ADMIN', '/app/admin/dashboard'));
 
-  assert.match(html, /<dt>State version<\/dt><dd>3<\/dd>/);
+  assert.match(html, /<dt>Phiên bản dữ liệu<\/dt><dd>3<\/dd>/);
   assert.doesNotMatch(html, /undefined/);
 });

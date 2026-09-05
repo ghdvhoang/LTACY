@@ -82,3 +82,30 @@ test('audit export uses a spreadsheet-safe UTF-8 CSV and print delegates to the 
   assert.equal(runtime.controller.execute('print-view').ok, true);
   assert.equal(runtime.printCount, 1);
 });
+
+test('core demo preparation opens manual attendance without creating the learner assignment early', () => {
+  const runtime = createController();
+
+  const result = runtime.controller.execute('prepare-core-demo');
+
+  assert.equal(result.ok, true, result.message);
+  assert.equal(runtime.storage.getItem('yc.demo.actorId'), 'teacher-1');
+  assert.equal(runtime.location.hash, '#/app/teacher/sessions/session-canonical/attendance');
+  assert.ok(runtime.store.getState().enrollments.some((item) => item.learnerId === 'student-canonical' && item.status === 'ACTIVE'));
+  assert.ok(runtime.store.getState().teacherAssignments.some((item) => item.classId === 'class-6a' && item.status === 'ACTIVE'));
+  assert.equal(runtime.store.getState().sessions.find((item) => item.id === 'session-canonical').status, 'COMPLETED');
+  assert.equal(runtime.store.getState().remedialAssignments.some((item) => item.learnerId === 'student-canonical'), false);
+});
+
+test('demo guide leads with three simple accounts and keeps the full journey collapsed', () => {
+  const runtime = createController();
+  const state = runtime.store.getState();
+  const html = runtime.YC.demoGuide.render({ state, actor: null, learnerId: 'student-canonical', path: '/demo-guide' });
+
+  assert.equal((html.match(/class="core-journey-step/g) || []).length, 3);
+  assert.match(html, /Giáo viên điểm danh/);
+  assert.match(html, /Học viên hoàn thành bài/);
+  assert.match(html, /Quản trị viên kiểm tra/);
+  assert.match(html, /<details class="advanced-journey">/);
+  assert.match(html, /Luồng đầy đủ từ tư vấn đến tái ghi danh/);
+});

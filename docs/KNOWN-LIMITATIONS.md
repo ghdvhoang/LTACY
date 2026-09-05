@@ -33,4 +33,4 @@
 ## Product scope
 
 - Release 3+ của handbook—AI, adaptive learning, standards, credentials, external certification và predictive optimization—không thuộc bản demo.
-- Visual direction lấy cảm hứng từ pattern học tập rõ ràng của Coursera, không sao chép thương hiệu, nội dung hoặc asset.
+- Hướng giao diện lấy cảm hứng từ cách Coursera tổ chức việc học rõ ràng, không sao chép thương hiệu, nội dung hoặc tài sản thiết kế.

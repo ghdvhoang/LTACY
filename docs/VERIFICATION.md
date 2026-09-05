@@ -6,7 +6,7 @@ Ngày kiểm tra: 2026-09-05
 
 | Gate | Kết quả |
 |---|---|
-| Domain/policy/router/controller tests | 44/44 PASS |
+| Kiểm thử nghiệp vụ/chính sách/router/controller | 74/74 PASS |
 | Static build/release/docs tests | 7/7 PASS |
 | Standalone release build | PASS |
 | Generated artifact freshness | PASS — 4/4 current |
@@ -20,14 +20,13 @@ Ngày kiểm tra: 2026-09-05
 
 Kiểm tra thủ công bằng in-app Chromium trên bản chạy HTTP:
 
-- Public homepage và Demo Guide render đúng hierarchy, responsive shell và 12 checkpoint.
-- `RENEWED` checkpoint mở ở 92% với renewal là next action; không còn báo hoàn tất sớm.
-- **Chạy tự động đến cuối** đạt 100%, 12/12 milestone và hiện `Hành trình đã hoàn tất`.
-- Role switcher mở/đổi được Admissions → Admin.
-- Admin Audit Logs hiển thị canonical events, có **In view** và **Xuất CSV**.
-- CSV action hoàn tất, button được re-enable và có success toast.
-- Parent progress lọc internal/restricted feedback; Learner course có continue-learning và module affordance.
-- Không có console/page error mới trong phiên QA sạch.
+- Trang đăng nhập giữ biểu mẫu quen thuộc và đúng bốn tài khoản nhanh: Giáo viên, Trợ giảng, Học viên, Quản trị viên.
+- Luồng sạch đã chạy qua Giáo viên điểm danh vắng → Học viên `HS6A001` nhận đúng bài → video 100% → bài kiểm tra 10 câu → kết quả 80/100.
+- Dashboard Học viên hiển thị đúng 0% cho bài học bù mới, không dùng giá trị minh họa 42%.
+- Course được kiểm tra ở Học viên, Xưởng nội dung Giáo viên và Quản trị khóa học Admin; cùng hiển thị một chương trình đã Việt hóa.
+- Tạo bản nháp nội dung, tìm kiếm trong trang và lưu cấu hình Admin đều hoạt động.
+- Mobile 390×844 không tràn ngang; thanh tìm kiếm desktop được ẩn đúng breakpoint và thanh điều hướng dùng nút mở.
+- Không có lỗi hoặc cảnh báo trong console ở phiên QA sạch.
 
 ## Luồng canonical đã xác minh
 
@@ -44,7 +43,7 @@ Kiểm tra thủ công bằng in-app Chromium trên bản chạy HTTP:
 11. Parent acknowledgement theo visibility policy.
 12. Create và accept next-level renewal.
 
-## Regression được thêm trong self-review
+## Hồi quy được thêm trong tự rà soát
 
 - Checkpoint lặp lại trong cùng phiên cho snapshot ổn định.
 - Journey phân biệt milestone cuối đang mở với toàn hành trình đã complete.
@@ -52,5 +51,8 @@ Kiểm tra thủ công bằng in-app Chromium trên bản chạy HTTP:
 - Admin Data Health đọc `schemaVersion` thật.
 - Audit CSV có UTF-8 BOM và chống spreadsheet formula injection.
 - Direct route khác role bị chặn trước khi view được gọi.
+- Toàn bộ route cũ có kiểm thử parity; Course có kiểm thử xuyên trang công khai, Học viên, Giáo viên và Admin.
+- Thông báo thao tác, dữ liệu khóa học mẫu và các enum hiển thị đã được Việt hóa.
+- Sao chép liên kết có phương án dự phòng khi Clipboard API bị giới hạn trên `file://`.
 
 Standalone `file://` được kiểm tra bằng static release invariant vì browser QA sandbox chặn điều hướng local file theo policy. File release không có dependency ngoài; người dùng cuối vẫn nên chạy HTTP khi cần download/print ổn định.

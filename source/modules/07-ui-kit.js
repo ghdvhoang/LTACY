@@ -4,15 +4,28 @@
   const { escapeHtml, formatDate } = root.YC.utils;
 
   const STATUS_LABELS = Object.freeze({
-    NEW: 'Mới', CONTACTED: 'Đã liên hệ', PLACEMENT_BOOKED: 'Đã đặt placement', PLACED: 'Đã placement',
+    NEW: 'Mới', CONTACTED: 'Đã liên hệ', PLACEMENT_BOOKED: 'Đã đặt kiểm tra đầu vào', PLACED: 'Đã kiểm tra đầu vào',
     OFFERED: 'Đã gửi đề nghị', SENT: 'Đã gửi', ACCEPTED: 'Đã chấp nhận', ISSUED: 'Đã phát hành', PAID: 'Đã thanh toán', WON: 'Đã chốt',
     OPEN: 'Đang mở', ACTIVE: 'Đang hoạt động', PROPOSED: 'Chờ xác nhận', CONFIRMED: 'Đã xác nhận', DRAFT: 'Bản nháp',
     READY: 'Sẵn sàng', IN_PROGRESS: 'Đang diễn ra', COMPLETED: 'Hoàn thành', NOT_PASSED: 'Cần học lại', ASSIGNED: 'Đã giao',
     SUBMITTED: 'Đã nộp', RESUBMITTED: 'Đã nộp lại', FEEDBACK_READY: 'Chờ phát hành', RELEASED: 'Đã phát hành',
-    REVISION_REQUIRED: 'Cần chỉnh sửa', APPROVED: 'Đã duyệt', MODERATION: 'Đang moderation', PUBLISHED: 'Đã publish',
+    REVISION_REQUIRED: 'Cần chỉnh sửa', APPROVED: 'Đã duyệt', MODERATION: 'Đang kiểm duyệt', PUBLISHED: 'Đã công bố',
     FINAL: 'Đã chốt', MOCKED: 'Mô phỏng', FULL: 'Hết chỗ', PRESENT: 'Có mặt', ABSENT: 'Vắng', LATE: 'Đi muộn',
     REQUESTED: 'Đã yêu cầu', HANDOVER_READY: 'Đã bàn giao', CLOSED: 'Đã đóng', VALID: 'Còn hiệu lực',
+    REJECTED: 'Không đủ điều kiện', OVERDUE: 'Quá hạn', REVOKED: 'Đã thu hồi', EXPIRED: 'Hết hạn', LOST: 'Không phù hợp',
   });
+
+  const VALUE_LABELS = Object.freeze({
+    OFFLINE: 'Trực tiếp', ONLINE: 'Trực tuyến', HYBRID: 'Kết hợp', VIDEO: 'Video', ARTICLE: 'Bài đọc', PRACTICE: 'Luyện tập', QUIZ: 'Bài kiểm tra', LIVE_ACTIVITY: 'Hoạt động trên lớp', LESSON: 'Bài học',
+    NO_SEAT: 'Hết chỗ', SCHEDULE_CHANGE: 'Đổi lịch', TRANSFER: 'Chuyển lớp', SUBSTITUTION: 'Dạy thay', B2C: 'Cá nhân', B2B: 'Tổ chức', SUPPORT: 'Hỗ trợ',
+    LISTENING: 'Nghe', READING: 'Đọc', WRITING: 'Viết', LANGUAGE: 'Ngôn ngữ', SPOKEN_INTERACTION: 'Tương tác nói', SPOKEN_PRODUCTION: 'Trình bày nói',
+    QUALIFICATION_CURRENT: 'Bằng cấp còn hạn', LEVEL_SCOPE: 'Đúng cấp độ', AGE_SCOPE: 'Đúng nhóm tuổi', MODE_SCOPE: 'Đúng hình thức', BRANCH_SCOPE: 'Đúng cơ sở', WORKLOAD_CAP: 'Trong giới hạn giờ dạy',
+  });
+
+  function valueLabel(value) {
+    const key = String(value || '').replace(/([a-z])([A-Z])/g, '$1_$2').toUpperCase();
+    return VALUE_LABELS[key] || value || '—';
+  }
 
   function money(value, currency = 'VND') {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency, maximumFractionDigits: 0 }).format(Number(value || 0));
@@ -72,7 +85,7 @@
   }
 
   function table(columns, rows, options = {}) {
-    if (!rows.length) return empty(options.emptyTitle || 'Chưa có dữ liệu', options.emptyBody || 'Evidence sẽ xuất hiện sau khi luồng được thực hiện.');
+    if (!rows.length) return empty(options.emptyTitle || 'Chưa có dữ liệu', options.emptyBody || 'Bằng chứng sẽ xuất hiện sau khi luồng được thực hiện.');
     return `<div class="table-wrap"><table><thead><tr>${columns.map((item) => `<th>${escapeHtml(item.label)}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr>${columns.map((column) => `<td>${typeof column.render === 'function' ? column.render(row) : escapeHtml(row[column.key] ?? '—')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
   }
 
@@ -93,5 +106,5 @@
     return `<div class="fact">${icon(iconName)}<span><small>${escapeHtml(label)}</small><strong>${escapeHtml(value)}</strong></span></div>`;
   }
 
-  root.YC.define('ui', Object.freeze({ badge, button, empty, fact, formatDate, icon, link, metric, money, pageHeader, person, progress, section, table }));
+  root.YC.define('ui', Object.freeze({ badge, button, empty, fact, formatDate, icon, link, metric, money, pageHeader, person, progress, section, table, valueLabel }));
 })(globalThis);

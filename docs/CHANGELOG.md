@@ -1,5 +1,14 @@
 # Changelog
 
+## Chưa phát hành — Bản demo tiếng Việt và tương thích luồng cũ
+
+- Giữ nguyên toàn bộ route cũ và bổ sung kiểm thử đối chiếu route tự động.
+- Khôi phục đăng nhập bằng thông tin tài khoản, quên mật khẩu/OTP và đúng bốn tài khoản truy cập nhanh.
+- Hoàn thiện Course từ danh mục công khai đến khu học viên, Content Studio và quản trị khóa học.
+- Bổ sung điểm danh thủ công, học bù, trình phát video, bài kiểm tra 10 câu, kết quả và vòng đời liên kết.
+- Chuyển giao diện sang tiếng Việt, rút luồng demo chính còn ba bước và giữ hành trình 12 chặng trong phần nâng cao.
+- Bổ sung biểu mẫu quản trị cấu hình, tìm kiếm trong trang và sao chép liên kết khi chạy bằng `file://`.
+
 ## v3.0.0 — Full Journey Frontend Demo (2026-09-05)
 
 - Rebuilt the frontend around a normalized Language Center domain state.

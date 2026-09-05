@@ -12,9 +12,9 @@ test('course surfaces share the same curriculum from public catalog to learner p
   const publicHtml = YC.router.render('/chuong-trinh/program-foundation', context(YC, 'STUDENT', '/chuong-trinh/program-foundation'));
   const learnerHtml = YC.router.render('/app/student/course/item-past-simple-video', context(YC, 'STUDENT', '/app/student/course/item-past-simple-video'));
 
-  assert.match(publicHtml, /English Foundation 6/);
+  assert.match(publicHtml, /Tiếng Anh nền tảng 6/);
   assert.match(publicHtml, /A2\.1/);
-  assert.match(learnerHtml, /Past Simple in context/);
+  assert.match(learnerHtml, /Thì quá khứ đơn trong ngữ cảnh/);
   assert.match(learnerHtml, /Mục tiêu học tập/);
   assert.doesNotMatch(learnerHtml, /Không tìm thấy trang/);
 });
@@ -38,7 +38,7 @@ test('admin course inventory restores every legacy content route', () => {
   for (const path of ['/app/admin/courses', '/app/admin/lessons', '/app/admin/videos', '/app/admin/questions', '/app/admin/quizzes']) {
     const html = YC.router.render(path, { ...ctx, path });
     assert.match(html, /Quản trị khóa học/);
-    assert.match(html, /English Foundation 6/);
+    assert.match(html, /Tiếng Anh nền tảng 6/);
     assert.doesNotMatch(html, /Không tìm thấy trang/);
   }
 });
@@ -67,4 +67,3 @@ test('published course versions remain immutable', () => {
   assert.equal(result.code, 'COURSE_VERSION_IMMUTABLE');
   assert.equal(store.getState().courseVersions.find((item) => item.id === 'course-v6').immutable, true);
 });
-

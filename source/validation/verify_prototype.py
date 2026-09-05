@@ -42,7 +42,7 @@ def verify_static() -> dict[str, object]:
     require(not re.search(r'<script[^>]+src=["\']\./app\.js', standalone), "Standalone links external JavaScript")
     for token in [
         "schemaVersion: 3", "canonical-run-all", "load-checkpoint", "export-csv", "print-view",
-        "LEAD_CONTACTED", "PARENT_PROGRESS_VIEWED", "RENEWAL_ACCEPTED", "Không có quyền vào workspace này",
+        "LEAD_CONTACTED", "PARENT_PROGRESS_VIEWED", "RENEWAL_ACCEPTED", "Không có quyền vào khu vực này",
     ]:
         require(token in bundle, f"Runtime token missing: {token}")
     for token in ["checkpoint-bar", "course-player-layout", "role-switcher", "@media print"]:

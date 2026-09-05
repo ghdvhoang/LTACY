@@ -64,7 +64,7 @@
     }
 
     function findLead(draft, leadId) {
-      return required(draft.leads.find((item) => item.id === leadId), 'LEAD_NOT_FOUND', 'Không tìm thấy lead.');
+      return required(draft.leads.find((item) => item.id === leadId), 'LEAD_NOT_FOUND', 'Không tìm thấy khách hàng.');
     }
 
     function latestForLead(collection, leadId) {
@@ -140,10 +140,33 @@
         return { message: 'Đã chạy đồng bộ mô phỏng.' };
       },
 
+      UPDATE_SETTINGS(draft, payload, context) {
+        requireRole(context.actor, ['ADMIN']);
+        const rules = {
+          minimumVideoProgress: { min: 1, max: 100 },
+          defaultPassingScore: { min: 1, max: 100 },
+          remedialDeadlineDays: { min: 1, max: 60 },
+        };
+        const next = {};
+        for (const [key, limits] of Object.entries(rules)) {
+          if (payload[key] === undefined || payload[key] === '') continue;
+          const value = Number(payload[key]);
+          if (!Number.isInteger(value) || value < limits.min || value > limits.max) {
+            throw new CommandError('INVALID_SETTING', `Giá trị ${key} không hợp lệ.`);
+          }
+          next[key] = value;
+        }
+        if (!Object.keys(next).length) throw new CommandError('INVALID_SETTING', 'Cần nhập ít nhất một thiết lập hợp lệ.');
+        Object.assign(draft.settings, next);
+        appendEvent(draft, context, 'DEMO_SETTINGS_UPDATED', 'SETTINGS', draft.settings.organizationId, 'Đã cập nhật quy tắc học tập của bản demo.');
+        appendAudit(draft, context, 'DEMO_SETTINGS_UPDATED', 'SETTINGS', draft.settings.organizationId, Object.entries(next).map(([key, value]) => `${key}=${value}`).join(' · '));
+        return { message: 'Đã lưu thiết lập demo.' };
+      },
+
       CONTACT_LEAD(draft, payload, context) {
         requireRole(context.actor, ['ADMISSIONS']);
         const lead = findLead(draft, payload.leadId);
-        if (lead.status !== 'NEW') throw new CommandError('INVALID_LEAD_STATE', 'Lead chỉ được liên hệ lần đầu từ trạng thái NEW.');
+        if (lead.status !== 'NEW') throw new CommandError('INVALID_LEAD_STATE', 'Khách hàng chỉ được liên hệ lần đầu từ trạng thái Mới.');
         lead.status = 'CONTACTED';
         lead.contactedAt = nowIso();
         draft.consultations.push({ id: uid('consultation'), leadId: lead.id, ownerId: context.actor.id, note: payload.note || 'Đã xác nhận nhu cầu.', occurredAt: nowIso() });
@@ -155,22 +178,22 @@
       BOOK_PLACEMENT(draft, payload, context) {
         requireRole(context.actor, ['ADMISSIONS']);
         const lead = findLead(draft, payload.leadId);
-        if (lead.status !== 'CONTACTED') throw new CommandError('LEAD_NOT_CONTACTED', 'Cần liên hệ lead trước khi đặt placement.');
+        if (lead.status !== 'CONTACTED') throw new CommandError('LEAD_NOT_CONTACTED', 'Cần liên hệ khách hàng trước khi đặt lịch kiểm tra đầu vào.');
         lead.status = 'PLACEMENT_BOOKED';
         const booking = { id: uid('placement-booking'), leadId: lead.id, learnerId: lead.learnerId, branchId: lead.branchId, startsAt: payload.startsAt, mode: payload.mode || 'OFFLINE', status: 'BOOKED', createdBy: context.actor.id };
         draft.placementBookings.push(booking);
-        appendEvent(draft, context, 'PLACEMENT_BOOKED', 'PLACEMENT_BOOKING', booking.id, `Đặt lịch placement cho ${lead.name}.`, { learnerId: lead.learnerId });
+        appendEvent(draft, context, 'PLACEMENT_BOOKED', 'PLACEMENT_BOOKING', booking.id, `Đặt lịch kiểm tra đầu vào cho ${lead.name}.`, { learnerId: lead.learnerId });
         appendAudit(draft, context, 'PLACEMENT_BOOKED', 'PLACEMENT_BOOKING', booking.id, `${payload.startsAt} · ${booking.mode}`);
-        notifyRole(draft, 'ACADEMIC_MANAGER', 'Có lịch placement mới', `${lead.name} cần được đánh giá đầu vào.`, '/app/academic/dashboard');
-        return { message: 'Đã đặt lịch placement.' };
+        notifyRole(draft, 'ACADEMIC_MANAGER', 'Có lịch kiểm tra đầu vào mới', `${lead.name} cần được đánh giá đầu vào.`, '/app/academic/dashboard');
+        return { message: 'Đã đặt lịch kiểm tra đầu vào.' };
       },
 
       RECORD_PLACEMENT(draft, payload, context) {
         requireRole(context.actor, ['ACADEMIC_MANAGER']);
         const lead = findLead(draft, payload.leadId);
         const booking = latestForLead(draft.placementBookings, lead.id);
-        if (!booking || booking.status !== 'BOOKED') throw new CommandError('PLACEMENT_NOT_BOOKED', 'Cần có booking placement hợp lệ trước khi ghi kết quả.');
-        if (draft.placementResults.some((item) => item.leadId === lead.id)) throw new CommandError('PLACEMENT_EXISTS', 'Lead đã có kết quả placement.');
+        if (!booking || booking.status !== 'BOOKED') throw new CommandError('PLACEMENT_NOT_BOOKED', 'Cần có lịch kiểm tra đầu vào hợp lệ trước khi ghi kết quả.');
+        if (draft.placementResults.some((item) => item.leadId === lead.id)) throw new CommandError('PLACEMENT_EXISTS', 'Khách hàng đã có kết quả đầu vào.');
         booking.status = 'COMPLETED';
         const result = {
           id: uid('placement'),
@@ -187,74 +210,74 @@
         draft.placementResults.push(result);
         appendEvent(draft, context, 'PLACEMENT_RECORDED', 'PLACEMENT_RESULT', result.id, `${lead.name}: ${result.frameworkLevel} · ${result.recommendation}.`, { learnerId: lead.learnerId });
         appendAudit(draft, context, 'PLACEMENT_RECORDED', 'PLACEMENT_RESULT', result.id, 'Kết quả đa kỹ năng đã được ghi nhận.');
-        return { message: 'Đã ghi kết quả placement.' };
+        return { message: 'Đã ghi kết quả đầu vào.' };
       },
 
       RELEASE_PLACEMENT(draft, payload, context) {
         requireRole(context.actor, ['ACADEMIC_MANAGER']);
         const lead = findLead(draft, payload.leadId);
         const result = latestForLead(draft.placementResults, lead.id);
-        if (!result || result.status !== 'REVIEWED') throw new CommandError('PLACEMENT_NOT_REVIEWED', 'Kết quả placement chưa sẵn sàng để release.');
+        if (!result || result.status !== 'REVIEWED') throw new CommandError('PLACEMENT_NOT_REVIEWED', 'Kết quả đầu vào chưa được duyệt để phát hành.');
         result.status = 'RELEASED';
         result.releasedAt = nowIso();
         lead.status = 'PLACED';
         appendEvent(draft, context, 'PLACEMENT_RELEASED', 'PLACEMENT_RESULT', result.id, `Đã phát hành khuyến nghị ${result.recommendation}.`, { learnerId: lead.learnerId });
-        appendAudit(draft, context, 'PLACEMENT_RELEASED', 'PLACEMENT_RESULT', result.id, 'Academic Manager phê duyệt kết quả.');
-        notifyRole(draft, 'ADMISSIONS', 'Placement đã được phát hành', `${lead.name}: ${result.recommendation}.`, '/app/admissions/offers');
-        return { message: 'Đã phát hành kết quả placement.' };
+        appendAudit(draft, context, 'PLACEMENT_RELEASED', 'PLACEMENT_RESULT', result.id, 'Quản lý học thuật phê duyệt kết quả.');
+        notifyRole(draft, 'ADMISSIONS', 'Kết quả đầu vào đã được phát hành', `${lead.name}: ${result.recommendation}.`, '/app/admissions/offers');
+        return { message: 'Đã phát hành kết quả đầu vào.' };
       },
 
       CREATE_OFFER(draft, payload, context) {
         requireRole(context.actor, ['ADMISSIONS']);
         const lead = findLead(draft, payload.leadId);
         const placement = latestForLead(draft.placementResults, lead.id);
-        if (!placement || placement.status !== 'RELEASED') throw new CommandError('PLACEMENT_NOT_RELEASED', 'Cần placement đã phát hành trước khi tạo offer.');
-        const packageItem = required(draft.packages.find((item) => item.id === payload.packageId), 'PACKAGE_NOT_FOUND', 'Không tìm thấy package.');
+        if (!placement || placement.status !== 'RELEASED') throw new CommandError('PLACEMENT_NOT_RELEASED', 'Cần kết quả đầu vào đã phát hành trước khi tạo gói đề xuất.');
+        const packageItem = required(draft.packages.find((item) => item.id === payload.packageId), 'PACKAGE_NOT_FOUND', 'Không tìm thấy gói học.');
         const discount = Math.max(0, Number(payload.discount || 0));
         const offer = { id: uid('offer'), leadId: lead.id, learnerId: lead.learnerId, packageId: packageItem.id, listPrice: packageItem.price, discount, total: packageItem.price - discount, currency: packageItem.currency, status: 'DRAFT', createdBy: context.actor.id, createdAt: nowIso() };
         draft.offers.push(offer);
         lead.status = 'OFFERED';
-        appendEvent(draft, context, 'OFFER_CREATED', 'OFFER', offer.id, `Offer ${offer.total.toLocaleString('vi-VN')} ${offer.currency}.`, { learnerId: lead.learnerId });
+        appendEvent(draft, context, 'OFFER_CREATED', 'OFFER', offer.id, `Gói đề xuất ${offer.total.toLocaleString('vi-VN')} ${offer.currency}.`, { learnerId: lead.learnerId });
         appendAudit(draft, context, 'OFFER_CREATED', 'OFFER', offer.id, `Giảm ${discount.toLocaleString('vi-VN')} ${offer.currency}.`);
-        return { message: 'Đã tạo offer nháp.' };
+        return { message: 'Đã tạo gói đề xuất nháp.' };
       },
 
       SEND_OFFER(draft, payload, context) {
         requireRole(context.actor, ['ADMISSIONS']);
         const lead = findLead(draft, payload.leadId);
-        const offer = required(latestForLead(draft.offers, lead.id), 'OFFER_NOT_FOUND', 'Không tìm thấy offer.');
-        if (offer.status !== 'DRAFT') throw new CommandError('INVALID_OFFER_STATE', 'Chỉ offer nháp mới được gửi.');
+        const offer = required(latestForLead(draft.offers, lead.id), 'OFFER_NOT_FOUND', 'Không tìm thấy gói đề xuất.');
+        if (offer.status !== 'DRAFT') throw new CommandError('INVALID_OFFER_STATE', 'Chỉ gói đề xuất nháp mới được gửi.');
         offer.status = 'SENT';
         offer.sentAt = nowIso();
         draft.outboundMessages.unshift({ id: uid('outbound'), channel: 'EMAIL', recipient: lead.email || lead.phone, template: 'OFFER_SENT', status: 'MOCKED', mode: 'MOCK', createdAt: nowIso() });
-        appendEvent(draft, context, 'OFFER_SENT', 'OFFER', offer.id, `Đã gửi offer mock cho ${lead.parentName || lead.name}.`, { learnerId: lead.learnerId });
-        appendAudit(draft, context, 'OFFER_SENT_MOCK', 'OFFER', offer.id, 'Outbound mock, không gửi ra provider thật.');
-        return { message: 'Đã gửi offer ở chế độ mock.' };
+        appendEvent(draft, context, 'OFFER_SENT', 'OFFER', offer.id, `Đã gửi gói đề xuất mô phỏng cho ${lead.parentName || lead.name}.`, { learnerId: lead.learnerId });
+        appendAudit(draft, context, 'OFFER_SENT_MOCK', 'OFFER', offer.id, 'Gửi ra ngoài ở chế độ mô phỏng, không gọi nhà cung cấp thật.');
+        return { message: 'Đã gửi gói đề xuất ở chế độ mô phỏng.' };
       },
 
       ACCEPT_OFFER(draft, payload, context) {
         requireRole(context.actor, ['ADMISSIONS']);
         const lead = findLead(draft, payload.leadId);
-        const offer = required(latestForLead(draft.offers, lead.id), 'OFFER_NOT_FOUND', 'Không tìm thấy offer.');
-        if (offer.status !== 'SENT') throw new CommandError('OFFER_NOT_SENT', 'Offer phải được gửi trước khi ghi nhận chấp nhận.');
+        const offer = required(latestForLead(draft.offers, lead.id), 'OFFER_NOT_FOUND', 'Không tìm thấy gói đề xuất.');
+        if (offer.status !== 'SENT') throw new CommandError('OFFER_NOT_SENT', 'Gói đề xuất phải được gửi trước khi ghi nhận chấp nhận.');
         offer.status = 'ACCEPTED';
         offer.acceptedAt = nowIso();
-        appendEvent(draft, context, 'OFFER_ACCEPTED', 'OFFER', offer.id, `${lead.parentName || lead.name} đã chấp nhận offer.`, { learnerId: lead.learnerId });
-        appendAudit(draft, context, 'OFFER_ACCEPTED', 'OFFER', offer.id, 'Admissions ghi nhận xác nhận trong demo.');
-        notifyRole(draft, 'FINANCE', 'Offer chờ xuất hóa đơn', `${lead.name} đã chấp nhận offer.`, '/app/finance/invoices');
-        return { message: 'Đã ghi nhận offer được chấp nhận.' };
+        appendEvent(draft, context, 'OFFER_ACCEPTED', 'OFFER', offer.id, `${lead.parentName || lead.name} đã chấp nhận gói đề xuất.`, { learnerId: lead.learnerId });
+        appendAudit(draft, context, 'OFFER_ACCEPTED', 'OFFER', offer.id, 'Tuyển sinh ghi nhận xác nhận trong bản mẫu.');
+        notifyRole(draft, 'FINANCE', 'Gói đề xuất chờ xuất hóa đơn', `${lead.name} đã chấp nhận gói đề xuất.`, '/app/finance/invoices');
+        return { message: 'Đã ghi nhận gói đề xuất được chấp nhận.' };
       },
 
       ISSUE_INVOICE(draft, payload, context) {
         requireRole(context.actor, ['FINANCE']);
         const lead = findLead(draft, payload.leadId);
-        const offer = required(latestForLead(draft.offers, lead.id), 'OFFER_NOT_FOUND', 'Không tìm thấy offer.');
-        if (offer.status !== 'ACCEPTED') throw new CommandError('OFFER_NOT_ACCEPTED', 'Offer chưa được chấp nhận.');
+        const offer = required(latestForLead(draft.offers, lead.id), 'OFFER_NOT_FOUND', 'Không tìm thấy gói đề xuất.');
+        if (offer.status !== 'ACCEPTED') throw new CommandError('OFFER_NOT_ACCEPTED', 'Gói đề xuất chưa được chấp nhận.');
         const invoice = { id: uid('invoice'), leadId: lead.id, learnerId: lead.learnerId, offerId: offer.id, amount: offer.total, currency: offer.currency, status: 'ISSUED', mode: 'MOCK', issuedAt: nowIso(), dueAt: new Date(new Date(nowIso()).getTime() + 3 * 86400000).toISOString() };
         draft.invoices.push(invoice);
-        appendEvent(draft, context, 'INVOICE_ISSUED', 'INVOICE', invoice.id, `Hóa đơn mock ${invoice.amount.toLocaleString('vi-VN')} ${invoice.currency}.`, { learnerId: lead.learnerId });
-        appendAudit(draft, context, 'MOCK_INVOICE_ISSUED', 'INVOICE', invoice.id, 'Hóa đơn demo, không phải chứng từ tài chính thật.');
-        return { message: 'Đã phát hành hóa đơn mock.' };
+        appendEvent(draft, context, 'INVOICE_ISSUED', 'INVOICE', invoice.id, `Hóa đơn mô phỏng ${invoice.amount.toLocaleString('vi-VN')} ${invoice.currency}.`, { learnerId: lead.learnerId });
+        appendAudit(draft, context, 'MOCK_INVOICE_ISSUED', 'INVOICE', invoice.id, 'Hóa đơn bản mẫu, không phải chứng từ tài chính thật.');
+        return { message: 'Đã phát hành hóa đơn mô phỏng.' };
       },
 
       RECORD_MOCK_PAYMENT(draft, payload, context) {
@@ -267,10 +290,10 @@
         const payment = { id: uid('payment'), invoiceId: invoice.id, leadId: lead.id, learnerId: lead.learnerId, amount: invoice.amount, currency: invoice.currency, reference: payload.reference || uid('MOCK'), provider: 'DEMO_LEDGER', mode: 'MOCK', status: 'PAID', paidAt: nowIso() };
         draft.payments.push(payment);
         lead.status = 'WON';
-        appendEvent(draft, context, 'PAYMENT_RECORDED', 'PAYMENT', payment.id, `Đã ghi nhận thanh toán mock cho ${lead.name}.`, { learnerId: lead.learnerId });
-        appendAudit(draft, context, 'MOCK_PAYMENT_RECORDED', 'PAYMENT', payment.id, `${payment.reference} · DEMO_LEDGER.`);
-        notifyRole(draft, 'STUDENT_SERVICE', 'Học viên đã đủ điều kiện xếp lớp', `${lead.name} đã hoàn tất payment mock.`, '/app/service/allocation');
-        return { message: 'Đã ghi nhận thanh toán mock.' };
+        appendEvent(draft, context, 'PAYMENT_RECORDED', 'PAYMENT', payment.id, `Đã ghi nhận thanh toán mô phỏng cho ${lead.name}.`, { learnerId: lead.learnerId });
+        appendAudit(draft, context, 'MOCK_PAYMENT_RECORDED', 'PAYMENT', payment.id, `${payment.reference} · Sổ mô phỏng.`);
+        notifyRole(draft, 'STUDENT_SERVICE', 'Học viên đã đủ điều kiện xếp lớp', `${lead.name} đã hoàn tất thanh toán mô phỏng.`, '/app/service/allocation');
+        return { message: 'Đã ghi nhận thanh toán mô phỏng.' };
       },
 
       ALLOCATE_CLASS(draft, payload, context) {
@@ -286,25 +309,25 @@
             .sort((a, b) => b.seats - a.seats);
           throw new CommandError('NO_SEAT', 'Lớp đã hết chỗ; cần chọn phương án thay thế.', { alternatives });
         }
-        const learner = required(draft.learners.find((item) => item.id === lead.learnerId), 'LEARNER_NOT_FOUND', 'Lead chưa có learner profile.');
+        const learner = required(draft.learners.find((item) => item.id === lead.learnerId), 'LEARNER_NOT_FOUND', 'Khách hàng chưa có hồ sơ học viên.');
         const paid = draft.payments.some((item) => item.leadId === lead.id && item.status === 'PAID');
         if (!paid) throw new CommandError('PAYMENT_REQUIRED', 'Cần ghi nhận thanh toán trước khi xếp lớp.');
-        if (draft.enrollments.some((item) => item.learnerId === learner.id && item.status === 'ACTIVE')) throw new CommandError('ACTIVE_ENROLLMENT_EXISTS', 'Học viên đã có enrollment đang hoạt động.');
+        if (draft.enrollments.some((item) => item.learnerId === learner.id && item.status === 'ACTIVE')) throw new CommandError('ACTIVE_ENROLLMENT_EXISTS', 'Học viên đã có ghi danh đang hoạt động.');
         const enrollment = { id: uid('enrollment'), learnerId: learner.id, classId: classItem.id, courseVersionId: classItem.courseVersionId, status: 'ACTIVE', startsAt: nowIso(), endsAt: null, allocatedBy: context.actor.id };
         draft.enrollments.push(enrollment);
         learner.classId = classItem.id;
         learner.branchId = classItem.branchId;
         learner.status = 'ACTIVE';
         appendEvent(draft, context, 'LEARNER_ALLOCATED', 'ENROLLMENT', enrollment.id, `${learner.name} vào lớp ${classItem.name}.`, { learnerId: learner.id });
-        appendAudit(draft, context, 'CLASS_ALLOCATED', 'ENROLLMENT', enrollment.id, `Payment cleared · ${classItem.code}.`);
-        notifyRole(draft, 'ACADEMIC_MANAGER', 'Lớp cần gán giáo viên', `${classItem.name} có learner mới.`, '/app/academic/assignments');
-        return { message: 'Đã xếp lớp và tạo enrollment.' };
+        appendAudit(draft, context, 'CLASS_ALLOCATED', 'ENROLLMENT', enrollment.id, `Đã xác nhận thanh toán · ${classItem.code}.`);
+        notifyRole(draft, 'ACADEMIC_MANAGER', 'Lớp cần gán giáo viên', `${classItem.name} có học viên mới.`, '/app/academic/assignments');
+        return { message: 'Đã xếp lớp và tạo ghi danh.' };
       },
 
       TRANSFER_ENROLLMENT(draft, payload, context) {
         requireRole(context.actor, ['STUDENT_SERVICE']);
         if (!String(payload.reason || '').trim()) throw new CommandError('REASON_REQUIRED', 'Chuyển lớp cần có lý do.');
-        const current = required(draft.enrollments.find((item) => item.learnerId === payload.learnerId && item.status === 'ACTIVE'), 'ACTIVE_ENROLLMENT_NOT_FOUND', 'Không tìm thấy enrollment đang hoạt động.');
+        const current = required(draft.enrollments.find((item) => item.learnerId === payload.learnerId && item.status === 'ACTIVE'), 'ACTIVE_ENROLLMENT_NOT_FOUND', 'Không tìm thấy ghi danh đang hoạt động.');
         const nextClass = required(draft.classes.find((item) => item.id === payload.toClassId), 'CLASS_NOT_FOUND', 'Không tìm thấy lớp đích.');
         const occupied = draft.enrollments.filter((item) => item.classId === nextClass.id && item.status === 'ACTIVE').length;
         if (occupied >= nextClass.capacity) throw new CommandError('NO_SEAT', 'Lớp đích đã hết chỗ.', { alternatives: [] });
@@ -318,30 +341,30 @@
         learner.branchId = nextClass.branchId;
         appendEvent(draft, context, 'ENROLLMENT_TRANSFERRED', 'ENROLLMENT', replacement.id, `${learner.name} chuyển sang ${nextClass.name}.`, { learnerId: learner.id });
         appendAudit(draft, context, 'ENROLLMENT_TRANSFERRED', 'ENROLLMENT', replacement.id, payload.reason.trim());
-        return { message: 'Đã chuyển lớp và giữ nguyên lịch sử enrollment cũ.' };
+        return { message: 'Đã chuyển lớp và giữ nguyên lịch sử ghi danh cũ.' };
       },
 
       CREATE_RENEWAL(draft, payload, context) {
         requireRole(context.actor, ['ADMISSIONS']);
         const learner = required(draft.learners.find((item) => item.id === payload.learnerId), 'LEARNER_NOT_FOUND', 'Không tìm thấy học viên.');
         const promotion = draft.promotionDecisions.find((item) => item.learnerId === learner.id && item.decision === 'PROMOTE' && item.status === 'FINAL');
-        if (!promotion) throw new CommandError('PROMOTION_REQUIRED', 'Cần quyết định promotion đã chốt trước khi tạo renewal.');
-        const packageItem = required(draft.packages.find((item) => item.id === payload.packageId), 'PACKAGE_NOT_FOUND', 'Không tìm thấy package.');
-        const renewal = { id: uid('renewal'), learnerId: learner.id, nextCourseVersionId: promotion.nextCourseVersionId, packageId: packageItem.id, status: 'OFFERED', outcome: promotion.decision, nextGoal: 'Tiếp tục A2.2 và tăng speaking confidence', offeredAt: nowIso(), ownerId: context.actor.id };
+        if (!promotion) throw new CommandError('PROMOTION_REQUIRED', 'Cần quyết định lên lớp đã chốt trước khi tạo gia hạn.');
+        const packageItem = required(draft.packages.find((item) => item.id === payload.packageId), 'PACKAGE_NOT_FOUND', 'Không tìm thấy gói học.');
+        const renewal = { id: uid('renewal'), learnerId: learner.id, nextCourseVersionId: promotion.nextCourseVersionId, packageId: packageItem.id, status: 'OFFERED', outcome: promotion.decision, nextGoal: 'Tiếp tục A2.2 và tăng sự tự tin khi nói', offeredAt: nowIso(), ownerId: context.actor.id };
         draft.renewals.push(renewal);
-        appendEvent(draft, context, 'RENEWAL_OFFERED', 'RENEWAL', renewal.id, `Đã tạo renewal cho ${learner.name}.`, { learnerId: learner.id });
-        appendAudit(draft, context, 'RENEWAL_OFFERED', 'RENEWAL', renewal.id, `Next course: ${promotion.nextCourseVersionId}.`);
-        return { message: 'Đã tạo renewal offer.' };
+        appendEvent(draft, context, 'RENEWAL_OFFERED', 'RENEWAL', renewal.id, `Đã tạo gói gia hạn cho ${learner.name}.`, { learnerId: learner.id });
+        appendAudit(draft, context, 'RENEWAL_OFFERED', 'RENEWAL', renewal.id, `Khóa tiếp theo: ${promotion.nextCourseVersionId}.`);
+        return { message: 'Đã tạo gói gia hạn.' };
       },
 
       ACCEPT_RENEWAL(draft, payload, context) {
         requireRole(context.actor, ['ADMISSIONS']);
-        const renewal = required(draft.renewals.find((item) => item.learnerId === payload.learnerId && item.status === 'OFFERED'), 'RENEWAL_NOT_FOUND', 'Không tìm thấy renewal đang chờ.');
+        const renewal = required(draft.renewals.find((item) => item.learnerId === payload.learnerId && item.status === 'OFFERED'), 'RENEWAL_NOT_FOUND', 'Không tìm thấy gói gia hạn đang chờ.');
         renewal.status = 'ACCEPTED';
         renewal.acceptedAt = nowIso();
         appendEvent(draft, context, 'RENEWAL_ACCEPTED', 'RENEWAL', renewal.id, 'Phụ huynh đã chấp nhận lộ trình tiếp theo.', { learnerId: renewal.learnerId });
-        appendAudit(draft, context, 'RENEWAL_ACCEPTED', 'RENEWAL', renewal.id, 'Admissions ghi nhận xác nhận trong demo.');
-        return { message: 'Đã hoàn tất renewal.' };
+        appendAudit(draft, context, 'RENEWAL_ACCEPTED', 'RENEWAL', renewal.id, 'Tuyển sinh ghi nhận xác nhận trong bản mẫu.');
+        return { message: 'Đã hoàn tất gia hạn.' };
       },
 
       CREATE_CONTENT_DRAFT(draft, payload, context) {
@@ -371,25 +394,25 @@
 
       PUBLISH_COURSE_VERSION(draft, payload, context) {
         requireRole(context.actor, ['ACADEMIC_MANAGER']);
-        const version = required(draft.courseVersions.find((item) => item.id === payload.courseVersionId), 'COURSE_VERSION_NOT_FOUND', 'Không tìm thấy course version.');
-        if (version.status === 'PUBLISHED' && version.immutable) throw new CommandError('COURSE_VERSION_IMMUTABLE', 'Course version đã publish là immutable.');
-        if (!['DRAFT', 'APPROVED'].includes(version.status)) throw new CommandError('INVALID_COURSE_VERSION_STATE', 'Course version chưa sẵn sàng để publish.');
+        const version = required(draft.courseVersions.find((item) => item.id === payload.courseVersionId), 'COURSE_VERSION_NOT_FOUND', 'Không tìm thấy phiên bản khóa học.');
+        if (version.status === 'PUBLISHED' && version.immutable) throw new CommandError('COURSE_VERSION_IMMUTABLE', 'Phiên bản khóa học đã công bố thì không thể sửa.');
+        if (!['DRAFT', 'APPROVED'].includes(version.status)) throw new CommandError('INVALID_COURSE_VERSION_STATE', 'Phiên bản khóa học chưa sẵn sàng để công bố.');
         version.status = 'PUBLISHED';
         version.immutable = true;
         version.publishedAt = nowIso();
-        appendEvent(draft, context, 'COURSE_VERSION_PUBLISHED', 'COURSE_VERSION', version.id, `${version.title} đã publish.`);
-        appendAudit(draft, context, 'COURSE_VERSION_PUBLISHED', 'COURSE_VERSION', version.id, 'Khóa snapshot curriculum.');
-        return { message: 'Đã publish course version.' };
+        appendEvent(draft, context, 'COURSE_VERSION_PUBLISHED', 'COURSE_VERSION', version.id, `${version.title} đã được công bố.`);
+        appendAudit(draft, context, 'COURSE_VERSION_PUBLISHED', 'COURSE_VERSION', version.id, 'Đã khóa bản chụp chương trình học.');
+        return { message: 'Đã công bố phiên bản khóa học.' };
       },
 
       PROPOSE_TEACHER_ASSIGNMENT(draft, payload, context) {
         requireRole(context.actor, ['ACADEMIC_MANAGER']);
-        const profile = required(draft.teacherProfiles.find((item) => item.userId === payload.teacherId), 'TEACHER_NOT_FOUND', 'Không tìm thấy teacher profile.');
+        const profile = required(draft.teacherProfiles.find((item) => item.userId === payload.teacherId), 'TEACHER_NOT_FOUND', 'Không tìm thấy hồ sơ giáo viên.');
         const cohort = required(draft.classes.find((item) => item.id === payload.classId), 'CLASS_NOT_FOUND', 'Không tìm thấy lớp.');
         const evidence = root.YC.selectors.teacherEligibility(draft, payload.teacherId, cohort.id, Number(payload.workloadMinutes || 720));
-        if (!evidence.eligible) throw new CommandError('TEACHER_INELIGIBLE', 'Giáo viên không vượt qua eligibility gate.', { evidence });
+        if (!evidence.eligible) throw new CommandError('TEACHER_INELIGIBLE', 'Giáo viên không đạt điều kiện bắt buộc.', { evidence });
         if (draft.teacherAssignments.some((item) => item.classId === cohort.id && ['PROPOSED', 'ACCEPTED', 'ACTIVE'].includes(item.status))) {
-          throw new CommandError('CLASS_ALREADY_ASSIGNED', 'Lớp đã có teacher assignment đang hiệu lực.');
+          throw new CommandError('CLASS_ALREADY_ASSIGNED', 'Lớp đã có phân công giáo viên đang hiệu lực.');
         }
         const assignment = {
           id: uid('teacher-assignment'),
@@ -406,34 +429,34 @@
         };
         draft.teacherAssignments.push(assignment);
         appendEvent(draft, context, 'TEACHER_ASSIGNMENT_PROPOSED', 'TEACHER_ASSIGNMENT', assignment.id, `${draft.users.find((item) => item.id === payload.teacherId)?.name} được đề xuất cho ${cohort.name}.`);
-        appendAudit(draft, context, 'TEACHER_ASSIGNMENT_PROPOSED', 'TEACHER_ASSIGNMENT', assignment.id, 'Eligibility hard gates đều đạt.');
+        appendAudit(draft, context, 'TEACHER_ASSIGNMENT_PROPOSED', 'TEACHER_ASSIGNMENT', assignment.id, 'Đã đạt mọi điều kiện bắt buộc.');
         draft.notifications.unshift({ id: uid('notification'), userId: payload.teacherId, title: 'Có đề xuất nhận lớp mới', body: cohort.name, link: '/app/teacher/dashboard', read: false, createdAt: nowIso() });
-        return { message: 'Đã gửi đề xuất assignment cho giáo viên.', evidence };
+        return { message: 'Đã gửi đề xuất phân công cho giáo viên.', evidence };
       },
 
       ACCEPT_TEACHER_ASSIGNMENT(draft, payload, context) {
         requireRole(context.actor, ['TEACHER']);
-        const profile = required(draft.teacherProfiles.find((item) => item.userId === context.actor.id), 'TEACHER_NOT_FOUND', 'Không tìm thấy teacher profile.');
-        const assignment = required(draft.teacherAssignments.find((item) => item.teacherProfileId === profile.id && item.classId === payload.classId && item.status === 'PROPOSED'), 'ASSIGNMENT_NOT_FOUND', 'Không tìm thấy đề xuất assignment.');
+        const profile = required(draft.teacherProfiles.find((item) => item.userId === context.actor.id), 'TEACHER_NOT_FOUND', 'Không tìm thấy hồ sơ giáo viên.');
+        const assignment = required(draft.teacherAssignments.find((item) => item.teacherProfileId === profile.id && item.classId === payload.classId && item.status === 'PROPOSED'), 'ASSIGNMENT_NOT_FOUND', 'Không tìm thấy đề xuất phân công.');
         assignment.status = 'ACTIVE';
         assignment.acceptedAt = nowIso();
         draft.sessionAssignments.push(...draft.sessions.filter((item) => item.classId === assignment.classId).map((session) => ({ id: uid('session-assignment'), sessionId: session.id, teacherProfileId: profile.id, role: assignment.role, status: 'ACTIVE', startsAt: assignment.startsAt, endsAt: assignment.endsAt })));
         appendEvent(draft, context, 'TEACHER_ASSIGNMENT_ACCEPTED', 'TEACHER_ASSIGNMENT', assignment.id, 'Giáo viên đã nhận lớp.');
-        appendAudit(draft, context, 'TEACHER_ASSIGNMENT_ACTIVATED', 'TEACHER_ASSIGNMENT', assignment.id, 'Quyền lớp có hiệu lực theo thời hạn assignment.');
-        notifyRole(draft, 'ACADEMIC_MANAGER', 'Giáo viên đã nhận lớp', `${context.actor.name} đã nhận assignment.`, '/app/academic/assignments');
-        return { message: 'Đã nhận lớp và kích hoạt quyền theo assignment.' };
+        appendAudit(draft, context, 'TEACHER_ASSIGNMENT_ACTIVATED', 'TEACHER_ASSIGNMENT', assignment.id, 'Quyền lớp có hiệu lực theo thời hạn phân công.');
+        notifyRole(draft, 'ACADEMIC_MANAGER', 'Giáo viên đã nhận lớp', `${context.actor.name} đã nhận phân công.`, '/app/academic/assignments');
+        return { message: 'Đã nhận lớp và kích hoạt quyền theo phân công.' };
       },
 
       CONFIRM_SESSION(draft, payload, context) {
         requireRole(context.actor, ['ACADEMIC_MANAGER', 'STUDENT_SERVICE']);
         const session = required(draft.sessions.find((item) => item.id === payload.sessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học.');
-        if (session.status !== 'PLANNED') throw new CommandError('INVALID_SESSION_STATE', 'Chỉ buổi Planned mới được confirm.');
+        if (session.status !== 'PLANNED') throw new CommandError('INVALID_SESSION_STATE', 'Chỉ buổi ở trạng thái Đã lên lịch mới được xác nhận.');
         const cohort = draft.classes.find((item) => item.id === session.classId);
         const conflicts = root.YC.selectors.scheduleConflicts(draft, { teacherId: payload.teacherId, branchId: cohort.branchId, room: session.room, startsAt: session.startsAt, endsAt: session.endsAt });
         if (conflicts.length) throw new CommandError('SCHEDULE_CONFLICT', 'Lịch bị trùng giáo viên hoặc phòng.', { evidence: conflicts });
         session.status = 'CONFIRMED';
         appendEvent(draft, context, 'SESSION_CONFIRMED', 'SESSION', session.id, 'Buổi học đã được xác nhận.');
-        appendAudit(draft, context, 'SESSION_CONFIRMED', 'SESSION', session.id, 'Đã qua conflict gate.');
+        appendAudit(draft, context, 'SESSION_CONFIRMED', 'SESSION', session.id, 'Đã vượt qua kiểm tra trùng lịch.');
         return { message: 'Đã xác nhận buổi học.' };
       },
 
@@ -442,25 +465,25 @@
         const session = required(draft.sessions.find((item) => item.id === payload.sessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học.');
         const profile = draft.teacherProfiles.find((item) => item.userId === context.actor.id);
         const assigned = profile && draft.teacherAssignments.some((item) => item.teacherProfileId === profile.id && item.classId === session.classId && item.status === 'ACTIVE');
-        if (!assigned) throw new CommandError('SESSION_NOT_ASSIGNED', 'Giáo viên không được assign vào lớp này.');
-        const plan = required(draft.lessonPlans.find((item) => item.sessionId === session.id), 'LESSON_PLAN_NOT_FOUND', 'Buổi học chưa có lesson plan.');
+        if (!assigned) throw new CommandError('SESSION_NOT_ASSIGNED', 'Giáo viên chưa được phân công vào lớp này.');
+        const plan = required(draft.lessonPlans.find((item) => item.sessionId === session.id), 'LESSON_PLAN_NOT_FOUND', 'Buổi học chưa có giáo án.');
         plan.adaptations = payload.adaptations || plan.adaptations;
         plan.readiness = 'READY';
         plan.readyAt = nowIso();
         appendEvent(draft, context, 'SESSION_READY', 'LESSON_PLAN', plan.id, 'Giáo viên xác nhận sẵn sàng trước buổi học.');
-        appendAudit(draft, context, 'SESSION_READY', 'LESSON_PLAN', plan.id, `${plan.adaptations.length} adaptation.`);
-        return { message: 'Đã xác nhận lesson plan sẵn sàng.' };
+        appendAudit(draft, context, 'SESSION_READY', 'LESSON_PLAN', plan.id, `${plan.adaptations.length} điều chỉnh.`);
+        return { message: 'Đã xác nhận giáo án sẵn sàng.' };
       },
 
       START_SESSION(draft, payload, context) {
         requireRole(context.actor, ['TEACHER']);
         const session = required(draft.sessions.find((item) => item.id === payload.sessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học.');
         const plan = draft.lessonPlans.find((item) => item.sessionId === session.id);
-        if (!plan || plan.readiness !== 'READY') throw new CommandError('SESSION_NOT_READY', 'Cần xác nhận lesson plan sẵn sàng trước khi bắt đầu.');
-        if (session.status !== 'CONFIRMED') throw new CommandError('INVALID_SESSION_STATE', 'Chỉ buổi Confirmed mới được bắt đầu.');
+        if (!plan || plan.readiness !== 'READY') throw new CommandError('SESSION_NOT_READY', 'Cần xác nhận giáo án sẵn sàng trước khi bắt đầu.');
+        if (session.status !== 'CONFIRMED') throw new CommandError('INVALID_SESSION_STATE', 'Chỉ buổi đã xác nhận mới được bắt đầu.');
         session.status = 'IN_PROGRESS';
         session.actualStartsAt = nowIso();
-        appendEvent(draft, context, 'SESSION_STARTED', 'SESSION', session.id, 'Giáo viên check-in và bắt đầu buổi học.');
+        appendEvent(draft, context, 'SESSION_STARTED', 'SESSION', session.id, 'Giáo viên xác nhận có mặt và bắt đầu buổi học.');
         appendAudit(draft, context, 'TEACHER_CHECKED_IN', 'SESSION', session.id, context.actor.name);
         return { message: 'Buổi học đã bắt đầu.' };
       },
@@ -470,7 +493,7 @@
         const session = required(draft.sessions.find((item) => item.id === payload.sessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học.');
         if (session.status !== 'IN_PROGRESS') throw new CommandError('INVALID_SESSION_STATE', 'Buổi học phải đang diễn ra trước khi hoàn tất.');
         const taughtItemIds = payload.taughtItemIds || [];
-        if (!taughtItemIds.length) throw new CommandError('DELIVERY_EVIDENCE_REQUIRED', 'Cần ghi nhận ít nhất một learning item đã dạy.');
+        if (!taughtItemIds.length) throw new CommandError('DELIVERY_EVIDENCE_REQUIRED', 'Cần ghi nhận ít nhất một nội dung học tập đã dạy.');
         const delivery = {
           id: uid('delivery'),
           sessionId: session.id,
@@ -487,15 +510,15 @@
         session.status = 'COMPLETED';
         session.actualEndsAt = delivery.actualEndsAt;
         appendEvent(draft, context, 'DELIVERY_RECORDED', 'DELIVERY_RECORD', delivery.id, `${taughtItemIds.length} item đã dạy, ${delivery.deferredItemIds.length} item deferred.`);
-        appendAudit(draft, context, 'SESSION_COMPLETED', 'SESSION', session.id, payload.note || 'Delivery evidence complete.');
-        if (delivery.coverageStatus === 'GAP') notifyRole(draft, 'ACADEMIC_MANAGER', 'Có coverage gap cần theo dõi', payload.note || 'Buổi học có nội dung deferred.', '/app/academic/dashboard');
-        return { message: 'Đã hoàn tất session và lưu delivery evidence.' };
+        appendAudit(draft, context, 'SESSION_COMPLETED', 'SESSION', session.id, payload.note || 'Đã đủ bằng chứng giảng dạy.');
+        if (delivery.coverageStatus === 'GAP') notifyRole(draft, 'ACADEMIC_MANAGER', 'Có nội dung chưa dạy cần theo dõi', payload.note || 'Buổi học có nội dung được chuyển sang sau.', '/app/academic/dashboard');
+        return { message: 'Đã hoàn tất buổi học và lưu bằng chứng giảng dạy.' };
       },
 
       CORRECT_ATTENDANCE(draft, payload, context) {
         requireRole(context.actor, ['STUDENT_SERVICE', 'ACADEMIC_MANAGER']);
-        if (!String(payload.reason || '').trim()) throw new CommandError('REASON_REQUIRED', 'Sửa attendance cần lý do để audit.');
-        const record = required(draft.attendanceRecords.find((item) => item.id === payload.attendanceId), 'ATTENDANCE_NOT_FOUND', 'Không tìm thấy attendance record.');
+        if (!String(payload.reason || '').trim()) throw new CommandError('REASON_REQUIRED', 'Sửa điểm danh cần lý do để ghi nhật ký.');
+        const record = required(draft.attendanceRecords.find((item) => item.id === payload.attendanceId), 'ATTENDANCE_NOT_FOUND', 'Không tìm thấy bản ghi điểm danh.');
         const previous = record.status;
         record.status = payload.status;
         record.correctedAt = nowIso();
@@ -503,14 +526,14 @@
         record.correctionReason = payload.reason.trim();
         appendEvent(draft, context, 'ATTENDANCE_CORRECTED', 'ATTENDANCE', record.id, `${previous} → ${record.status}.`, { learnerId: record.learnerId });
         appendAudit(draft, context, 'ATTENDANCE_CORRECTED', 'ATTENDANCE', record.id, payload.reason.trim());
-        return { message: 'Đã sửa attendance với đầy đủ lý do.' };
+        return { message: 'Đã sửa điểm danh với đầy đủ lý do.' };
       },
 
       REQUEST_SUBSTITUTION(draft, payload, context) {
         requireRole(context.actor, ['STUDENT_SERVICE', 'ACADEMIC_MANAGER']);
         if (!String(payload.reason || '').trim()) throw new CommandError('REASON_REQUIRED', 'Yêu cầu dạy thay cần lý do.');
         const session = required(draft.sessions.find((item) => item.id === payload.sessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học.');
-        if (draft.substitutions.some((item) => item.sessionId === session.id && !['CLOSED', 'CANCELLED'].includes(item.status))) throw new CommandError('SUBSTITUTION_EXISTS', 'Buổi học đã có substitution đang xử lý.');
+        if (draft.substitutions.some((item) => item.sessionId === session.id && !['CLOSED', 'CANCELLED'].includes(item.status))) throw new CommandError('SUBSTITUTION_EXISTS', 'Buổi học đã có yêu cầu dạy thay đang xử lý.');
         const primary = draft.teacherAssignments.find((item) => item.classId === session.classId && item.status === 'ACTIVE');
         const substitution = { id: uid('substitution'), sessionId: session.id, originalTeacherProfileId: primary?.teacherProfileId || null, replacementTeacherProfileId: null, reason: payload.reason.trim(), status: 'REQUESTED', handover: null, requestedBy: context.actor.id, requestedAt: nowIso(), accessStartsAt: null, accessEndsAt: null };
         draft.substitutions.push(substitution);
@@ -521,10 +544,10 @@
 
       CONFIRM_SUBSTITUTE(draft, payload, context) {
         requireRole(context.actor, ['STUDENT_SERVICE', 'ACADEMIC_MANAGER']);
-        const substitution = required(draft.substitutions.find((item) => item.sessionId === payload.sessionId && item.status === 'REQUESTED'), 'SUBSTITUTION_NOT_FOUND', 'Không tìm thấy yêu cầu substitution.');
+        const substitution = required(draft.substitutions.find((item) => item.sessionId === payload.sessionId && item.status === 'REQUESTED'), 'SUBSTITUTION_NOT_FOUND', 'Không tìm thấy yêu cầu dạy thay.');
         const session = draft.sessions.find((item) => item.id === payload.sessionId);
         const eligibility = root.YC.selectors.teacherEligibility(draft, payload.replacementTeacherId, session.classId, 90);
-        if (!eligibility.eligible) throw new CommandError('TEACHER_INELIGIBLE', 'Giáo viên dạy thay không vượt qua eligibility gate.', { evidence: eligibility });
+        if (!eligibility.eligible) throw new CommandError('TEACHER_INELIGIBLE', 'Giáo viên dạy thay không đạt điều kiện bắt buộc.', { evidence: eligibility });
         const replacement = draft.teacherProfiles.find((item) => item.userId === payload.replacementTeacherId);
         substitution.replacementTeacherProfileId = replacement.id;
         substitution.status = 'CONFIRMED';
@@ -532,53 +555,53 @@
         substitution.accessStartsAt = new Date(new Date(session.startsAt).getTime() - 86400000).toISOString();
         substitution.accessEndsAt = new Date(new Date(session.endsAt).getTime() + 86400000).toISOString();
         appendEvent(draft, context, 'SUBSTITUTE_CONFIRMED', 'SUBSTITUTION', substitution.id, `${draft.users.find((item) => item.id === payload.replacementTeacherId)?.name} đã được chọn.`);
-        appendAudit(draft, context, 'SUBSTITUTE_ACCESS_GRANTED', 'SUBSTITUTION', substitution.id, 'Quyền theo session trong handover window.');
+        appendAudit(draft, context, 'SUBSTITUTE_ACCESS_GRANTED', 'SUBSTITUTION', substitution.id, 'Quyền theo buổi học trong thời gian bàn giao.');
         return { message: 'Đã xác nhận giáo viên dạy thay.' };
       },
 
       MARK_HANDOVER_READY(draft, payload, context) {
         requireRole(context.actor, ['TEACHER', 'STUDENT_SERVICE']);
-        const substitution = required(draft.substitutions.find((item) => item.sessionId === payload.sessionId && item.status === 'CONFIRMED'), 'SUBSTITUTION_NOT_CONFIRMED', 'Substitution chưa được xác nhận.');
-        if (!String(payload.note || '').trim()) throw new CommandError('HANDOVER_REQUIRED', 'Cần nội dung handover.');
+        const substitution = required(draft.substitutions.find((item) => item.sessionId === payload.sessionId && item.status === 'CONFIRMED'), 'SUBSTITUTION_NOT_CONFIRMED', 'Yêu cầu dạy thay chưa được xác nhận.');
+        if (!String(payload.note || '').trim()) throw new CommandError('HANDOVER_REQUIRED', 'Cần nội dung bàn giao.');
         substitution.handover = { note: payload.note.trim(), lessonTemplateId: draft.sessions.find((item) => item.id === payload.sessionId)?.lessonTemplateId, openHomeworkIds: draft.homeworkAssignments.filter((item) => item.classId === draft.sessions.find((session) => session.id === payload.sessionId)?.classId).map((item) => item.id), preparedBy: context.actor.id, preparedAt: nowIso() };
         substitution.status = 'HANDOVER_READY';
         appendEvent(draft, context, 'SUBSTITUTION_HANDOVER_READY', 'SUBSTITUTION', substitution.id, payload.note.trim());
-        appendAudit(draft, context, 'SUBSTITUTION_HANDOVER_READY', 'SUBSTITUTION', substitution.id, 'Lesson, risk và homework context đã sẵn sàng.');
-        return { message: 'Handover package đã sẵn sàng.' };
+        appendAudit(draft, context, 'SUBSTITUTION_HANDOVER_READY', 'SUBSTITUTION', substitution.id, 'Bài học, rủi ro và bài tập đã được bàn giao.');
+        return { message: 'Gói bàn giao đã sẵn sàng.' };
       },
 
       CLOSE_SUBSTITUTION(draft, payload, context) {
         requireRole(context.actor, ['STUDENT_SERVICE', 'ACADEMIC_MANAGER']);
-        const substitution = required(draft.substitutions.find((item) => item.sessionId === payload.sessionId && !['CLOSED', 'CANCELLED'].includes(item.status)), 'SUBSTITUTION_NOT_FOUND', 'Không tìm thấy substitution.');
-        if (substitution.status !== 'HANDOVER_READY') throw new CommandError('HANDOVER_NOT_READY', 'Cần hoàn tất handover trước khi đóng substitution.');
+        const substitution = required(draft.substitutions.find((item) => item.sessionId === payload.sessionId && !['CLOSED', 'CANCELLED'].includes(item.status)), 'SUBSTITUTION_NOT_FOUND', 'Không tìm thấy yêu cầu dạy thay.');
+        if (substitution.status !== 'HANDOVER_READY') throw new CommandError('HANDOVER_NOT_READY', 'Cần hoàn tất bàn giao trước khi đóng yêu cầu dạy thay.');
         substitution.status = 'CLOSED';
         substitution.closedAt = nowIso();
-        appendEvent(draft, context, 'SUBSTITUTION_CLOSED', 'SUBSTITUTION', substitution.id, 'Đã đóng substitution và giới hạn access window.');
-        appendAudit(draft, context, 'SUBSTITUTION_CLOSED', 'SUBSTITUTION', substitution.id, 'Handover evidence retained.');
-        return { message: 'Đã đóng substitution.' };
+        appendEvent(draft, context, 'SUBSTITUTION_CLOSED', 'SUBSTITUTION', substitution.id, 'Đã đóng yêu cầu dạy thay và giới hạn thời gian truy cập.');
+        appendAudit(draft, context, 'SUBSTITUTION_CLOSED', 'SUBSTITUTION', substitution.id, 'Đã giữ lại bằng chứng bàn giao.');
+        return { message: 'Đã đóng yêu cầu dạy thay.' };
       },
 
       BOOK_MAKE_UP(draft, payload, context) {
         requireRole(context.actor, ['STUDENT_SERVICE']);
-        const attendance = required(draft.attendanceRecords.find((item) => item.id === payload.attendanceId && ['ABSENT', 'EXCUSED'].includes(item.status)), 'MAKE_UP_NOT_ELIGIBLE', 'Attendance chưa đủ điều kiện học bù.');
+        const attendance = required(draft.attendanceRecords.find((item) => item.id === payload.attendanceId && ['ABSENT', 'EXCUSED'].includes(item.status)), 'MAKE_UP_NOT_ELIGIBLE', 'Bản ghi điểm danh chưa đủ điều kiện học bù.');
         const session = required(draft.sessions.find((item) => item.id === payload.makeUpSessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học bù.');
         const booking = { id: uid('make-up'), learnerId: attendance.learnerId, sourceAttendanceId: attendance.id, sessionId: session.id, status: 'BOOKED', bookedBy: context.actor.id, bookedAt: nowIso() };
         draft.makeUpBookings.push(booking);
         appendEvent(draft, context, 'MAKE_UP_BOOKED', 'MAKE_UP', booking.id, 'Đã đặt buổi học bù.', { learnerId: booking.learnerId });
-        appendAudit(draft, context, 'MAKE_UP_BOOKED', 'MAKE_UP', booking.id, `Session ${session.id}.`);
+        appendAudit(draft, context, 'MAKE_UP_BOOKED', 'MAKE_UP', booking.id, `Buổi học ${session.id}.`);
         return { message: 'Đã đặt buổi học bù.' };
       },
 
       FINALIZE_ATTENDANCE(draft, payload, context) {
         requireRole(context.actor, ['TEACHER', 'TA']);
         const session = required(draft.sessions.find((item) => item.id === payload.sessionId), 'SESSION_NOT_FOUND', 'Không tìm thấy buổi học.');
-        if (!['IN_PROGRESS', 'COMPLETED'].includes(session.status)) throw new CommandError('INVALID_SESSION_STATE', 'Chỉ điểm danh khi session đang hoặc đã diễn ra.');
-        if (!root.YC.policy.can(context.actor, 'ATTENDANCE_EDIT', { classId: session.classId }, draft)) throw new CommandError('FORBIDDEN', 'Không có assignment hiệu lực cho lớp này.');
+        if (!['IN_PROGRESS', 'COMPLETED'].includes(session.status)) throw new CommandError('INVALID_SESSION_STATE', 'Chỉ điểm danh khi buổi học đang hoặc đã diễn ra.');
+        if (!root.YC.policy.can(context.actor, 'ATTENDANCE_EDIT', { classId: session.classId }, draft)) throw new CommandError('FORBIDDEN', 'Không có phân công hiệu lực cho lớp này.');
         const records = payload.records || [];
-        if (!records.length) throw new CommandError('ATTENDANCE_REQUIRED', 'Cần ít nhất một attendance record.');
+        if (!records.length) throw new CommandError('ATTENDANCE_REQUIRED', 'Cần ít nhất một bản ghi điểm danh.');
         let createdAssignments = 0;
         for (const input of records) {
-          const learner = required(draft.learners.find((item) => item.id === input.learnerId), 'LEARNER_NOT_FOUND', 'Không tìm thấy học viên trong attendance.');
+          const learner = required(draft.learners.find((item) => item.id === input.learnerId), 'LEARNER_NOT_FOUND', 'Không tìm thấy học viên trong danh sách điểm danh.');
           let record = draft.attendanceRecords.find((item) => item.sessionId === session.id && item.learnerId === learner.id);
           if (!record) {
             record = { id: uid('attendance'), sessionId: session.id, learnerId: learner.id };
@@ -601,13 +624,13 @@
             createdAssignments += 1;
             appendEvent(draft, context, 'REMEDIAL_ASSIGNED', 'REMEDIAL_ASSIGNMENT', assignment.id, `${learner.name} nhận bài học bù.`, { learnerId: learner.id });
             const studentUser = draft.users.find((item) => item.role === 'STUDENT' && (item.linkedLearnerIds || []).includes(learner.id));
-            if (studentUser) draft.notifications.unshift({ id: uid('notification'), userId: studentUser.id, title: 'Bạn có bài học bù mới', body: 'Hoàn tất video và quiz trước deadline.', link: '/app/student/remedial', read: false, createdAt: nowIso() });
+            if (studentUser) draft.notifications.unshift({ id: uid('notification'), userId: studentUser.id, title: 'Bạn có bài học bù mới', body: 'Hoàn tất video và bài kiểm tra trước hạn.', link: '/app/student/remedial', read: false, createdAt: nowIso() });
           }
         }
         session.attendanceFinalized = true;
-        appendEvent(draft, context, 'ATTENDANCE_FINALIZED', 'SESSION', session.id, `${records.length} record · ${createdAssignments} remedial mới.`);
-        appendAudit(draft, context, 'ATTENDANCE_FINALIZED', 'SESSION', session.id, `Idempotent trigger · ${createdAssignments} assignment mới.`);
-        return { message: `Đã lưu attendance; tạo ${createdAssignments} bài học bù.`, createdAssignments };
+        appendEvent(draft, context, 'ATTENDANCE_FINALIZED', 'SESSION', session.id, `${records.length} bản ghi · ${createdAssignments} bài học bù mới.`);
+        appendAudit(draft, context, 'ATTENDANCE_FINALIZED', 'SESSION', session.id, `Không tạo trùng · ${createdAssignments} nhiệm vụ mới.`);
+        return { message: `Đã lưu điểm danh; tạo ${createdAssignments} bài học bù.`, createdAssignments };
       },
 
       START_REMEDIAL(draft, payload, context) {
@@ -626,23 +649,23 @@
         assignment.accessStatus = 'ACTIVE';
         assignment.linkVersion = Number(assignment.linkVersion || 1) + 1;
         assignment.accessExpiresAt = assignment.dueAt;
-        appendEvent(draft, context, 'REMEDIAL_LINK_REGENERATED', 'REMEDIAL_ASSIGNMENT', assignment.id, `Đã tạo link phiên bản ${assignment.linkVersion}.`, { learnerId: assignment.learnerId });
+        appendEvent(draft, context, 'REMEDIAL_LINK_REGENERATED', 'REMEDIAL_ASSIGNMENT', assignment.id, `Đã tạo liên kết phiên bản ${assignment.linkVersion}.`, { learnerId: assignment.learnerId });
         appendAudit(draft, context, 'REMEDIAL_LINK_REGENERATED', 'REMEDIAL_ASSIGNMENT', assignment.id, `Phiên bản ${assignment.linkVersion}.`);
-        return { message: 'Đã tạo lại link bài học bù.', linkVersion: assignment.linkVersion };
+        return { message: 'Đã tạo lại liên kết bài học bù.', linkVersion: assignment.linkVersion };
       },
 
       REVOKE_REMEDIAL_LINK(draft, payload, context) {
         requireRole(context.actor, ['TEACHER', 'TA']);
         const assignment = required(draft.remedialAssignments.find((item) => item.id === payload.assignmentId), 'REMEDIAL_NOT_FOUND', 'Không tìm thấy bài học bù.');
         const reason = String(payload.reason || '').trim();
-        if (!reason) throw new CommandError('REASON_REQUIRED', 'Thu hồi link cần có lý do.');
+        if (!reason) throw new CommandError('REASON_REQUIRED', 'Thu hồi liên kết cần có lý do.');
         assignment.accessStatus = 'REVOKED';
         assignment.revokedAt = nowIso();
         assignment.revokedBy = context.actor.id;
         assignment.revocationReason = reason;
         appendEvent(draft, context, 'REMEDIAL_LINK_REVOKED', 'REMEDIAL_ASSIGNMENT', assignment.id, reason, { learnerId: assignment.learnerId });
         appendAudit(draft, context, 'REMEDIAL_LINK_REVOKED', 'REMEDIAL_ASSIGNMENT', assignment.id, reason);
-        return { message: 'Đã thu hồi link bài học bù.' };
+        return { message: 'Đã thu hồi liên kết bài học bù.' };
       },
 
       EXTEND_REMEDIAL_DEADLINE(draft, payload, context) {
@@ -679,8 +702,8 @@
       SUBMIT_AUTO_ASSESSMENT(draft, payload, context) {
         requireRole(context.actor, ['STUDENT']);
         const assignment = required(draft.remedialAssignments.find((item) => item.id === payload.assignmentId), 'REMEDIAL_NOT_FOUND', 'Không tìm thấy bài học bù.');
-        if (!(context.actor.linkedLearnerIds || []).includes(assignment.learnerId)) throw new CommandError('FORBIDDEN', 'Assessment không thuộc tài khoản này.');
-        const assessment = required(draft.assessments.find((item) => item.id === assignment.assessmentId), 'ASSESSMENT_NOT_FOUND', 'Không tìm thấy assessment.');
+        if (!(context.actor.linkedLearnerIds || []).includes(assignment.learnerId)) throw new CommandError('FORBIDDEN', 'Bài kiểm tra không thuộc tài khoản này.');
+        const assessment = required(draft.assessments.find((item) => item.id === assignment.assessmentId), 'ASSESSMENT_NOT_FOUND', 'Không tìm thấy bài kiểm tra.');
         const previous = draft.attempts.filter((item) => item.assignmentId === assignment.id);
         if (previous.length >= assessment.maxAttempts) throw new CommandError('MAX_ATTEMPTS_REACHED', 'Đã hết số lượt làm bài.');
         const answers = payload.answers || [];
@@ -698,12 +721,12 @@
           assignment.status = 'COMPLETED';
           assignment.completedAt = nowIso();
           assignment.completionMode = 'AUTO';
-          appendEvent(draft, context, 'REMEDIAL_COMPLETED', 'REMEDIAL_ASSIGNMENT', assignment.id, `${score}/100 · video ${assignment.videoProgress}%.`, { learnerId: assignment.learnerId });
+          appendEvent(draft, context, 'REMEDIAL_COMPLETED', 'REMEDIAL_ASSIGNMENT', assignment.id, `${score}/100 · tiến độ video ${assignment.videoProgress}%.`, { learnerId: assignment.learnerId });
           draft.notifications.unshift({ id: uid('notification'), userId: context.actor.id, title: 'Bạn đã bù xong', body: `Kết quả ${score}/100 đã được ghi nhận.`, link: '/app/student/progress', read: false, createdAt: nowIso() });
           notifyRole(draft, 'TEACHER', 'Học viên đã bù xong', `${draft.learners.find((item) => item.id === assignment.learnerId)?.name}: ${score}/100.`, '/app/teacher/dashboard');
         } else {
           assignment.status = 'NOT_PASSED';
-          appendEvent(draft, context, 'ASSESSMENT_ATTEMPT_RELEASED', 'ATTEMPT', attempt.id, `${score}/100 · chưa đủ completion rule.`, { learnerId: assignment.learnerId });
+          appendEvent(draft, context, 'ASSESSMENT_ATTEMPT_RELEASED', 'ATTEMPT', attempt.id, `${score}/100 · chưa đủ điều kiện hoàn thành.`, { learnerId: assignment.learnerId });
         }
         appendAudit(draft, context, 'AUTO_ASSESSMENT_SUBMITTED', 'ATTEMPT', attempt.id, `${correct}/${assessment.questionIds.length} câu đúng.`);
         return { message: completion.completed ? 'Đã hoàn tất bài học bù.' : 'Đã lưu kết quả; còn thiếu điều kiện hoàn thành.', score, completed: completion.completed };
@@ -713,24 +736,24 @@
         requireRole(context.actor, ['TEACHER']);
         const learner = required(draft.learners.find((item) => item.id === payload.learnerId), 'LEARNER_NOT_FOUND', 'Không tìm thấy học viên.');
         if (!root.YC.policy.can(context.actor, 'HOMEWORK_EDIT', { classId: payload.classId, learnerId: learner.id }, draft)) throw new CommandError('FORBIDDEN', 'Không có quyền giao bài cho lớp này.');
-        const homework = { id: uid('homework'), classId: payload.classId, learnerId: learner.id, title: payload.title, objective: payload.objective || 'Practice and reinforcement', status: 'ASSIGNED', assignedBy: context.actor.id, assignedAt: nowIso(), dueAt: new Date(new Date(nowIso()).getTime() + 3 * 86400000).toISOString(), currentSubmissionId: null };
+        const homework = { id: uid('homework'), classId: payload.classId, learnerId: learner.id, title: payload.title, objective: payload.objective || 'Thực hành và củng cố', status: 'ASSIGNED', assignedBy: context.actor.id, assignedAt: nowIso(), dueAt: new Date(new Date(nowIso()).getTime() + 3 * 86400000).toISOString(), currentSubmissionId: null };
         draft.homeworkAssignments.push(homework);
         appendEvent(draft, context, 'HOMEWORK_ASSIGNED', 'HOMEWORK', homework.id, homework.title, { learnerId: learner.id });
-        return { message: 'Đã giao homework.' };
+        return { message: 'Đã giao bài tập.' };
       },
 
       SUBMIT_HOMEWORK(draft, payload, context) {
         requireRole(context.actor, ['STUDENT']);
-        const homework = required(draft.homeworkAssignments.find((item) => item.id === payload.homeworkId), 'HOMEWORK_NOT_FOUND', 'Không tìm thấy homework.');
-        if (!(context.actor.linkedLearnerIds || []).includes(homework.learnerId)) throw new CommandError('FORBIDDEN', 'Homework không thuộc tài khoản này.');
-        if (!['ASSIGNED', 'REVISION_REQUIRED'].includes(homework.status)) throw new CommandError('INVALID_HOMEWORK_STATE', 'Homework chưa sẵn sàng để submit.');
+        const homework = required(draft.homeworkAssignments.find((item) => item.id === payload.homeworkId), 'HOMEWORK_NOT_FOUND', 'Không tìm thấy bài tập.');
+        if (!(context.actor.linkedLearnerIds || []).includes(homework.learnerId)) throw new CommandError('FORBIDDEN', 'Bài tập không thuộc tài khoản này.');
+        if (!['ASSIGNED', 'REVISION_REQUIRED'].includes(homework.status)) throw new CommandError('INVALID_HOMEWORK_STATE', 'Bài tập chưa sẵn sàng để nộp.');
         const submission = { id: uid('homework-submission'), homeworkId: homework.id, learnerId: homework.learnerId, version: draft.homeworkSubmissions.filter((item) => item.homeworkId === homework.id).length + 1, evidence: payload.evidence, status: 'SUBMITTED', submittedAt: nowIso() };
         draft.homeworkSubmissions.push(submission);
         homework.currentSubmissionId = submission.id;
         homework.status = homework.status === 'REVISION_REQUIRED' ? 'RESUBMITTED' : 'SUBMITTED';
         appendEvent(draft, context, 'HOMEWORK_SUBMITTED', 'HOMEWORK_SUBMISSION', submission.id, `${homework.title} · v${submission.version}.`, { learnerId: homework.learnerId });
-        notifyRole(draft, 'TEACHER', 'Có homework chờ chấm', homework.title, '/app/teacher/grading');
-        return { message: 'Đã nộp homework.' };
+        notifyRole(draft, 'TEACHER', 'Có bài tập chờ chấm', homework.title, '/app/teacher/grading');
+        return { message: 'Đã nộp bài tập.' };
       },
 
       RESUBMIT_HOMEWORK(draft, payload, context) {
@@ -739,8 +762,8 @@
 
       GRADE_HOMEWORK(draft, payload, context) {
         requireRole(context.actor, ['TEACHER']);
-        const homework = required(draft.homeworkAssignments.find((item) => item.id === payload.homeworkId), 'HOMEWORK_NOT_FOUND', 'Không tìm thấy homework.');
-        if (!['SUBMITTED', 'RESUBMITTED'].includes(homework.status)) throw new CommandError('INVALID_HOMEWORK_STATE', 'Homework chưa có submission chờ chấm.');
+        const homework = required(draft.homeworkAssignments.find((item) => item.id === payload.homeworkId), 'HOMEWORK_NOT_FOUND', 'Không tìm thấy bài tập.');
+        if (!['SUBMITTED', 'RESUBMITTED'].includes(homework.status)) throw new CommandError('INVALID_HOMEWORK_STATE', 'Bài tập chưa có bài nộp chờ chấm.');
         const submission = draft.homeworkSubmissions.find((item) => item.id === homework.currentSubmissionId);
         submission.score = Number(payload.score);
         submission.feedback = payload.feedback;
@@ -749,47 +772,47 @@
         submission.status = 'FEEDBACK_READY';
         homework.status = 'FEEDBACK_READY';
         appendEvent(draft, context, 'HOMEWORK_GRADED', 'HOMEWORK_SUBMISSION', submission.id, `${submission.score}/100.`, { learnerId: homework.learnerId });
-        return { message: 'Đã chấm homework và chuẩn bị feedback.' };
+        return { message: 'Đã chấm bài tập và chuẩn bị nhận xét.' };
       },
 
       RELEASE_HOMEWORK_FEEDBACK(draft, payload, context) {
         requireRole(context.actor, ['TEACHER']);
-        const homework = required(draft.homeworkAssignments.find((item) => item.id === payload.homeworkId), 'HOMEWORK_NOT_FOUND', 'Không tìm thấy homework.');
-        if (homework.status !== 'FEEDBACK_READY') throw new CommandError('FEEDBACK_NOT_READY', 'Feedback chưa sẵn sàng để release.');
+        const homework = required(draft.homeworkAssignments.find((item) => item.id === payload.homeworkId), 'HOMEWORK_NOT_FOUND', 'Không tìm thấy bài tập.');
+        if (homework.status !== 'FEEDBACK_READY') throw new CommandError('FEEDBACK_NOT_READY', 'Nhận xét chưa sẵn sàng để phát hành.');
         const submission = draft.homeworkSubmissions.find((item) => item.id === homework.currentSubmissionId);
         submission.status = 'RELEASED';
         submission.releasedAt = nowIso();
         homework.status = 'RELEASED';
-        appendEvent(draft, context, 'HOMEWORK_FEEDBACK_RELEASED', 'HOMEWORK', homework.id, 'Feedback đã phát hành.', { learnerId: homework.learnerId });
-        return { message: 'Đã phát hành homework feedback.' };
+        appendEvent(draft, context, 'HOMEWORK_FEEDBACK_RELEASED', 'HOMEWORK', homework.id, 'Nhận xét đã phát hành.', { learnerId: homework.learnerId });
+        return { message: 'Đã phát hành nhận xét bài tập.' };
       },
 
       REQUEST_REVISION(draft, payload, context) {
         requireRole(context.actor, ['TEACHER']);
-        const homework = required(draft.homeworkAssignments.find((item) => item.id === payload.homeworkId), 'HOMEWORK_NOT_FOUND', 'Không tìm thấy homework.');
-        if (homework.status !== 'RELEASED') throw new CommandError('FEEDBACK_NOT_RELEASED', 'Cần release feedback trước khi yêu cầu revision.');
+        const homework = required(draft.homeworkAssignments.find((item) => item.id === payload.homeworkId), 'HOMEWORK_NOT_FOUND', 'Không tìm thấy bài tập.');
+        if (homework.status !== 'RELEASED') throw new CommandError('FEEDBACK_NOT_RELEASED', 'Cần phát hành nhận xét trước khi yêu cầu sửa bài.');
         homework.status = 'REVISION_REQUIRED';
         homework.nextAction = payload.nextAction;
         appendEvent(draft, context, 'HOMEWORK_REVISION_REQUIRED', 'HOMEWORK', homework.id, payload.nextAction, { learnerId: homework.learnerId });
-        return { message: 'Đã yêu cầu nộp lại homework.' };
+        return { message: 'Đã yêu cầu nộp lại bài tập.' };
       },
 
       ACCEPT_HOMEWORK(draft, payload, context) {
         requireRole(context.actor, ['TEACHER']);
-        const homework = required(draft.homeworkAssignments.find((item) => item.id === payload.homeworkId), 'HOMEWORK_NOT_FOUND', 'Không tìm thấy homework.');
-        if (homework.status !== 'RELEASED') throw new CommandError('FEEDBACK_NOT_RELEASED', 'Cần release feedback trước khi accept.');
+        const homework = required(draft.homeworkAssignments.find((item) => item.id === payload.homeworkId), 'HOMEWORK_NOT_FOUND', 'Không tìm thấy bài tập.');
+        if (homework.status !== 'RELEASED') throw new CommandError('FEEDBACK_NOT_RELEASED', 'Cần phát hành nhận xét trước khi chấp nhận bài.' );
         homework.status = 'ACCEPTED';
         homework.acceptedAt = nowIso();
-        appendEvent(draft, context, 'HOMEWORK_ACCEPTED', 'HOMEWORK', homework.id, 'Homework đã đạt objective.', { learnerId: homework.learnerId });
-        return { message: 'Đã chấp nhận homework.' };
+        appendEvent(draft, context, 'HOMEWORK_ACCEPTED', 'HOMEWORK', homework.id, 'Bài tập đã đạt mục tiêu.', { learnerId: homework.learnerId });
+        return { message: 'Đã chấp nhận bài tập.' };
       },
 
       SUBMIT_MANUAL_GRADE(draft, payload, context) {
         requireRole(context.actor, ['TEACHER', 'ACADEMIC_MANAGER']);
-        const assessment = required(draft.assessments.find((item) => item.id === payload.assessmentId), 'ASSESSMENT_NOT_FOUND', 'Không tìm thấy assessment.');
+        const assessment = required(draft.assessments.find((item) => item.id === payload.assessmentId), 'ASSESSMENT_NOT_FOUND', 'Không tìm thấy bài kiểm tra.');
         const learner = required(draft.learners.find((item) => item.id === payload.learnerId), 'LEARNER_NOT_FOUND', 'Không tìm thấy học viên.');
         const values = Object.values(payload.skills || {}).map(Number);
-        if (values.length !== 6) throw new CommandError('SKILL_EVIDENCE_REQUIRED', 'Cần đủ sáu skill score.');
+        if (values.length !== 6) throw new CommandError('SKILL_EVIDENCE_REQUIRED', 'Cần đủ điểm của sáu kỹ năng.');
         const score = Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
         const attempt = { id: uid('attempt-final'), learnerId: learner.id, assessmentId: assessment.id, score, status: 'SUBMITTED_FOR_REVIEW', gradingMode: 'MANUAL', submittedAt: nowIso(), moderationRequired: assessment.purpose === 'FINAL' || values.some((value) => Math.abs(value - 60) <= 3) };
         draft.attempts.push(attempt);
@@ -797,80 +820,80 @@
         draft.gradingRecords.push(grading);
         const skillMap = { listening: 'LISTENING', reading: 'READING', spokenInteraction: 'SPOKEN_INTERACTION', spokenProduction: 'SPOKEN_PRODUCTION', writing: 'WRITING', language: 'LANGUAGE' };
         Object.entries(payload.skills).forEach(([key, value]) => draft.skillResults.push({ id: uid('skill-result'), learnerId: learner.id, assessmentId: assessment.id, attemptId: attempt.id, skill: skillMap[key], score: Number(value), status: 'PENDING_REVIEW', recordedAt: nowIso() }));
-        appendEvent(draft, context, 'MANUAL_GRADE_SUBMITTED', 'GRADING_RECORD', grading.id, `${score}/100 · moderation ${attempt.moderationRequired ? 'required' : 'not required'}.`, { learnerId: learner.id });
-        notifyRole(draft, 'ACADEMIC_MANAGER', 'Có kết quả cần moderation', `${learner.name} · ${assessment.title}.`, '/app/academic/moderation');
-        return { message: 'Đã gửi điểm và evidence để review.', attemptId: attempt.id, score };
+        appendEvent(draft, context, 'MANUAL_GRADE_SUBMITTED', 'GRADING_RECORD', grading.id, `${score}/100 · kiểm duyệt ${attempt.moderationRequired ? 'bắt buộc' : 'không bắt buộc'}.`, { learnerId: learner.id });
+        notifyRole(draft, 'ACADEMIC_MANAGER', 'Có kết quả cần kiểm duyệt', `${learner.name} · ${assessment.title}.`, '/app/academic/moderation');
+        return { message: 'Đã gửi điểm và bằng chứng để duyệt.', attemptId: attempt.id, score };
       },
 
       START_MODERATION(draft, payload, context) {
         requireRole(context.actor, ['ACADEMIC_MANAGER']);
-        const attempt = required(draft.attempts.find((item) => item.id === payload.attemptId), 'ATTEMPT_NOT_FOUND', 'Không tìm thấy attempt.');
-        if (!attempt.moderationRequired) throw new CommandError('MODERATION_NOT_REQUIRED', 'Attempt này không cần moderation.');
-        if (draft.moderationCases.some((item) => item.attemptId === attempt.id)) throw new CommandError('MODERATION_EXISTS', 'Moderation case đã tồn tại.');
+        const attempt = required(draft.attempts.find((item) => item.id === payload.attemptId), 'ATTEMPT_NOT_FOUND', 'Không tìm thấy lượt làm bài.');
+        if (!attempt.moderationRequired) throw new CommandError('MODERATION_NOT_REQUIRED', 'Lượt làm này không cần kiểm duyệt.');
+        if (draft.moderationCases.some((item) => item.attemptId === attempt.id)) throw new CommandError('MODERATION_EXISTS', 'Hồ sơ kiểm duyệt đã tồn tại.');
         const moderation = { id: uid('moderation'), attemptId: attempt.id, learnerId: attempt.learnerId, status: 'MODERATION', variance: 2, reviewerId: context.actor.id, openedAt: nowIso() };
         draft.moderationCases.push(moderation);
-        appendEvent(draft, context, 'MODERATION_STARTED', 'MODERATION_CASE', moderation.id, 'Bắt đầu review rubric và evidence.', { learnerId: attempt.learnerId });
-        return { message: 'Đã mở moderation case.' };
+        appendEvent(draft, context, 'MODERATION_STARTED', 'MODERATION_CASE', moderation.id, 'Bắt đầu đối chiếu thang điểm và bằng chứng.', { learnerId: attempt.learnerId });
+        return { message: 'Đã mở hồ sơ kiểm duyệt.' };
       },
 
       APPROVE_MODERATION(draft, payload, context) {
         requireRole(context.actor, ['ACADEMIC_MANAGER']);
-        const moderation = required(draft.moderationCases.find((item) => item.attemptId === payload.attemptId && item.status === 'MODERATION'), 'MODERATION_NOT_FOUND', 'Không tìm thấy moderation đang mở.');
-        if (!String(payload.note || '').trim()) throw new CommandError('EVIDENCE_NOTE_REQUIRED', 'Approval cần ghi chú evidence.');
+        const moderation = required(draft.moderationCases.find((item) => item.attemptId === payload.attemptId && item.status === 'MODERATION'), 'MODERATION_NOT_FOUND', 'Không tìm thấy hồ sơ kiểm duyệt đang mở.');
+        if (!String(payload.note || '').trim()) throw new CommandError('EVIDENCE_NOTE_REQUIRED', 'Phê duyệt cần ghi chú bằng chứng.');
         moderation.status = 'APPROVED';
         moderation.note = payload.note.trim();
         moderation.approvedAt = nowIso();
         appendEvent(draft, context, 'MODERATION_APPROVED', 'MODERATION_CASE', moderation.id, moderation.note, { learnerId: moderation.learnerId });
         appendAudit(draft, context, 'MODERATION_APPROVED', 'MODERATION_CASE', moderation.id, moderation.note);
-        return { message: 'Đã approve moderation.' };
+        return { message: 'Đã phê duyệt kiểm duyệt.' };
       },
 
       RELEASE_RESULT(draft, payload, context) {
         requireRole(context.actor, ['TEACHER', 'ACADEMIC_MANAGER']);
-        const attempt = required(draft.attempts.find((item) => item.id === payload.attemptId), 'ATTEMPT_NOT_FOUND', 'Không tìm thấy attempt.');
-        const grading = required(draft.gradingRecords.find((item) => item.attemptId === attempt.id), 'GRADING_NOT_FOUND', 'Không tìm thấy grading record.');
-        if (attempt.moderationRequired && !draft.moderationCases.some((item) => item.attemptId === attempt.id && item.status === 'APPROVED')) throw new CommandError('MODERATION_REQUIRED', 'Final/borderline result cần moderation được approve trước khi release.');
+        const attempt = required(draft.attempts.find((item) => item.id === payload.attemptId), 'ATTEMPT_NOT_FOUND', 'Không tìm thấy lượt làm bài.');
+        const grading = required(draft.gradingRecords.find((item) => item.attemptId === attempt.id), 'GRADING_NOT_FOUND', 'Không tìm thấy bản ghi chấm điểm.');
+        if (attempt.moderationRequired && !draft.moderationCases.some((item) => item.attemptId === attempt.id && item.status === 'APPROVED')) throw new CommandError('MODERATION_REQUIRED', 'Kết quả cuối khóa hoặc sát ngưỡng cần được kiểm duyệt trước khi phát hành.');
         grading.status = 'RELEASED';
         grading.releasedAt = nowIso();
         attempt.status = 'RELEASED';
         attempt.releasedAt = nowIso();
         draft.skillResults.filter((item) => item.attemptId === attempt.id).forEach((item) => { item.status = 'RELEASED'; });
         appendEvent(draft, context, 'RESULT_RELEASED', 'ATTEMPT', attempt.id, `${attempt.score}/100.`, { learnerId: attempt.learnerId });
-        appendAudit(draft, context, 'RESULT_RELEASED', 'ATTEMPT', attempt.id, attempt.moderationRequired ? 'Released after moderation.' : 'Released by grading policy.');
+        appendAudit(draft, context, 'RESULT_RELEASED', 'ATTEMPT', attempt.id, attempt.moderationRequired ? 'Đã phát hành sau khi kiểm duyệt.' : 'Đã phát hành theo quy tắc chấm điểm.');
         return { message: 'Đã phát hành kết quả.' };
       },
 
       OPEN_INTERVENTION(draft, payload, context) {
         requireRole(context.actor, ['ACADEMIC_MANAGER', 'TEACHER', 'STUDENT_SERVICE']);
-        if (!String(payload.plan || '').trim() || !payload.followUpAt) throw new CommandError('INTERVENTION_PLAN_REQUIRED', 'Intervention cần action plan và follow-up date.');
+        if (!String(payload.plan || '').trim() || !payload.followUpAt) throw new CommandError('INTERVENTION_PLAN_REQUIRED', 'Can thiệp cần kế hoạch hành động và ngày theo dõi tiếp theo.');
         const learner = required(draft.learners.find((item) => item.id === payload.learnerId), 'LEARNER_NOT_FOUND', 'Không tìm thấy học viên.');
         const owner = draft.users.find((item) => item.role === payload.ownerRole && item.status === 'ACTIVE');
         const intervention = { id: uid('intervention'), learnerId: learner.id, signal: payload.signal, ownerRole: payload.ownerRole, ownerId: owner?.id || context.actor.id, status: 'OPEN', plan: payload.plan.trim(), followUpAt: payload.followUpAt, outcome: null, openedBy: context.actor.id, openedAt: nowIso() };
         draft.interventionCases.push(intervention);
         appendEvent(draft, context, 'INTERVENTION_OPENED', 'INTERVENTION', intervention.id, `${payload.signal} → ${payload.ownerRole}.`, { learnerId: learner.id });
         appendAudit(draft, context, 'INTERVENTION_OPENED', 'INTERVENTION', intervention.id, intervention.plan);
-        notifyRole(draft, payload.ownerRole, 'Có intervention cần xử lý', `${learner.name}: ${payload.signal}.`, '/app/service/cases');
-        return { message: 'Đã mở intervention và giao owner.' };
+        notifyRole(draft, payload.ownerRole, 'Có can thiệp cần xử lý', `${learner.name}: ${payload.signal}.`, '/app/service/cases');
+        return { message: 'Đã mở can thiệp và giao người phụ trách.' };
       },
 
       PUBLISH_PROGRESS_REPORT(draft, payload, context) {
         requireRole(context.actor, ['ACADEMIC_MANAGER']);
         const learner = required(draft.learners.find((item) => item.id === payload.learnerId), 'LEARNER_NOT_FOUND', 'Không tìm thấy học viên.');
         const evidence = root.YC.selectors.progressReportEvidence(draft, learner.id);
-        if (evidence.skillProfile.some((item) => item.score === null)) throw new CommandError('SKILL_EVIDENCE_INCOMPLETE', 'Cần đủ sáu skill result đã release.');
+        if (evidence.skillProfile.some((item) => item.score === null)) throw new CommandError('SKILL_EVIDENCE_INCOMPLETE', 'Cần đủ kết quả sáu kỹ năng đã phát hành.');
         const report = { id: uid('progress-report'), learnerId: learner.id, status: 'PUBLISHED', snapshot: { attendanceRate: evidence.attendanceRate, homeworkCompletion: evidence.homeworkCompletion }, skillProfile: evidence.skillProfile, narrative: payload.narrative, nextActions: payload.nextActions || [], evidenceIds: [...evidence.interventionIds, ...evidence.remedialIds, ...evidence.skillProfile.map((item) => item.evidenceId)], approvedBy: context.actor.id, publishedAt: nowIso() };
         draft.progressReports.push(report);
         appendEvent(draft, context, 'PROGRESS_REPORT_PUBLISHED', 'PROGRESS_REPORT', report.id, learner.name, { learnerId: learner.id });
-        appendAudit(draft, context, 'PROGRESS_REPORT_PUBLISHED', 'PROGRESS_REPORT', report.id, 'Published evidence is visible to learner/parent.');
+        appendAudit(draft, context, 'PROGRESS_REPORT_PUBLISHED', 'PROGRESS_REPORT', report.id, 'Bằng chứng đã công bố hiển thị cho học viên và phụ huynh.');
         const parent = draft.users.find((item) => item.role === 'PARENT' && (item.linkedLearnerIds || []).includes(learner.id));
-        if (parent) draft.notifications.unshift({ id: uid('notification'), userId: parent.id, title: 'Báo cáo tiến bộ đã phát hành', body: `${learner.name}: xem kết quả và next action.`, link: '/app/parent/progress', read: false, createdAt: nowIso() });
-        return { message: 'Đã phát hành progress report.', reportId: report.id };
+        if (parent) draft.notifications.unshift({ id: uid('notification'), userId: parent.id, title: 'Báo cáo tiến bộ đã phát hành', body: `${learner.name}: xem kết quả và việc cần làm tiếp theo.`, link: '/app/parent/progress', read: false, createdAt: nowIso() });
+        return { message: 'Đã phát hành báo cáo tiến bộ.', reportId: report.id };
       },
 
       DECIDE_PROMOTION(draft, payload, context) {
         requireRole(context.actor, ['ACADEMIC_MANAGER']);
         const learner = required(draft.learners.find((item) => item.id === payload.learnerId), 'LEARNER_NOT_FOUND', 'Không tìm thấy học viên.');
-        const report = required(draft.progressReports.find((item) => item.learnerId === learner.id && item.status === 'PUBLISHED'), 'PROGRESS_REPORT_REQUIRED', 'Cần progress report đã publish.');
+        const report = required(draft.progressReports.find((item) => item.learnerId === learner.id && item.status === 'PUBLISHED'), 'PROGRESS_REPORT_REQUIRED', 'Cần báo cáo tiến bộ đã công bố.');
         const enrollment = draft.enrollments.find((item) => item.learnerId === learner.id && item.status === 'ACTIVE');
         const courseVersion = draft.courseVersions.find((item) => item.id === enrollment?.courseVersionId) || draft.courseVersions.find((item) => item.id === 'course-v6');
         const minimum = courseVersion.completionRule.skillMinimum;
@@ -883,22 +906,22 @@
         const overrideReason = String(payload.overrideReason || '').trim();
         const overrideEvidence = Array.isArray(payload.overrideEvidence) ? payload.overrideEvidence.filter(Boolean) : [];
         if (payload.decision === 'PROMOTE' && !thresholdsPassed && (!overrideReason || overrideEvidence.length === 0)) {
-          throw new CommandError('PROMOTION_THRESHOLDS_NOT_MET', 'Evidence chưa đạt đủ promotion rule; override cần lý do và evidence.', { evidence });
+          throw new CommandError('PROMOTION_THRESHOLDS_NOT_MET', 'Bằng chứng chưa đạt quy tắc lên lớp; ngoại lệ cần lý do và bằng chứng.', { evidence });
         }
         const decision = { id: uid('promotion'), learnerId: learner.id, progressReportId: report.id, decision: payload.decision, nextCourseVersionId: payload.nextCourseVersionId || null, evidence, status: 'FINAL', decidedBy: context.actor.id, decidedAt: nowIso(), overrideReason: overrideReason || null, overrideEvidence };
         draft.promotionDecisions.unshift(decision);
         appendEvent(draft, context, 'PROMOTION_DECIDED', 'PROMOTION', decision.id, `${learner.name}: ${decision.decision}.`, { learnerId: learner.id });
-        appendAudit(draft, context, 'PROMOTION_DECIDED', 'PROMOTION', decision.id, `${decision.decision} · overall ${overall}${overrideReason ? ` · override: ${overrideReason}` : ''}.`);
-        notifyRole(draft, 'ADMISSIONS', 'Học viên sẵn sàng renewal', `${learner.name}: ${decision.decision}.`, '/app/admissions/renewals');
-        return { message: 'Đã chốt promotion decision.', evidence };
+        appendAudit(draft, context, 'PROMOTION_DECIDED', 'PROMOTION', decision.id, `${decision.decision} · tổng thể ${overall}${overrideReason ? ` · ngoại lệ: ${overrideReason}` : ''}.`);
+        notifyRole(draft, 'ADMISSIONS', 'Học viên sẵn sàng gia hạn', `${learner.name}: ${decision.decision}.`, '/app/admissions/renewals');
+        return { message: 'Đã chốt quyết định lên lớp.', evidence };
       },
 
       ACKNOWLEDGE_PARENT_PROGRESS(draft, payload, context) {
         requireRole(context.actor, ['PARENT']);
         if (!(context.actor.linkedLearnerIds || []).includes(payload.learnerId)) throw new CommandError('FORBIDDEN', 'Học viên không thuộc tài khoản phụ huynh.');
-        const report = required(draft.progressReports.find((item) => item.learnerId === payload.learnerId && item.status === 'PUBLISHED'), 'PROGRESS_REPORT_REQUIRED', 'Chưa có progress report được publish.');
-        appendEvent(draft, context, 'PARENT_PROGRESS_VIEWED', 'PROGRESS_REPORT', report.id, 'Phụ huynh đã xem báo cáo và next action.', { learnerId: payload.learnerId });
-        appendAudit(draft, context, 'PARENT_PROGRESS_VIEWED', 'PROGRESS_REPORT', report.id, 'Visibility-filtered parent view.');
+        const report = required(draft.progressReports.find((item) => item.learnerId === payload.learnerId && item.status === 'PUBLISHED'), 'PROGRESS_REPORT_REQUIRED', 'Chưa có báo cáo tiến bộ được công bố.');
+        appendEvent(draft, context, 'PARENT_PROGRESS_VIEWED', 'PROGRESS_REPORT', report.id, 'Phụ huynh đã xem báo cáo và việc cần làm tiếp theo.', { learnerId: payload.learnerId });
+        appendAudit(draft, context, 'PARENT_PROGRESS_VIEWED', 'PROGRESS_REPORT', report.id, 'Đã lọc nội dung theo quyền xem của phụ huynh.');
         return { message: 'Đã ghi nhận phụ huynh xem báo cáo.' };
       },
     };

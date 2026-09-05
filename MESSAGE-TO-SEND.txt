@@ -1,5 +1,5 @@
 Yen Center Full Journey Frontend Demo v3.0
 
-Mở OPEN-DEMO.html, chọn Demo Guide rồi dùng “Chạy tự động đến cuối” hoặc 12 checkpoint. Bản demo nối lead → placement → payment → class/teacher → session → attendance/remedial → homework → assessment/moderation → progress/parent → renewal.
+Mở OPEN-DEMO.html, chọn Hướng dẫn demo rồi bấm “Bắt đầu demo chính”. Luồng 3 bước nối Giáo viên điểm danh → Học viên Nguyễn Minh Anh hoàn thành học bù → Quản trị viên kiểm tra bằng chứng. Course có đủ danh mục công khai, khu học viên, Xưởng nội dung và quản trị khóa học. Luồng nâng cao 12 checkpoint vẫn được giữ trong phần mở rộng.
 
-Lưu ý: đây là frontend demonstrator. Auth/RBAC, payment, messaging, media và persistence production chưa được triển khai; vui lòng đọc docs/HANDBOOK-COVERAGE-v1.1.md và docs/KNOWN-LIMITATIONS.md trước khi estimate.
+Lưu ý: đây là demo frontend. Xác thực/phân quyền, thanh toán, nhắn tin, media và lưu trữ production chưa được triển khai; vui lòng đọc docs/HANDBOOK-COVERAGE-v1.1.md và docs/KNOWN-LIMITATIONS.md trước khi ước lượng.

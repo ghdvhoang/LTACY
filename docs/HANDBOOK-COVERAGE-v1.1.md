@@ -7,6 +7,8 @@ Phạm vi: Yen Center Full Journey **frontend demonstrator v3.0**
 
 Bản demo bao phủ trọn acceptance journey và các capability Release 1/Release 2 cần để kể câu chuyện end-to-end. Nó không phải bản hiện thực toàn bộ reference architecture hoặc Release 3+; backend, security production, provider integration, standards và AI vẫn ngoài phạm vi frontend.
 
+Đối chiếu thêm với prototype trước khi pull: toàn bộ route công khai và route khu vực làm việc cũ đều có điểm đến hữu ích hoặc alias tương thích; kiểm thử route parity chạy tự động để ngăn luồng cũ bị rơi. Course đã được nối xuyên danh mục công khai, player của Học viên, Content Studio của Giáo viên và màn quản trị của Admin trên cùng dữ liệu chương trình.
+
 ## Golden journey và evidence
 
 | Milestone handbook | Hiện thực trong demo | Evidence/guard |
@@ -32,6 +34,7 @@ Bản demo bao phủ trọn acceptance journey và các capability Release 1/Rel
 |---|---|
 | Identity, branch, role, scope | Interactive frontend policy + route guard; không phải server authorization |
 | Program, course version | Normalized data, published/immutable version UI |
+| Course catalog, learner course, content studio | Tương tác xuyên vai trò; tạo bản nháp nội dung và giữ phiên bản đã công bố bất biến |
 | Student, teacher, class | Normalized entities và role workspaces |
 | Timetable, session | Recurrence/holiday/conflict data model đại diện; canonical session lifecycle interactive |
 | Enrollment, attendance | Interactive command/state transition |

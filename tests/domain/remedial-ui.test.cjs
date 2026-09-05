@@ -31,6 +31,15 @@ test('student remedial detail restores player progress and real quiz navigation'
   assert.match(html, new RegExp(`/app/student/quiz/${runtime.assignment.id}`));
 });
 
+test('student dashboard shows the real zero progress for a new remedial assignment', () => {
+  const runtime = preparedRuntime();
+  const actor = runtime.store.getState().users.find((item) => item.id === 'student-login-1');
+  const path = '/app/student/dashboard';
+  const html = runtime.YC.router.render(path, { state: runtime.store.getState(), actor, learnerId: 'student-canonical', path });
+  assert.match(html, /Tiến độ bài hiện tại[\s\S]*?0%/);
+  assert.doesNotMatch(html, /Tiến độ bài hiện tại[\s\S]*?42%/);
+});
+
 test('quiz route renders every question, timer, demo-fill and submit controls', () => {
   const runtime = preparedRuntime();
   const actor = runtime.store.getState().users.find((item) => item.id === 'student-login-1');
@@ -82,4 +91,3 @@ test('teacher remedial view exposes the complete link lifecycle', () => {
 
   for (const action of ['copy-remedial-link', 'regenerate-remedial-link', 'revoke-remedial-link', 'extend-remedial-deadline']) assert.match(html, new RegExp(`data-action="${action}"`));
 });
-

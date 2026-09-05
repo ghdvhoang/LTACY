@@ -48,7 +48,7 @@
     function render() {
       const currentPath = path();
       app.innerHTML = root.YC.router.frame(currentPath, context());
-      document.title = currentPath.startsWith('/app/') ? 'Yen Center · Workspace Demo' : 'Yen Center · Learning Journey Demo';
+      document.title = currentPath.startsWith('/app/') ? 'Yen Center · Khu vực làm việc' : 'Yen Center · Hành trình học tập';
       document.body.classList.toggle('is-app', currentPath.startsWith('/app/'));
       root.clearInterval(quizTimer);
       const timer = document.querySelector('[data-quiz-timer]');
@@ -76,9 +76,27 @@
       URL.revokeObjectURL(url);
     }
 
-    const controller = root.YC.actions.create({ store, bus, storage, location: root.location, onChange: render, onToast: toast, onDownload: download, onPrint: () => root.print(), onCopy: (value) => {
-      if (root.navigator?.clipboard?.writeText) root.navigator.clipboard.writeText(value).catch(() => {});
-    } });
+    function legacyCopy(value) {
+      const field = document.createElement('textarea');
+      field.value = value;
+      field.setAttribute('readonly', '');
+      field.style.position = 'fixed';
+      field.style.opacity = '0';
+      document.body.appendChild(field);
+      field.select();
+      try { document.execCommand('copy'); } catch (_error) { /* Trình duyệt không hỗ trợ. */ }
+      field.remove();
+    }
+
+    function copy(value) {
+      if (root.navigator?.clipboard?.writeText) {
+        root.navigator.clipboard.writeText(value).catch(() => legacyCopy(value));
+        return;
+      }
+      legacyCopy(value);
+    }
+
+    const controller = root.YC.actions.create({ store, bus, storage, location: root.location, onChange: render, onToast: toast, onDownload: download, onPrint: () => root.print(), onCopy: copy });
 
     function payloadFrom(element) {
       if (!element.dataset.payload) return {};
@@ -115,6 +133,18 @@
         return;
       }
       const data = { ...payloadFrom(trigger), actorId: trigger.dataset.actorId, learnerId: trigger.dataset.learnerId, sessionId: trigger.dataset.sessionId, assignmentId: trigger.dataset.assignmentId, documentId: trigger.dataset.documentId, status: trigger.dataset.status, progress: trigger.dataset.progress };
+      if (action === 'revoke-remedial-link') {
+        if (root.confirm && !root.confirm('Thu hồi liên kết học bù này? Học viên sẽ không thể mở liên kết hiện tại.')) return;
+        data.reason = 'Giáo viên xác nhận thu hồi từ màn quản lý.';
+      }
+      if (action === 'extend-remedial-deadline' && root.prompt) {
+        const days = root.prompt('Gia hạn thêm bao nhiêu ngày? (1–30)', '3');
+        if (days === null) return;
+        const reason = root.prompt('Lý do gia hạn', 'Học viên cần thêm thời gian hoàn thành');
+        if (reason === null) return;
+        data.days = days;
+        data.reason = reason;
+      }
       trigger.disabled = true;
       const result = controller.execute(action, data);
       if (result?.ok === false) toast(result.message, 'error');
@@ -135,6 +165,7 @@
       if (form.dataset.form === 'quiz') { action = 'submit-quiz'; data = { assignmentId: form.dataset.assignmentId, answers: Array.from(form.querySelectorAll('.question-card'), (_card, index) => { const selected = form.querySelector(`input[name="answer-${index}"]:checked`); return selected ? Number(selected.value) : null; }) }; }
       if (form.dataset.form === 'public-lead') { action = 'submit-public-lead'; data = { type: form.dataset.type, name: values.get('name'), studentName: values.get('studentName'), organization: values.get('organization'), phone: values.get('phone'), email: values.get('email'), message: values.get('message') }; }
       if (form.dataset.form === 'add-student') { action = 'add-learner'; data = { code: values.get('code'), name: values.get('name'), phone: values.get('phone'), classId: values.get('classId') }; }
+      if (form.dataset.form === 'settings') { action = 'update-settings'; data = { minimumVideoProgress: values.get('minimumVideoProgress'), defaultPassingScore: values.get('defaultPassingScore'), remedialDeadlineDays: values.get('remedialDeadlineDays') }; }
       if (!action) return;
       const result = controller.execute(action, data);
       if (result?.ok === false) toast(result.message, 'error');
@@ -145,6 +176,16 @@
       if (!trigger) return;
       const result = controller.execute('lead-status', { leadId: trigger.dataset.leadId, status: trigger.value });
       if (result?.ok === false) toast(result.message, 'error');
+    });
+
+    document.addEventListener('input', (event) => {
+      const field = event.target.closest('.topbar-search input');
+      if (!field) return;
+      const normalize = (value) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const query = normalize(field.value).trim();
+      document.querySelectorAll('#main-content tbody tr, #main-content .queue-card, #main-content .candidate-card, #main-content .learning-list > article, #main-content .lesson-plan, #main-content .lesson-row, #main-content .task-list > a').forEach((item) => {
+        item.hidden = Boolean(query) && !normalize(item.textContent).includes(query);
+      });
     });
 
     root.addEventListener('hashchange', () => {
