@@ -1,4 +1,4 @@
-# Yen Center frontend runtime v3.0
+# Lớp Tiếng Anh Cô Yến frontend runtime v3.0
 
 `index.html` + `styles.css` + `app.js` là bản source chạy qua HTTP. `yen-center-lms-demo.html` là bản standalone đã inline CSS/JavaScript.
 

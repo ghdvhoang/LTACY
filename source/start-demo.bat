@@ -1,6 +1,6 @@
 @echo off
 cd /d "%~dp0"
-echo Yen Center LMS FE Demo v2.0
+echo Lop Tieng Anh Co Yen - Frontend Demo v3.0
 echo Mo trinh duyet tai http://localhost:4173
 where py >nul 2>nul
 if %errorlevel%==0 (

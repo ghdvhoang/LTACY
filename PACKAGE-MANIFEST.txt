@@ -1,4 +1,4 @@
-Yen Center Full Journey Frontend Demo v3.0 — Package Manifest
+Lớp Tiếng Anh Cô Yến Full Journey Frontend Demo v3.0 — Package Manifest
 Generated: 2026-09-05
 
 MESSAGE-TO-SEND.txt

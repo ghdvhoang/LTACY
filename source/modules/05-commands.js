@@ -33,6 +33,22 @@
       return new Date(store.clock()).toISOString();
     }
 
+    function publishSiteItem(draft, collectionName, item, actorId) {
+      const collection = cmsCollection(draft, collectionName);
+      const publishedAt = nowIso();
+      collection.filter((entry) => entry.id !== item.id && (entry.contentKey || entry.id) === (item.contentKey || item.id) && entry.status === 'PUBLISHED').forEach((entry) => {
+        entry.status = 'ARCHIVED';
+        entry.effectiveTo = publishedAt;
+        entry.archivedBy = actorId;
+        entry.archivedAt = publishedAt;
+      });
+      item.status = 'PUBLISHED';
+      item.effectiveFrom = item.effectiveFrom || publishedAt;
+      item.publishedBy = actorId;
+      item.publishedAt = publishedAt;
+      return publishedAt;
+    }
+
     function appendEvent(draft, context, type, resourceType, resourceId, summary, extra = {}) {
       const event = {
         id: uid('event'),
@@ -277,8 +293,9 @@
         item.submittedAt = nowIso();
         const request = {
           id: uid('change-request'), resourceType: 'SITE_CONTENT', resourceId: item.id, collection: payload.collection,
-          operation: 'PUBLISH', status: 'SUBMITTED', requesterId: context.actor.id, reason,
-          beforeSnapshot: null, afterSnapshot: clone(item), submittedAt: nowIso(), eventIds: [],
+          operation: 'PUBLISH', status: 'SUBMITTED', requesterId: context.actor.id, submittedBy: context.actor.id, reason,
+          baseVersion: Number(item.sourceRevisionId ? item.revision - 1 : 0), revision: Number(item.revision || 1), diff: [],
+          beforeSnapshot: null, afterSnapshot: clone(item), proposedSnapshot: clone(item), submittedAt: nowIso(), eventIds: [],
         };
         item.approvalRequestId = request.id;
         draft.changeRequests.push(request);
@@ -294,17 +311,7 @@
         const collection = cmsCollection(draft, payload.collection);
         const item = required(collection.find((entry) => entry.id === payload.contentId), 'SITE_CONTENT_NOT_FOUND', 'Không tìm thấy nội dung website.');
         if (!['DRAFT', 'SUBMITTED'].includes(item.status)) throw new CommandError('SITE_CONTENT_NOT_PUBLISHABLE', 'Nội dung không ở trạng thái có thể xuất bản.');
-        const publishedAt = nowIso();
-        collection.filter((entry) => entry.id !== item.id && (entry.contentKey || entry.id) === (item.contentKey || item.id) && entry.status === 'PUBLISHED').forEach((entry) => {
-          entry.status = 'ARCHIVED';
-          entry.effectiveTo = publishedAt;
-          entry.archivedBy = context.actor.id;
-          entry.archivedAt = publishedAt;
-        });
-        item.status = 'PUBLISHED';
-        item.effectiveFrom = item.effectiveFrom || publishedAt;
-        item.publishedBy = context.actor.id;
-        item.publishedAt = publishedAt;
+        const publishedAt = publishSiteItem(draft, payload.collection, item, context.actor.id);
         if (item.approvalRequestId) {
           const request = draft.changeRequests.find((entry) => entry.id === item.approvalRequestId);
           if (request) Object.assign(request, { status: 'APPROVED', reviewerId: context.actor.id, reviewedAt: publishedAt, appliedAt: publishedAt, reviewNote: String(payload.reviewNote || 'Đã duyệt nội dung để xuất bản.') });
@@ -449,7 +456,7 @@
         request.reviewNote = note || null;
         request.reviewedAt = nowIso();
 
-        if (nextStatus === 'APPROVED' && root.YC.approval.stale(request, draft)) {
+        if (nextStatus === 'APPROVED' && request.resourceType !== 'SITE_CONTENT' && root.YC.approval.stale(request, draft)) {
           root.YC.approval.transition(request, 'CONFLICTED');
           const event = appendEvent(draft, context, 'CHANGE_REQUEST_CONFLICTED', 'CHANGE_REQUEST', request.id, 'Dữ liệu gốc đã thay đổi; yêu cầu cần được cập nhật lại.');
           request.eventIds.push(event.id);
@@ -459,11 +466,18 @@
         }
 
         if (nextStatus === 'APPROVED') {
-          const canonical = approvalCall(() => root.YC.approval.applyChange(request, draft));
+          const canonical = request.resourceType === 'SITE_CONTENT'
+            ? required(cmsCollection(draft, request.collection).find((item) => item.id === request.resourceId && item.status === 'SUBMITTED'), 'SITE_CONTENT_NOT_REVIEWABLE', 'Nội dung không còn ở trạng thái chờ duyệt.')
+            : approvalCall(() => root.YC.approval.applyChange(request, draft));
+          if (request.resourceType === 'SITE_CONTENT') publishSiteItem(draft, request.collection, canonical, context.actor.id);
           root.YC.approval.transition(request, 'APPROVED');
           request.appliedAt = nowIso();
           request.resourceId = canonical.id;
         } else {
+          if (request.resourceType === 'SITE_CONTENT') {
+            const item = cmsCollection(draft, request.collection).find((entry) => entry.id === request.resourceId);
+            if (item?.status === 'SUBMITTED') Object.assign(item, { status: 'DRAFT', updatedBy: context.actor.id, updatedAt: nowIso() });
+          }
           root.YC.approval.transition(request, nextStatus);
         }
         const type = `CHANGE_REQUEST_${request.status}`;
@@ -621,7 +635,8 @@
 
       REGISTER_PUBLIC_EVENT(draft, payload, context) {
         requireRole(context.actor, ['VISITOR']);
-        const event = required(draft.publicContent.events.find((item) => item.id === payload.eventId && item.status === 'PUBLISHED'), 'EVENT_NOT_FOUND', 'Không tìm thấy sự kiện.');
+        const publicEvents = root.YC.publicContent?.published('publicEvents', draft) || [];
+        const event = required(publicEvents.find((item) => item.id === payload.eventId) || draft.publicContent.events.find((item) => item.id === payload.eventId && item.status === 'PUBLISHED'), 'EVENT_NOT_FOUND', 'Không tìm thấy sự kiện.');
         context.actor.registeredEventIds ||= [];
         if (!context.actor.registeredEventIds.includes(event.id)) context.actor.registeredEventIds.push(event.id);
         draft.notifications.unshift({ id: uid('notification'), userId: context.actor.id, title: 'Đăng ký sự kiện thành công', body: event.title, link: '/tai-khoan', read: false, createdAt: nowIso() });

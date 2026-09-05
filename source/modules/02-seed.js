@@ -235,20 +235,21 @@
         { ...publicMeta('nav-group-family', 'nav-family', 5), label: 'Góc phụ huynh', key: 'FAMILY' },
       ],
       navigationItems: [
-        { ...publicMeta('nav-about-story', 'nav-about-story', 1), groupId: 'nav-group-about', label: 'Câu chuyện Cô Yến', href: '/ve-co-yen' },
-        { ...publicMeta('nav-about-teachers', 'nav-about-teachers', 2), groupId: 'nav-group-about', label: 'Đội ngũ giáo viên', href: '/giao-vien' },
+        { ...publicMeta('nav-about-story', 'nav-about-story', 1), groupId: 'nav-group-about', label: 'Câu chuyện Cô Yến', href: '/gioi-thieu' },
+        { ...publicMeta('nav-about-method', 'nav-about-method', 2), groupId: 'nav-group-about', label: 'Phương pháp học', href: '/phuong-phap' },
+        { ...publicMeta('nav-about-teachers', 'nav-about-teachers', 3), groupId: 'nav-group-about', label: 'Đội ngũ giáo viên', href: '/doi-ngu-giao-vien' },
         { ...publicMeta('nav-branches-list', 'nav-branches-list', 1), groupId: 'nav-group-branches', label: 'Hệ thống cơ sở', href: '/co-so' },
-        { ...publicMeta('nav-branches-schedule', 'nav-branches-schedule', 2), groupId: 'nav-group-branches', label: 'Lịch khai giảng', href: '/lich-hoc' },
+        { ...publicMeta('nav-branches-schedule', 'nav-branches-schedule', 2), groupId: 'nav-group-branches', label: 'Lịch khai giảng', href: '/lich-khai-giang' },
         { ...publicMeta('nav-news-list', 'nav-news-list', 1), groupId: 'nav-group-news', label: 'Tin mới', href: '/tin-tuc' },
         { ...publicMeta('nav-events-list', 'nav-events-list', 2), groupId: 'nav-group-news', label: 'Sự kiện', href: '/su-kien' },
-        { ...publicMeta('nav-family-progress', 'nav-family-progress', 1), groupId: 'nav-group-family', label: 'Theo dõi tiến bộ', href: '/phu-huynh-hoc-sinh' },
+        { ...publicMeta('nav-family-progress', 'nav-family-progress', 1), groupId: 'nav-group-family', label: 'Theo dõi tiến bộ', href: '/goc-phu-huynh' },
         { ...publicMeta('nav-family-faq', 'nav-family-faq', 2), groupId: 'nav-group-family', label: 'Câu hỏi thường gặp', href: '/cau-hoi-thuong-gap' },
       ],
       heroBanners: [{
         ...publicMeta('hero-home-main', 'hero-home', 1), placement: 'HOME', eyebrow: 'Lớp học đồng hành cùng từng tiến bộ',
         title: 'Học chắc hôm nay, tự tin nói tiếng Anh ngày mai',
         description: 'Lộ trình vừa sức, lớp học tương tác và báo cáo rõ ràng để học viên biết mình đang tiến bộ ở đâu.',
-        primaryCtaLabel: 'Khám phá chương trình', primaryCtaHref: '/chuong-trinh', secondaryCtaLabel: 'Xem lịch khai giảng', secondaryCtaHref: '/lich-hoc',
+        primaryCtaLabel: 'Khám phá chương trình', primaryCtaHref: '/chuong-trinh', secondaryCtaLabel: 'Xem lịch khai giảng', secondaryCtaHref: '/lich-khai-giang',
         image: './assets/yen-home-hero.png', imageAlt: 'Cô giáo đồng hành cùng học viên trong lớp tiếng Anh',
       }],
       publicProgramProfiles: [
@@ -279,7 +280,9 @@
       ],
       staticPages: [
         { ...publicMeta('page-about', 'page-about', 1), slug: 've-co-yen', title: 'Về Cô Yến', eyebrow: 'Câu chuyện lớp học', summary: 'Một lớp học gần gũi, có kỷ luật và theo sát từng mục tiêu.', body: 'Lớp Tiếng Anh Cô Yến xây dựng trải nghiệm học dựa trên tương tác thật, phản hồi kịp thời và sự phối hợp rõ ràng với gia đình.' },
-        { ...publicMeta('page-teachers', 'page-teachers', 2), slug: 'giao-vien', title: 'Đội ngũ giáo viên', eyebrow: 'Người đồng hành', summary: 'Đội ngũ có chuyên môn, hiểu người học và cùng sử dụng một chuẩn vận hành.', body: 'Mỗi giáo viên công khai trên website đều đã đồng ý hiển thị hồ sơ và được quản trị viên duyệt nội dung.' },
+        { ...publicMeta('page-method', 'page-method', 2), slug: 'phuong-phap', title: 'Phương pháp học', eyebrow: 'Học qua tương tác', summary: 'Hiểu – thực hành – nhận phản hồi – vận dụng trong ngữ cảnh gần gũi.', body: 'Mỗi buổi học có mục tiêu rõ ràng, thời lượng thực hành chủ động và phản hồi giúp học viên biết cách tiến bộ sau lớp.' },
+        { ...publicMeta('page-teachers', 'page-teachers', 3), slug: 'giao-vien', title: 'Đội ngũ giáo viên', eyebrow: 'Người đồng hành', summary: 'Đội ngũ có chuyên môn, hiểu người học và cùng sử dụng một chuẩn vận hành.', body: 'Mỗi giáo viên công khai trên website đều đã đồng ý hiển thị hồ sơ và được quản trị viên duyệt nội dung.' },
+        { ...publicMeta('page-parent', 'page-parent', 4), slug: 'goc-phu-huynh', title: 'Góc phụ huynh', eyebrow: 'Cùng con tiến bộ', summary: 'Thông tin rõ ràng để gia đình đồng hành đúng lúc, đúng cách.', body: 'Phụ huynh theo dõi chuyên cần, bằng chứng kỹ năng, nhận xét được phép chia sẻ và việc cần hỗ trợ tiếp theo.' },
       ],
       contactChannels: [
         { ...publicMeta('contact-hotline', 'contact-hotline', 1), type: 'HOTLINE', label: 'Hotline tư vấn', value: '0901 234 567', href: 'tel:0901234567', icon: 'phone' },

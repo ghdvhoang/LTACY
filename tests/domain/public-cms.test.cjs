@@ -74,7 +74,7 @@ test('Admin creates, publishes and archives an audited content revision', () => 
 });
 
 test('editor submission waits for Admin and cannot self-publish', () => {
-  const { bus, state } = runtime();
+  const { YC, bus, state } = runtime();
   assert.equal(bus.dispatch('SET_ROLE_PERMISSION', { role: 'ACADEMIC_MANAGER', permissionId: 'site.edit', effect: 'ALLOW', scopeType: 'ORGANIZATION', reason: 'Cho phép biên tập nội dung' }, 'admin-1').ok, true);
   assert.equal(bus.dispatch('SET_ROLE_PERMISSION', { role: 'ACADEMIC_MANAGER', permissionId: 'site.submit', effect: 'ALLOW', scopeType: 'ORGANIZATION', reason: 'Cho phép gửi duyệt nội dung' }, 'admin-1').ok, true);
   const created = bus.dispatch('CREATE_SITE_CONTENT_DRAFT', { collection: 'articles', contentKey: 'editor-news', title: 'Bài của biên tập viên', slug: 'bai-bien-tap', effectiveFrom: FIXED_NOW }, 'academic-1');
@@ -82,11 +82,30 @@ test('editor submission waits for Admin and cannot self-publish', () => {
   const submitted = bus.dispatch('SUBMIT_SITE_CONTENT', { collection: 'articles', contentId: created.contentId, reason: 'Đã kiểm tra nội dung' }, 'academic-1');
   assert.equal(submitted.ok, true);
   assert.equal(state().articles.find((item) => item.id === created.contentId).status, 'SUBMITTED');
-  assert.equal(state().changeRequests.find((item) => item.id === submitted.requestId).status, 'SUBMITTED');
+  const request = state().changeRequests.find((item) => item.id === submitted.requestId);
+  assert.equal(request.status, 'SUBMITTED');
+  assert.equal(request.submittedBy, 'academic-1');
+  assert.ok(Array.isArray(request.diff));
+  const admin = state().users.find((item) => item.id === 'admin-1');
+  const approvals = YC.router.render('/app/admin/approvals', { state: state(), actor: admin, learnerId: 'student-canonical', path: '/app/admin/approvals' });
+  assert.match(approvals, /Bài của biên tập viên|Đã kiểm tra nội dung/);
   const forbidden = bus.dispatch('PUBLISH_SITE_CONTENT', { collection: 'articles', contentId: created.contentId }, 'academic-1');
   assert.equal(forbidden.ok, false);
   assert.equal(forbidden.code, 'FORBIDDEN');
   assert.equal(bus.dispatch('PUBLISH_SITE_CONTENT', { collection: 'articles', contentId: created.contentId }, 'admin-1').ok, true);
+});
+
+test('Admin approval queue can approve submitted website content end to end', () => {
+  const { bus, state } = runtime();
+  assert.equal(bus.dispatch('SET_ROLE_PERMISSION', { role: 'ACADEMIC_MANAGER', permissionId: 'site.edit', effect: 'ALLOW', scopeType: 'ORGANIZATION', reason: 'Cho phép biên tập nội dung' }, 'admin-1').ok, true);
+  assert.equal(bus.dispatch('SET_ROLE_PERMISSION', { role: 'ACADEMIC_MANAGER', permissionId: 'site.submit', effect: 'ALLOW', scopeType: 'ORGANIZATION', reason: 'Cho phép gửi duyệt nội dung' }, 'admin-1').ok, true);
+  const created = bus.dispatch('CREATE_SITE_CONTENT_DRAFT', { collection: 'articles', contentKey: 'approval-news', title: 'Bài chờ Admin', slug: 'bai-cho-admin', effectiveFrom: FIXED_NOW }, 'academic-1');
+  const submitted = bus.dispatch('SUBMIT_SITE_CONTENT', { collection: 'articles', contentId: created.contentId, reason: 'Xin duyệt xuất bản' }, 'academic-1');
+  const approved = bus.dispatch('REVIEW_CHANGE_REQUEST', { requestId: submitted.requestId, decision: 'APPROVE', note: 'Nội dung đạt yêu cầu.' }, 'admin-1');
+  assert.equal(approved.ok, true);
+  assert.equal(approved.applied, true);
+  assert.equal(state().articles.find((item) => item.id === created.contentId).status, 'PUBLISHED');
+  assert.equal(state().changeRequests.find((item) => item.id === submitted.requestId).status, 'APPROVED');
 });
 
 test('rollback clones a published record as a new draft revision', () => {

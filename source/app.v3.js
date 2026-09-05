@@ -433,20 +433,21 @@
         { ...publicMeta('nav-group-family', 'nav-family', 5), label: 'Góc phụ huynh', key: 'FAMILY' },
       ],
       navigationItems: [
-        { ...publicMeta('nav-about-story', 'nav-about-story', 1), groupId: 'nav-group-about', label: 'Câu chuyện Cô Yến', href: '/ve-co-yen' },
-        { ...publicMeta('nav-about-teachers', 'nav-about-teachers', 2), groupId: 'nav-group-about', label: 'Đội ngũ giáo viên', href: '/giao-vien' },
+        { ...publicMeta('nav-about-story', 'nav-about-story', 1), groupId: 'nav-group-about', label: 'Câu chuyện Cô Yến', href: '/gioi-thieu' },
+        { ...publicMeta('nav-about-method', 'nav-about-method', 2), groupId: 'nav-group-about', label: 'Phương pháp học', href: '/phuong-phap' },
+        { ...publicMeta('nav-about-teachers', 'nav-about-teachers', 3), groupId: 'nav-group-about', label: 'Đội ngũ giáo viên', href: '/doi-ngu-giao-vien' },
         { ...publicMeta('nav-branches-list', 'nav-branches-list', 1), groupId: 'nav-group-branches', label: 'Hệ thống cơ sở', href: '/co-so' },
-        { ...publicMeta('nav-branches-schedule', 'nav-branches-schedule', 2), groupId: 'nav-group-branches', label: 'Lịch khai giảng', href: '/lich-hoc' },
+        { ...publicMeta('nav-branches-schedule', 'nav-branches-schedule', 2), groupId: 'nav-group-branches', label: 'Lịch khai giảng', href: '/lich-khai-giang' },
         { ...publicMeta('nav-news-list', 'nav-news-list', 1), groupId: 'nav-group-news', label: 'Tin mới', href: '/tin-tuc' },
         { ...publicMeta('nav-events-list', 'nav-events-list', 2), groupId: 'nav-group-news', label: 'Sự kiện', href: '/su-kien' },
-        { ...publicMeta('nav-family-progress', 'nav-family-progress', 1), groupId: 'nav-group-family', label: 'Theo dõi tiến bộ', href: '/phu-huynh-hoc-sinh' },
+        { ...publicMeta('nav-family-progress', 'nav-family-progress', 1), groupId: 'nav-group-family', label: 'Theo dõi tiến bộ', href: '/goc-phu-huynh' },
         { ...publicMeta('nav-family-faq', 'nav-family-faq', 2), groupId: 'nav-group-family', label: 'Câu hỏi thường gặp', href: '/cau-hoi-thuong-gap' },
       ],
       heroBanners: [{
         ...publicMeta('hero-home-main', 'hero-home', 1), placement: 'HOME', eyebrow: 'Lớp học đồng hành cùng từng tiến bộ',
         title: 'Học chắc hôm nay, tự tin nói tiếng Anh ngày mai',
         description: 'Lộ trình vừa sức, lớp học tương tác và báo cáo rõ ràng để học viên biết mình đang tiến bộ ở đâu.',
-        primaryCtaLabel: 'Khám phá chương trình', primaryCtaHref: '/chuong-trinh', secondaryCtaLabel: 'Xem lịch khai giảng', secondaryCtaHref: '/lich-hoc',
+        primaryCtaLabel: 'Khám phá chương trình', primaryCtaHref: '/chuong-trinh', secondaryCtaLabel: 'Xem lịch khai giảng', secondaryCtaHref: '/lich-khai-giang',
         image: './assets/yen-home-hero.png', imageAlt: 'Cô giáo đồng hành cùng học viên trong lớp tiếng Anh',
       }],
       publicProgramProfiles: [
@@ -477,7 +478,9 @@
       ],
       staticPages: [
         { ...publicMeta('page-about', 'page-about', 1), slug: 've-co-yen', title: 'Về Cô Yến', eyebrow: 'Câu chuyện lớp học', summary: 'Một lớp học gần gũi, có kỷ luật và theo sát từng mục tiêu.', body: 'Lớp Tiếng Anh Cô Yến xây dựng trải nghiệm học dựa trên tương tác thật, phản hồi kịp thời và sự phối hợp rõ ràng với gia đình.' },
-        { ...publicMeta('page-teachers', 'page-teachers', 2), slug: 'giao-vien', title: 'Đội ngũ giáo viên', eyebrow: 'Người đồng hành', summary: 'Đội ngũ có chuyên môn, hiểu người học và cùng sử dụng một chuẩn vận hành.', body: 'Mỗi giáo viên công khai trên website đều đã đồng ý hiển thị hồ sơ và được quản trị viên duyệt nội dung.' },
+        { ...publicMeta('page-method', 'page-method', 2), slug: 'phuong-phap', title: 'Phương pháp học', eyebrow: 'Học qua tương tác', summary: 'Hiểu – thực hành – nhận phản hồi – vận dụng trong ngữ cảnh gần gũi.', body: 'Mỗi buổi học có mục tiêu rõ ràng, thời lượng thực hành chủ động và phản hồi giúp học viên biết cách tiến bộ sau lớp.' },
+        { ...publicMeta('page-teachers', 'page-teachers', 3), slug: 'giao-vien', title: 'Đội ngũ giáo viên', eyebrow: 'Người đồng hành', summary: 'Đội ngũ có chuyên môn, hiểu người học và cùng sử dụng một chuẩn vận hành.', body: 'Mỗi giáo viên công khai trên website đều đã đồng ý hiển thị hồ sơ và được quản trị viên duyệt nội dung.' },
+        { ...publicMeta('page-parent', 'page-parent', 4), slug: 'goc-phu-huynh', title: 'Góc phụ huynh', eyebrow: 'Cùng con tiến bộ', summary: 'Thông tin rõ ràng để gia đình đồng hành đúng lúc, đúng cách.', body: 'Phụ huynh theo dõi chuyên cần, bằng chứng kỹ năng, nhận xét được phép chia sẻ và việc cần hỗ trợ tiếp theo.' },
       ],
       contactChannels: [
         { ...publicMeta('contact-hotline', 'contact-hotline', 1), type: 'HOTLINE', label: 'Hotline tư vấn', value: '0901 234 567', href: 'tel:0901234567', icon: 'phone' },
@@ -1044,6 +1047,22 @@
       return new Date(store.clock()).toISOString();
     }
 
+    function publishSiteItem(draft, collectionName, item, actorId) {
+      const collection = cmsCollection(draft, collectionName);
+      const publishedAt = nowIso();
+      collection.filter((entry) => entry.id !== item.id && (entry.contentKey || entry.id) === (item.contentKey || item.id) && entry.status === 'PUBLISHED').forEach((entry) => {
+        entry.status = 'ARCHIVED';
+        entry.effectiveTo = publishedAt;
+        entry.archivedBy = actorId;
+        entry.archivedAt = publishedAt;
+      });
+      item.status = 'PUBLISHED';
+      item.effectiveFrom = item.effectiveFrom || publishedAt;
+      item.publishedBy = actorId;
+      item.publishedAt = publishedAt;
+      return publishedAt;
+    }
+
     function appendEvent(draft, context, type, resourceType, resourceId, summary, extra = {}) {
       const event = {
         id: uid('event'),
@@ -1288,8 +1307,9 @@
         item.submittedAt = nowIso();
         const request = {
           id: uid('change-request'), resourceType: 'SITE_CONTENT', resourceId: item.id, collection: payload.collection,
-          operation: 'PUBLISH', status: 'SUBMITTED', requesterId: context.actor.id, reason,
-          beforeSnapshot: null, afterSnapshot: clone(item), submittedAt: nowIso(), eventIds: [],
+          operation: 'PUBLISH', status: 'SUBMITTED', requesterId: context.actor.id, submittedBy: context.actor.id, reason,
+          baseVersion: Number(item.sourceRevisionId ? item.revision - 1 : 0), revision: Number(item.revision || 1), diff: [],
+          beforeSnapshot: null, afterSnapshot: clone(item), proposedSnapshot: clone(item), submittedAt: nowIso(), eventIds: [],
         };
         item.approvalRequestId = request.id;
         draft.changeRequests.push(request);
@@ -1305,17 +1325,7 @@
         const collection = cmsCollection(draft, payload.collection);
         const item = required(collection.find((entry) => entry.id === payload.contentId), 'SITE_CONTENT_NOT_FOUND', 'Không tìm thấy nội dung website.');
         if (!['DRAFT', 'SUBMITTED'].includes(item.status)) throw new CommandError('SITE_CONTENT_NOT_PUBLISHABLE', 'Nội dung không ở trạng thái có thể xuất bản.');
-        const publishedAt = nowIso();
-        collection.filter((entry) => entry.id !== item.id && (entry.contentKey || entry.id) === (item.contentKey || item.id) && entry.status === 'PUBLISHED').forEach((entry) => {
-          entry.status = 'ARCHIVED';
-          entry.effectiveTo = publishedAt;
-          entry.archivedBy = context.actor.id;
-          entry.archivedAt = publishedAt;
-        });
-        item.status = 'PUBLISHED';
-        item.effectiveFrom = item.effectiveFrom || publishedAt;
-        item.publishedBy = context.actor.id;
-        item.publishedAt = publishedAt;
+        const publishedAt = publishSiteItem(draft, payload.collection, item, context.actor.id);
         if (item.approvalRequestId) {
           const request = draft.changeRequests.find((entry) => entry.id === item.approvalRequestId);
           if (request) Object.assign(request, { status: 'APPROVED', reviewerId: context.actor.id, reviewedAt: publishedAt, appliedAt: publishedAt, reviewNote: String(payload.reviewNote || 'Đã duyệt nội dung để xuất bản.') });
@@ -1460,7 +1470,7 @@
         request.reviewNote = note || null;
         request.reviewedAt = nowIso();
 
-        if (nextStatus === 'APPROVED' && root.YC.approval.stale(request, draft)) {
+        if (nextStatus === 'APPROVED' && request.resourceType !== 'SITE_CONTENT' && root.YC.approval.stale(request, draft)) {
           root.YC.approval.transition(request, 'CONFLICTED');
           const event = appendEvent(draft, context, 'CHANGE_REQUEST_CONFLICTED', 'CHANGE_REQUEST', request.id, 'Dữ liệu gốc đã thay đổi; yêu cầu cần được cập nhật lại.');
           request.eventIds.push(event.id);
@@ -1470,11 +1480,18 @@
         }
 
         if (nextStatus === 'APPROVED') {
-          const canonical = approvalCall(() => root.YC.approval.applyChange(request, draft));
+          const canonical = request.resourceType === 'SITE_CONTENT'
+            ? required(cmsCollection(draft, request.collection).find((item) => item.id === request.resourceId && item.status === 'SUBMITTED'), 'SITE_CONTENT_NOT_REVIEWABLE', 'Nội dung không còn ở trạng thái chờ duyệt.')
+            : approvalCall(() => root.YC.approval.applyChange(request, draft));
+          if (request.resourceType === 'SITE_CONTENT') publishSiteItem(draft, request.collection, canonical, context.actor.id);
           root.YC.approval.transition(request, 'APPROVED');
           request.appliedAt = nowIso();
           request.resourceId = canonical.id;
         } else {
+          if (request.resourceType === 'SITE_CONTENT') {
+            const item = cmsCollection(draft, request.collection).find((entry) => entry.id === request.resourceId);
+            if (item?.status === 'SUBMITTED') Object.assign(item, { status: 'DRAFT', updatedBy: context.actor.id, updatedAt: nowIso() });
+          }
           root.YC.approval.transition(request, nextStatus);
         }
         const type = `CHANGE_REQUEST_${request.status}`;
@@ -1632,7 +1649,8 @@
 
       REGISTER_PUBLIC_EVENT(draft, payload, context) {
         requireRole(context.actor, ['VISITOR']);
-        const event = required(draft.publicContent.events.find((item) => item.id === payload.eventId && item.status === 'PUBLISHED'), 'EVENT_NOT_FOUND', 'Không tìm thấy sự kiện.');
+        const publicEvents = root.YC.publicContent?.published('publicEvents', draft) || [];
+        const event = required(publicEvents.find((item) => item.id === payload.eventId) || draft.publicContent.events.find((item) => item.id === payload.eventId && item.status === 'PUBLISHED'), 'EVENT_NOT_FOUND', 'Không tìm thấy sự kiện.');
         context.actor.registeredEventIds ||= [];
         if (!context.actor.registeredEventIds.includes(event.id)) context.actor.registeredEventIds.push(event.id);
         draft.notifications.unshift({ id: uid('notification'), userId: context.actor.id, title: 'Đăng ký sự kiện thành công', body: event.title, link: '/tai-khoan', read: false, createdAt: nowIso() });
@@ -3400,8 +3418,10 @@
       book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>',
       calendar: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
       check: '<path d="m20 6-11 11-5-5"/>',
+      chat: '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3 1.7-5.1A7 7 0 0 1 3 12V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/>',
       clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
       grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+      mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
       people: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
       phone: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2Z"/>',
       search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
@@ -3522,7 +3542,7 @@
         ['2', 'Kiểm tra đầu vào', 'Đánh giá năng lực và trao đổi khuyến nghị lộ trình.'],
         ['3', 'Xếp lớp & bắt đầu', 'Chọn lớp còn chỗ, hoàn tất ghi danh và nhận lịch học.'],
       ].map(([number, title, body]) => `<article><span>${number}</span><div><h3>${title}</h3><p>${body}</p></div></article>`).join('')}</div>${link('Đăng ký tư vấn', '/lien-he', { kind: 'primary' })}</section>
-      ${openClasses.length ? `<section class="yen-section yen-schedule"><div class="container"><div class="yen-section-head"><div><p class="eyebrow">Lịch khai giảng</p><h2>Lớp đang nhận học viên</h2></div><a class="text-link" href="#/lich-hoc">Xem toàn bộ lịch ${icon('arrow')}</a></div><div class="yen-schedule-list">${openClasses.map((cohort) => { const branch = state.branches.find((item) => item.id === cohort.branchId); const course = state.courseVersions.find((item) => item.id === cohort.courseVersionId); const seats = availableSeats(state, cohort); return `<article><div><p>${escapeHtml(branch?.name || '')}</p><h3>${escapeHtml(cohort.name)}</h3><small>${escapeHtml(course?.title || '')}</small></div><div><span>${icon('calendar')} ${escapeHtml(cohort.scheduleLabel || 'Đang cập nhật')}</span><span>${icon('grid')} ${escapeHtml(cohort.room || 'Trực tuyến')}</span></div><div><strong>${seats}</strong><small>chỗ còn lại</small></div>${link('Nhận tư vấn', '/lien-he')}</article>`; }).join('')}</div></div></section>` : ''}
+      ${openClasses.length ? `<section class="yen-section yen-schedule"><div class="container"><div class="yen-section-head"><div><p class="eyebrow">Lịch khai giảng</p><h2>Lớp đang nhận học viên</h2></div><a class="text-link" href="#/lich-khai-giang">Xem toàn bộ lịch ${icon('arrow')}</a></div><div class="yen-schedule-list">${openClasses.map((cohort) => { const branch = state.branches.find((item) => item.id === cohort.branchId); const course = state.courseVersions.find((item) => item.id === cohort.courseVersionId); const seats = availableSeats(state, cohort); return `<article><div><p>${escapeHtml(branch?.name || '')}</p><h3>${escapeHtml(cohort.name)}</h3><small>${escapeHtml(course?.title || '')}</small></div><div><span>${icon('calendar')} ${escapeHtml(cohort.scheduleLabel || 'Đang cập nhật')}</span><span>${icon('grid')} ${escapeHtml(cohort.room || 'Trực tuyến')}</span></div><div><strong>${seats}</strong><small>chỗ còn lại</small></div>${link('Nhận tư vấn', '/lien-he')}</article>`; }).join('')}</div></div></section>` : ''}
       <section class="yen-section container yen-progress"><div class="yen-progress-story"><p class="eyebrow">Tiến bộ có thể theo dõi</p><h2>Không chỉ biết điểm số, mà biết nên làm gì tiếp theo</h2><p>Cùng một hồ sơ học viên kết nối buổi học, điểm danh, bài tập, học bù và báo cáo. Khi giáo viên cập nhật, học viên và phụ huynh nhìn thấy đúng phần được phép chia sẻ.</p>${link('Khám phá góc phụ huynh', '/phu-huynh-hoc-sinh', { kind: 'primary' })}</div><div class="yen-progress-card"><header><span class="avatar avatar-lg">MA</span><div><strong>Nguyễn Minh Anh</strong><small>Hồ sơ học tập liên tục</small></div>${badge('ACTIVE')}</header>${[['Chuyên cần', 92], ['Hoàn thành bài tập', 84], ['Tự tin giao tiếp', 76]].map(([label, score]) => `<div class="yen-progress-row"><span>${label}</span><div><i style="width:${score}%"></i></div><b>${score}%</b></div>`).join('')}<footer><span>${icon('check')} Có bằng chứng</span><span>${icon('trend')} Có bước tiếp theo</span></footer></div></section>
       ${content.teachers.length ? `<section class="yen-section yen-teachers"><div class="container"><div class="yen-section-head"><div><p class="eyebrow">Đội ngũ giáo viên</p><h2>Người đồng hành hiểu từng giai đoạn học</h2></div><a class="text-link" href="#/giao-vien">Xem đội ngũ ${icon('arrow')}</a></div><div class="yen-teacher-grid">${content.teachers.map((teacher) => `<article><span>${escapeHtml(teacher.name.split(' ').slice(-2).map((part) => part[0]).join(''))}</span><h3>${escapeHtml(teacher.name)}</h3><p>${escapeHtml(teacher.roleLabel)}</p><small>${escapeHtml((teacher.qualifications || []).join(' · '))}</small><blockquote>“${escapeHtml(teacher.quote)}”</blockquote></article>`).join('')}</div></div></section>` : ''}
       ${featured ? `<section class="yen-section container yen-news"><div class="yen-section-head"><div><p class="eyebrow">Tin mới nhất</p><h2>Cùng học tốt hơn mỗi ngày</h2></div><a class="text-link" href="#/tin-tuc">Xem tất cả ${icon('arrow')}</a></div><div class="yen-news-grid"><a class="yen-featured-news" href="#/tin-tuc/${escapeHtml(featured.slug)}"><span>${escapeHtml(content.categories.find((item) => item.id === featured.categoryId)?.name || 'Tin mới')}</span><h3>${escapeHtml(featured.title)}</h3><p>${escapeHtml(featured.summary)}</p><b>Đọc bài viết ${icon('arrow')}</b></a><div>${articleList.map((article) => `<a class="yen-news-row" href="#/tin-tuc/${escapeHtml(article.slug)}"><div><small>${escapeHtml(content.categories.find((item) => item.id === article.categoryId)?.name || 'Tin mới')}</small><strong>${escapeHtml(article.title)}</strong><p>${escapeHtml(article.summary)}</p></div>${icon('arrow')}</a>`).join('')}</div></div></section>` : ''}
@@ -3532,22 +3552,26 @@
   }
 
   function catalog(ctx) {
-    return `<main id="main-content" class="public-main"><section class="catalog-hero"><div class="container"><p class="eyebrow on-dark">Khám phá</p><h1>Chọn lộ trình phù hợp với mục tiêu</h1><p>Tìm theo độ tuổi, trình độ và hình thức học. Mọi khóa đều có chuẩn đầu ra và bằng chứng tiến bộ.</p>
-      <label class="search-box">${icon('search')}<input type="search" placeholder="Tìm chương trình, kỹ năng hoặc trình độ" aria-label="Tìm chương trình"></label></div></section>
-      <section class="public-section container"><div class="filter-row"><button class="chip active">Tất cả</button><button class="chip">Thiếu nhi</button><button class="chip">Thiếu niên</button><button class="chip">Người lớn</button><button class="chip">IELTS</button></div>${programCards(ctx.state, ctx.actor)}</section></main>`;
+    const programs = root.YC.publicContent.published('publicProgramProfiles', ctx.state);
+    return `<main id="main-content" class="public-main"><section class="catalog-hero"><div class="container"><p class="eyebrow on-dark">Khám phá chương trình</p><h1>Chọn lộ trình phù hợp với mục tiêu</h1><p>Tìm theo độ tuổi, trình độ và kết quả mong muốn. Mỗi chương trình công khai đều đã được Admin duyệt.</p>
+      <label class="search-box">${icon('search')}<input type="search" placeholder="Tìm chương trình hoặc độ tuổi" aria-label="Tìm chương trình"></label></div></section>
+      <section class="public-section container">${homepageProgramCards(programs, ctx.actor)}</section></main>`;
   }
 
   function programDetail(ctx, programId) {
     const state = ctx.state;
-    const program = state.programs.find((item) => item.id === programId) || state.programs[0];
-    const courses = state.courses.filter((item) => item.programId === program.id);
+    const profiles = root.YC.publicContent.published('publicProgramProfiles', state);
+    const profile = profiles.find((item) => [item.id, item.slug, item.programId].includes(programId)) || profiles[0];
+    if (!profile) return '';
+    const program = state.programs.find((item) => item.id === profile.programId);
+    const courses = state.courses.filter((item) => item.programId === profile.programId);
     const versions = courses.map((course) => state.courseVersions.find((item) => item.courseId === course.id)).filter(Boolean);
-    return `<main id="main-content" class="public-main"><section class="course-hero"><div class="container"><div><p class="eyebrow on-dark">${escapeHtml(program.audience)}</p><h1>${escapeHtml(program.name)}</h1><p>${escapeHtml(program.outcome)}. Học theo lộ trình rõ ràng với phản hồi và báo cáo tiến bộ định kỳ.</p>${link('Đăng ký kiểm tra đầu vào', '/lien-he', { kind: 'primary' })}</div>
-      <aside class="course-summary"><span class="summary-mark">YC</span><h3>Bắt đầu bằng kiểm tra đầu vào</h3><p>Xác định đúng cấp độ trước khi chọn lớp.</p>${link('Xem lịch khai giảng', '/lich-hoc')}</aside></div></section>
+    return `<main id="main-content" class="public-main"><section class="course-hero"><div class="container"><div><p class="eyebrow on-dark">${escapeHtml(profile.ageRange)}</p><h1>${escapeHtml(profile.name)}</h1><p>${escapeHtml(profile.summary)} ${escapeHtml(profile.outcome)}</p>${link('Đăng ký kiểm tra đầu vào', '/lien-he', { kind: 'primary' })}</div>
+      <aside class="course-summary"><span class="summary-mark">YC</span><h3>Bắt đầu bằng kiểm tra đầu vào</h3><p>Xác định đúng cấp độ trước khi chọn lớp.</p>${link('Xem lịch khai giảng', '/lich-khai-giang')}</aside></div></section>
       <section class="course-facts"><div class="container">${fact('trend', 'Trình độ', versions.map((item) => item.title.split('·').at(-1).trim()).join(' → ') || 'Theo đầu vào')}${fact('clock', 'Thời lượng', `${versions[0]?.totalHours || 48} giờ / cấp độ`)}${fact('calendar', 'Hình thức', 'Trực tiếp · Trực tuyến')}${fact('shield', 'Đầu ra', 'Bằng chứng 6 kỹ năng')}</div></section>
       <section class="public-section container course-layout"><div><div class="section-intro align-left"><p class="eyebrow">Lộ trình học</p><h2>Từ nền tảng đến sử dụng tự tin</h2></div>
         <div class="course-levels">${versions.map((version, index) => `<details class="course-module" ${index === 0 ? 'open' : ''}><summary><span><small>CẤP ĐỘ ${index + 1}</small><strong>${escapeHtml(version.title)}</strong></span><span>${version.totalHours} giờ ${icon('arrow')}</span></summary><div><p>Chuẩn đầu ra: chuyên cần ≥ ${version.completionRule.attendanceMinimum}%, cuối khóa ≥ ${version.completionRule.finalScoreMinimum}, từng kỹ năng ≥ ${version.completionRule.skillMinimum}.</p><ul><li>Bài học trực tiếp và luyện tập có hướng dẫn</li><li>Bài tập với vòng lặp phản hồi</li><li>Báo cáo tiến bộ và quyết định lên lớp</li></ul></div></details>`).join('')}</div></div>
-        <aside class="sticky-enroll"><p class="eyebrow">Bước tiếp theo</p><h3>Chưa chắc mình ở cấp độ nào?</h3><p>Kiểm tra đầu vào đa kỹ năng giúp trung tâm xếp đúng lớp và lịch phù hợp.</p>${link('Đặt lịch miễn phí', '/lien-he', { kind: 'primary' })}${programInterestAction(program, ctx.actor)}<small>Không cần thanh toán ở bước này.</small></aside></section></main>`;
+        <aside class="sticky-enroll"><p class="eyebrow">Bước tiếp theo</p><h3>Chưa chắc mình ở cấp độ nào?</h3><p>Kiểm tra đầu vào đa kỹ năng giúp trung tâm xếp đúng lớp và lịch phù hợp.</p>${link('Đặt lịch miễn phí', '/lien-he', { kind: 'primary' })}${programInterestAction(profile, ctx.actor)}<small>Không cần thanh toán ở bước này.</small></aside></section></main>`;
   }
 
   function schedule(ctx) {
@@ -3567,6 +3591,28 @@
       <button class="btn btn-primary" type="submit">${isSupport ? 'Gửi yêu cầu hỗ trợ' : 'Gửi yêu cầu'}</button><small>Dữ liệu chỉ lưu trong trình duyệt của bản demo.</small></form>`;
   }
 
+  function staticPage(ctx, slug) {
+    const page = root.YC.publicContent.published('staticPages', ctx.state).find((item) => item.slug === slug);
+    if (!page) return '';
+    return `<main id="main-content" class="public-main cms-public-page"><section class="simple-hero"><div class="container"><p class="eyebrow">${escapeHtml(page.eyebrow || 'Lớp Tiếng Anh Cô Yến')}</p><h1>${escapeHtml(page.title)}</h1><p>${escapeHtml(page.summary)}</p></div></section><section class="public-section container cms-prose"><p>${escapeHtml(page.body)}</p>${slug === 'phuong-phap' ? `<div class="method-grid">${[['01', 'Hiểu mục tiêu', 'Mỗi bài học bắt đầu bằng điều học viên cần làm được.'], ['02', 'Thực hành chủ động', 'Phần lớn thời gian dành cho nghe, nói và vận dụng.'], ['03', 'Nhận phản hồi', 'Giáo viên sửa đúng trọng tâm và ghi nhận bằng chứng.'], ['04', 'Duy trì tiến bộ', 'Bài tập, học bù và báo cáo nối tiếp sau buổi học.']].map(([number, title, body]) => `<article><b>${number}</b><h2>${title}</h2><p>${body}</p></article>`).join('')}</div>` : ''}${slug === 'goc-phu-huynh' ? `<div class="content-grid main-aside">${section('Theo dõi điều quan trọng', '<ul class="check-list"><li>✓ Lịch và chuyên cần</li><li>✓ Bài tập và học bù</li><li>✓ Tiến bộ kỹ năng đã được duyệt</li><li>✓ Việc gia đình nên hỗ trợ tiếp theo</li></ul>')}${publicLeadForm('B2C')}</div>` : ''}</section></main>`;
+  }
+
+  function teacherDirectory(ctx) {
+    const teachers = root.YC.publicContent.published('publicTeacherProfiles', ctx.state).filter((item) => item.publicOptIn === true);
+    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Đội ngũ giáo viên</p><h1>Người đồng hành trong từng bước tiến bộ</h1><p>Chỉ hồ sơ đã được giáo viên đồng ý và Admin duyệt mới xuất hiện tại đây.</p></div></section><section class="public-section container"><div class="yen-teacher-grid">${teachers.map((teacher) => `<article><span>${escapeHtml(teacher.name.split(' ').slice(-2).map((part) => part[0]).join(''))}</span><h3>${escapeHtml(teacher.name)}</h3><p>${escapeHtml(teacher.roleLabel)}</p><small>${escapeHtml((teacher.qualifications || []).join(' · '))}</small><blockquote>“${escapeHtml(teacher.quote)}”</blockquote></article>`).join('')}</div></section></main>`;
+  }
+
+  function branchDirectory(ctx, branchKey = null) {
+    const branches = root.YC.publicContent.published('publicBranchProfiles', ctx.state);
+    if (branchKey) {
+      const branch = branches.find((item) => [item.id, item.slug, item.branchId].includes(branchKey));
+      if (!branch) return '';
+      const classes = ctx.state.classes.filter((item) => item.branchId === branch.branchId && ['OPEN', 'ACTIVE'].includes(item.status));
+      return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Hệ thống cơ sở</p><h1>${escapeHtml(branch.name)}</h1><p>${escapeHtml(branch.address)} · ${escapeHtml(branch.scheduleNote)}</p></div></section><section class="public-section container"><div class="content-grid main-aside">${section('Lớp đang mở', classes.map((cohort) => `<a class="queue-card" href="#/lich-khai-giang"><div><strong>${escapeHtml(cohort.name)}</strong><small>${escapeHtml(cohort.scheduleLabel)} · ${availableSeats(ctx.state, cohort)} chỗ còn lại</small></div>${badge(cohort.status)}</a>`).join('') || '<p class="muted">Chưa có lớp đang mở.</p>')}${section('Tư vấn tại cơ sở', `${publicLeadForm('B2C')}`)}</div></section></main>`;
+    }
+    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Hệ thống cơ sở</p><h1>Chọn nơi học thuận tiện</h1><p>Mỗi cơ sở hiển thị lịch và số chỗ từ dữ liệu vận hành hiện tại.</p></div></section><section class="public-section container"><div class="branch-public-grid">${branches.map((branch) => `<article><p>${escapeHtml(branch.scheduleNote)}</p><h2>${escapeHtml(branch.name)}</h2><span>${escapeHtml(branch.address)}</span><a class="text-link" href="#/co-so/${escapeHtml(branch.slug)}">${escapeHtml(branch.mapLabel)} ${icon('arrow')}</a></article>`).join('')}</div></section></main>`;
+  }
+
   function family() {
     return `<main id="main-content" class="public-main"><section class="simple-hero family-hero"><div class="container feature-split"><div><p class="eyebrow">Phụ huynh & học viên</p><h1>Mỗi tuần đều biết mình đang tiến về đâu</h1><p>Một cổng học tập cho học viên và phụ huynh, với quyền xem đúng phạm vi.</p>${link('Đăng nhập cổng học tập', '/login', { kind: 'primary' })}</div><div class="family-cards"><article><b>01</b><h3>Tiếp tục học</h3><p>Video, bài kiểm tra, bài tập và nhận xét trong một lộ trình.</p></article><article><b>02</b><h3>Theo dõi bằng chứng</h3><p>Chuyên cần, hồ sơ kỹ năng và bước tiếp theo đã được duyệt.</p></article><article><b>03</b><h3>Phối hợp đúng lúc</h3><p>Nhận thay đổi lịch, dịch vụ và học phí phù hợp quyền xem.</p></article></div></div></section><section class="public-section container contact-grid"><div><p class="eyebrow">Tư vấn chương trình</p><h2>Chọn đúng lớp ngay từ đầu</h2><p>Yêu cầu sau khi gửi sẽ xuất hiện ngay trong Hộp thư liên hệ của Quản trị viên.</p></div>${publicLeadForm('B2C')}</section></main>`;
   }
@@ -3582,11 +3628,30 @@
   }
 
   function publicNews(ctx) {
-    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Tin tức</p><h1>Cập nhật từ Cô Yến</h1><p>Thông tin chương trình, khai giảng và hoạt động học tập.</p></div></section><section class="public-section container"><div class="program-grid">${ctx.state.publicContent.news.map((item) => `<article class="program-card"><div class="program-body"><p class="eyebrow">${escapeHtml(item.category)}</p><h2>${escapeHtml(item.title)}</h2><p>Nội dung minh họa được xuất bản trong cổng thông tin.</p>${badge(item.status)}</div></article>`).join('')}</div></section></main>`;
+    const articles = root.YC.publicContent.published('articles', ctx.state);
+    const categories = root.YC.publicContent.published('articleCategories', ctx.state);
+    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Tin tức</p><h1>Cập nhật từ Cô Yến</h1><p>Phương pháp học, câu chuyện lớp học và gợi ý đồng hành dành cho gia đình.</p></div></section><section class="public-section container"><div class="public-article-grid">${articles.map((item) => `<a href="#/tin-tuc/${escapeHtml(item.slug)}"><small>${escapeHtml(categories.find((entry) => entry.id === item.categoryId)?.name || 'Tin mới')}</small><h2>${escapeHtml(item.title)}</h2><p>${escapeHtml(item.summary)}</p><b>Đọc bài viết ${icon('arrow')}</b></a>`).join('')}</div></section></main>`;
+  }
+
+  function articleDetail(ctx, articleKey) {
+    const articles = root.YC.publicContent.published('articles', ctx.state);
+    const article = articles.find((item) => [item.id, item.slug].includes(articleKey));
+    if (!article) return '';
+    const category = root.YC.publicContent.published('articleCategories', ctx.state).find((item) => item.id === article.categoryId);
+    return `<main id="main-content" class="public-main"><article class="public-detail container"><a class="back-link" href="#/tin-tuc">← Về tin tức</a><p class="eyebrow">${escapeHtml(category?.name || 'Tin mới')}</p><h1>${escapeHtml(article.title)}</h1><p class="public-detail-lead">${escapeHtml(article.summary)}</p><div class="cms-prose"><p>${escapeHtml(article.body)}</p></div><footer>${link('Đăng ký tư vấn', '/lien-he', { kind: 'primary' })}</footer></article></main>`;
   }
 
   function publicEvents(ctx) {
-    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Sự kiện</p><h1>Hoạt động sắp diễn ra</h1><p>Đăng ký kiểm tra đầu vào và các buổi trải nghiệm.</p></div></section><section class="public-section container">${ctx.state.publicContent.events.map((item) => { const registered = (ctx.actor?.registeredEventIds || []).includes(item.id); const action = ctx.actor?.role === 'VISITOR' ? `<button class="btn ${registered ? 'btn-secondary' : 'btn-primary'}" type="button" data-action="register-public-event" data-event-id="${escapeHtml(item.id)}" ${registered ? 'disabled' : ''}>${registered ? 'Đã đăng ký' : 'Đăng ký'}</button>` : link(ctx.actor ? 'Nhận tư vấn' : 'Đăng nhập để đăng ký', ctx.actor ? '/lien-he' : '/login', { kind: 'primary' }); return `<article class="schedule-row"><div><p>Sự kiện</p><h3>${escapeHtml(item.title)}</h3><span>${escapeHtml(item.location)}</span></div><div><small>Thời gian</small><strong>${escapeHtml(formatDate(item.startsAt, true))}</strong></div>${action}</article>`; }).join('')}</section></main>`;
+    const events = root.YC.publicContent.published('publicEvents', ctx.state);
+    return `<main id="main-content" class="public-main"><section class="simple-hero"><div class="container"><p class="eyebrow">Sự kiện</p><h1>Hoạt động sắp diễn ra</h1><p>Trải nghiệm lớp học, kiểm tra đầu vào và trao đổi trực tiếp về lộ trình.</p></div></section><section class="public-section container"><div class="yen-event-grid">${events.map((item) => { const registered = (ctx.actor?.registeredEventIds || []).includes(item.id); const action = ctx.actor?.role === 'VISITOR' ? `<button class="btn ${registered ? 'btn-secondary' : 'btn-primary'}" type="button" data-action="register-public-event" data-event-id="${escapeHtml(item.id)}" ${registered ? 'disabled' : ''}>${registered ? 'Đã đăng ký' : 'Đăng ký'}</button>` : link(ctx.actor ? 'Nhận tư vấn' : 'Đăng nhập để đăng ký', ctx.actor ? '/lien-he' : '/login', { kind: 'primary' }); return `<article><time><b>${new Date(item.startsAt).getDate()}</b><span>Tháng ${new Date(item.startsAt).getMonth() + 1}</span></time><div><p>${escapeHtml(item.location)}</p><h3><a href="#/su-kien/${escapeHtml(item.slug)}">${escapeHtml(item.title)}</a></h3><span>${escapeHtml(formatDate(item.startsAt, true))}</span><small>${escapeHtml(item.summary)}</small></div>${action}</article>`; }).join('')}</div></section></main>`;
+  }
+
+  function eventDetail(ctx, eventKey) {
+    const event = root.YC.publicContent.published('publicEvents', ctx.state).find((item) => [item.id, item.slug].includes(eventKey));
+    if (!event) return '';
+    const registered = (ctx.actor?.registeredEventIds || []).includes(event.id);
+    const action = ctx.actor?.role === 'VISITOR' ? `<button class="btn ${registered ? 'btn-secondary' : 'btn-primary'}" type="button" data-action="register-public-event" data-event-id="${escapeHtml(event.id)}" ${registered ? 'disabled' : ''}>${registered ? 'Đã đăng ký' : 'Đăng ký tham gia'}</button>` : link('Đăng nhập để đăng ký', '/login', { kind: 'primary' });
+    return `<main id="main-content" class="public-main"><article class="public-detail container"><a class="back-link" href="#/su-kien">← Về sự kiện</a><p class="eyebrow">${escapeHtml(event.location)}</p><h1>${escapeHtml(event.title)}</h1><p class="public-detail-lead">${escapeHtml(event.summary)}</p><dl class="detail-list"><div><dt>Bắt đầu</dt><dd>${formatDate(event.startsAt, true)}</dd></div><div><dt>Kết thúc</dt><dd>${formatDate(event.endsAt, true)}</dd></div><div><dt>Địa điểm</dt><dd>${escapeHtml(event.location)}</dd></div></dl><footer>${action}</footer></article></main>`;
   }
 
   function publicDocuments(ctx) {
@@ -3627,7 +3692,8 @@
     if (!actor) return `<main id="main-content" class="auth-required"><div class="empty-icon">${icon('people')}</div><h1>Đăng nhập để xem tài khoản</h1><p>Khu vực này lưu các chương trình, sự kiện và yêu cầu tư vấn của bạn.</p>${link('Đăng nhập', '/login', { kind: 'primary' })}${link('Đăng ký', '/dang-ky')}</main>`;
     if (actor.role !== 'VISITOR') return `<main id="main-content" class="auth-required"><div class="empty-icon">${icon('shield')}</div><h1>Đây là khu vực khách hàng</h1><p>Tài khoản học viên và nhân sự sử dụng khu vực học tập riêng.</p>${link('Mở khu vực học tập', root.YC.selectors.roleHome(actor.role), { kind: 'primary' })}</main>`;
     const programs = (actor.savedProgramIds || []).map((id) => ctx.state.programs.find((item) => item.id === id)).filter(Boolean);
-    const events = (actor.registeredEventIds || []).map((id) => ctx.state.publicContent.events.find((item) => item.id === id)).filter(Boolean);
+    const publishedEvents = root.YC.publicContent.published('publicEvents', ctx.state);
+    const events = (actor.registeredEventIds || []).map((id) => publishedEvents.find((item) => item.id === id) || ctx.state.publicContent.events.find((item) => item.id === id)).filter(Boolean);
     const leads = ctx.state.leads.filter((item) => item.visitorUserId === actor.id);
     const notices = ctx.state.notifications.filter((item) => item.userId === actor.id);
     const emptyText = '<p class="muted">Chưa có dữ liệu. Bạn có thể khám phá và lưu từ các trang công khai.</p>';
@@ -3656,16 +3722,24 @@
 
   function render(path, ctx) {
     if (path === '/') return home(ctx);
+    if (['/gioi-thieu', '/ve-co-yen'].includes(path)) return staticPage(ctx, 've-co-yen');
+    if (path === '/phuong-phap') return staticPage(ctx, 'phuong-phap');
+    if (['/doi-ngu-giao-vien', '/giao-vien'].includes(path)) return teacherDirectory(ctx);
+    if (path === '/co-so') return branchDirectory(ctx);
+    if (path.startsWith('/co-so/')) return branchDirectory(ctx, path.split('/').at(-1));
     if (path === '/chuong-trinh') return catalog(ctx);
     if (path.startsWith('/chuong-trinh/')) return programDetail(ctx, path.split('/').at(-1));
-    if (path === '/lich-hoc') return schedule(ctx);
+    if (['/lich-khai-giang', '/lich-hoc'].includes(path)) return schedule(ctx);
+    if (path === '/goc-phu-huynh') return staticPage(ctx, 'goc-phu-huynh');
     if (path === '/phu-huynh-hoc-sinh') return family(ctx);
     if (path === '/giai-phap-trung-tam') return centerSolution(ctx);
     if (path === '/lien-he') return contact(ctx);
     if (path === '/tin-tuc') return publicNews(ctx);
+    if (path.startsWith('/tin-tuc/')) return articleDetail(ctx, path.split('/').at(-1));
     if (path === '/su-kien') return publicEvents(ctx);
+    if (path.startsWith('/su-kien/')) return eventDetail(ctx, path.split('/').at(-1));
     if (path === '/tai-lieu') return publicDocuments(ctx);
-    if (path === '/faq') return faq(ctx);
+    if (['/cau-hoi-thuong-gap', '/faq'].includes(path)) return faq(ctx);
     if (path === '/dieu-khoan-su-dung') return legal('terms');
     if (path === '/chinh-sach-bao-mat') return legal('privacy');
     if (path === '/403') return errorPage(403);
@@ -4421,9 +4495,10 @@
   }
 
   function requestCard(ctx, request, ownerView = false) {
-    const requester = ctx.state.users.find((item) => item.id === request.submittedBy);
+    const requester = ctx.state.users.find((item) => item.id === (request.submittedBy || request.requesterId));
+    const diff = request.diff || [];
     const href = ownerView ? `/app/teacher/requests/${request.id}` : `/app/admin/approvals/${request.id}`;
-    return `<article class="approval-card"><div class="approval-main"><div class="between"><span class="request-type">${escapeHtml(requestTitle(request))}</span>${badge(request.status)}</div><h3><a href="#${href}">${escapeHtml(request.reason)}</a></h3>${person(requester, `Gửi ${formatDate(request.submittedAt, true)}`)}<div class="request-meta"><span>Phiên bản gốc <b>${request.baseVersion}</b></span><span>Revision <b>${request.revision}</b></span><span>Thay đổi <b>${request.diff.length}</b> trường</span></div></div>${ownerView && ['SUBMITTED', 'CHANGES_REQUESTED'].includes(request.status) ? `<form data-form="withdraw-change-request" class="withdraw-form"><input type="hidden" name="requestId" value="${escapeHtml(request.id)}"><input class="input" name="reason" required placeholder="Lý do rút yêu cầu"><button class="btn btn-secondary btn-sm" type="submit">Rút yêu cầu</button></form>` : `<a class="btn btn-secondary btn-sm" href="#${href}">So sánh thay đổi</a>`}</article>`;
+    return `<article class="approval-card"><div class="approval-main"><div class="between"><span class="request-type">${escapeHtml(requestTitle(request))}</span>${badge(request.status)}</div><h3><a href="#${href}">${escapeHtml(request.reason)}</a></h3>${person(requester, `Gửi ${formatDate(request.submittedAt, true)}`)}<div class="request-meta"><span>Phiên bản gốc <b>${request.baseVersion ?? 0}</b></span><span>Revision <b>${request.revision ?? 1}</b></span><span>Thay đổi <b>${diff.length}</b> trường</span></div></div>${ownerView && ['SUBMITTED', 'CHANGES_REQUESTED'].includes(request.status) ? `<form data-form="withdraw-change-request" class="withdraw-form"><input type="hidden" name="requestId" value="${escapeHtml(request.id)}"><input class="input" name="reason" required placeholder="Lý do rút yêu cầu"><button class="btn btn-secondary btn-sm" type="submit">Rút yêu cầu</button></form>` : `<a class="btn btn-secondary btn-sm" href="#${href}">So sánh thay đổi</a>`}</article>`;
   }
 
   function approvals(ctx) {
@@ -4442,12 +4517,13 @@
   }
 
   function requestDetail(ctx, request, ownerView = false) {
-    const requester = ctx.state.users.find((item) => item.id === request.submittedBy);
+    const requester = ctx.state.users.find((item) => item.id === (request.submittedBy || request.requesterId));
+    const diff = request.diff || [];
     const reviewer = ctx.state.users.find((item) => item.id === request.reviewerId);
     const canReview = !ownerView && ['SUBMITTED', 'IN_REVIEW'].includes(request.status);
     return `<div class="workspace-page governance-page">${pageHeader(ownerView ? 'Giáo viên · Yêu cầu của tôi' : 'Quản trị · Phê duyệt', requestTitle(request), request.reason, `<a class="btn btn-secondary" href="#${ownerView ? '/app/teacher/requests' : '/app/admin/approvals'}">Về danh sách</a>`)}
       <div class="request-summary panel"><div>${person(requester, 'Người gửi')}<dl class="detail-list"><div><dt>Trạng thái</dt><dd>${badge(request.status)}</dd></div><div><dt>Phiên bản gốc</dt><dd>${request.baseVersion}</dd></div><div><dt>Revision</dt><dd>${request.revision}</dd></div><div><dt>Người duyệt</dt><dd>${escapeHtml(reviewer?.name || 'Chưa có')}</dd></div></dl></div><div class="request-reason"><small>Lý do đề xuất</small><strong>${escapeHtml(request.reason)}</strong><p>${escapeHtml(request.reviewNote || 'Chưa có ghi chú duyệt.')}</p></div></div>
-      ${section('So sánh thay đổi', `<div class="diff-table"><div class="diff-head"><span>Trường dữ liệu</span><span>Trước thay đổi</span><span>Sau thay đổi</span></div>${request.diff.map((item) => `<div class="diff-row"><code>${escapeHtml(item.field)}</code><pre>${escapeHtml(displayValue(item.before))}</pre><pre>${escapeHtml(displayValue(item.after))}</pre></div>`).join('') || '<p class="muted">Không có trường dữ liệu thay đổi.</p>'}</div>`, { subtitle: request.status === 'CONFLICTED' ? 'Cảnh báo: dữ liệu gốc đã đổi; cần gửi revision mới.' : 'Canonical data chỉ đổi sau khi duyệt thành công.' })}
+      ${section('So sánh thay đổi', `<div class="diff-table"><div class="diff-head"><span>Trường dữ liệu</span><span>Trước thay đổi</span><span>Sau thay đổi</span></div>${diff.map((item) => `<div class="diff-row"><code>${escapeHtml(item.field)}</code><pre>${escapeHtml(displayValue(item.before))}</pre><pre>${escapeHtml(displayValue(item.after))}</pre></div>`).join('') || '<p class="muted">Không có trường dữ liệu thay đổi.</p>'}</div>`, { subtitle: request.status === 'CONFLICTED' ? 'Cảnh báo: dữ liệu gốc đã đổi; cần gửi revision mới.' : 'Canonical data chỉ đổi sau khi duyệt thành công.' })}
       ${canReview ? section('Quyết định của Quản trị viên', `<form class="review-form" data-form="review-change-request"><input type="hidden" name="requestId" value="${escapeHtml(request.id)}"><label>Quyết định<select class="input" name="decision"><option value="APPROVE">Duyệt và áp dụng</option><option value="REQUEST_CHANGES">Yêu cầu chỉnh sửa</option><option value="REJECT">Từ chối</option></select></label><label>Ghi chú<textarea class="input" name="note" rows="3" placeholder="Bắt buộc khi từ chối hoặc yêu cầu chỉnh sửa"></textarea></label><button class="btn btn-primary" type="submit">Xác nhận quyết định</button></form>`) : ''}
       ${ownerView && ['SUBMITTED', 'CHANGES_REQUESTED'].includes(request.status) ? section('Rút yêu cầu', `<form data-form="withdraw-change-request" class="review-form"><input type="hidden" name="requestId" value="${escapeHtml(request.id)}"><label>Lý do<input class="input" name="reason" required></label><button class="btn btn-secondary" type="submit">Rút yêu cầu</button></form>`) : ''}</div>`;
   }
@@ -4823,6 +4899,11 @@
     return `<a class="brand ${light ? 'brand-light' : ''}" href="#/"><img class="brand-logo" src="./assets/yen-logo-horizontal.png" alt="Lớp Tiếng Anh Cô Yến"></a>`;
   }
 
+  function publicHref(href) {
+    const value = String(href || '/lien-he');
+    return /^(?:https?:|tel:|mailto:)/i.test(value) ? value : `#${value.startsWith('/') ? value : `/${value}`}`;
+  }
+
   function publicHeader(ctx) {
     let accountActions = '<a class="btn btn-secondary auth-action" href="#/login">Đăng nhập</a><a class="btn btn-primary auth-action" href="#/dang-ky">Đăng ký</a>';
     if (ctx.actor?.role === 'VISITOR') accountActions = '<a class="btn btn-secondary auth-action" href="#/tai-khoan">Tài khoản của tôi</a><button class="btn btn-ghost auth-action" type="button" data-action="logout">Đăng xuất</button>';
@@ -4837,14 +4918,24 @@
     }).join('');
     const mobileMenus = navigation.map((group) => `<section><strong>${escapeHtml(group.label)}</strong>${group.items.map((item) => `<a href="#${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>`).join('')}</section>`).join('');
     const hotline = root.YC.publicContent.published('contactChannels', ctx.state).find((item) => item.type === 'HOTLINE' && item.value);
-    return `<header class="public-header"><div class="container">${brand()}<nav class="public-nav" aria-label="Điều hướng chính">${desktopMenus}</nav><div class="public-actions">${hotline ? `<a class="hotline-action" href="${escapeHtml(hotline.href || '/lien-he')}">${icon('phone')}<span>${escapeHtml(hotline.value)}</span></a>` : ''}${accountActions}</div><button class="mobile-menu" type="button" data-action="toggle-mobile-nav" aria-label="Mở menu" aria-expanded="false" aria-controls="mobile-public-nav">☰</button></div><div class="mobile-public-nav" id="mobile-public-nav" aria-hidden="true">${mobileMenus}<div class="mobile-account-actions">${accountActions}</div></div></header>`;
+    return `<header class="public-header"><div class="container">${brand()}<nav class="public-nav" aria-label="Điều hướng chính">${desktopMenus}</nav><div class="public-actions">${hotline ? `<a class="hotline-action" href="${escapeHtml(publicHref(hotline.href))}">${icon('phone')}<span>${escapeHtml(hotline.value)}</span></a>` : ''}${accountActions}</div><button class="mobile-menu" type="button" data-action="toggle-mobile-nav" aria-label="Mở menu" aria-expanded="false" aria-controls="mobile-public-nav">☰</button></div><div class="mobile-public-nav" id="mobile-public-nav" aria-hidden="true">${mobileMenus}<div class="mobile-account-actions">${accountActions}</div></div></header>`;
   }
 
   function publicFooter(ctx) {
     let accountLinks = '<a href="#/login">Đăng nhập</a><a href="#/dang-ky">Đăng ký</a>';
     if (ctx.actor?.role === 'VISITOR') accountLinks = '<a href="#/tai-khoan">Tài khoản của tôi</a><button class="footer-action" type="button" data-action="logout">Đăng xuất</button>';
     else if (ctx.actor) accountLinks = `<a href="#${root.YC.selectors.roleHome(ctx.actor.role)}">${['STUDENT', 'PARENT'].includes(ctx.actor.role) ? 'Khu vực học tập' : 'Khu vực làm việc'}</a>`;
-    return `<footer class="public-footer"><div class="container"><div>${brand(true)}<p>Hành trình ngoại ngữ dựa trên bằng chứng.</p><small>Bản minh họa giao diện · Dữ liệu và tích hợp đều là mô phỏng.</small></div><div><strong>Khám phá</strong><a href="#/chuong-trinh">Chương trình</a><a href="#/lich-hoc">Lịch học</a><a href="#/su-kien">Sự kiện</a></div><div><strong>Tài khoản</strong>${accountLinks}</div><div><strong>Thông tin</strong><a href="#/giai-phap-trung-tam">Mô hình vận hành</a><a href="#/lien-he">Liên hệ</a><span>© 2026 Lớp Tiếng Anh Cô Yến</span></div></div></footer>`;
+    const site = root.YC.publicContent.published('siteSettings', ctx.state)[0] || {};
+    const navigation = root.YC.publicContent.publicNavigation(ctx.state).slice(0, 2);
+    const contacts = root.YC.publicContent.published('contactChannels', ctx.state).filter((item) => item.value);
+    const navColumns = navigation.map((group) => `<div><strong>${escapeHtml(group.label)}</strong>${group.items.slice(0, 4).map((item) => `<a href="#${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>`).join('')}</div>`).join('');
+    return `<footer class="public-footer"><div class="container"><div>${brand(true)}<p>${escapeHtml(site.tagline || 'Hành trình ngoại ngữ dựa trên bằng chứng.')}</p><small>${escapeHtml(site.description || '')}</small></div>${navColumns}<div><strong>Tài khoản</strong>${accountLinks}</div><div><strong>Liên hệ</strong>${contacts.map((item) => `<a href="${escapeHtml(publicHref(item.href))}">${escapeHtml(item.label)}<small>${escapeHtml(item.value)}</small></a>`).join('')}<span>© 2026 ${escapeHtml(site.centerName || 'Lớp Tiếng Anh Cô Yến')}</span></div></div></footer>`;
+  }
+
+  function floatingContacts(ctx) {
+    const contacts = root.YC.publicContent.published('contactChannels', ctx.state).filter((item) => item.value);
+    if (!contacts.length) return '';
+    return `<aside class="floating-contact-stack" aria-label="Liên hệ nhanh">${contacts.map((item) => `<a class="floating-contact" href="${escapeHtml(publicHref(item.href))}" aria-label="${escapeHtml(`${item.label}: ${item.value}`)}"><span>${icon(item.icon || (item.type === 'EMAIL' ? 'mail' : item.type === 'ZALO' ? 'chat' : 'phone'))}</span><strong>${escapeHtml(item.label)}</strong></a>`).join('')}</aside>`;
   }
 
   function notifications(ctx) {
@@ -4884,13 +4975,13 @@
     if (clean.startsWith('/app/')) {
       if (!ctx.actor) return appShell('', clean, ctx);
       const allowed = allowedWorkspaceRoles(clean);
-      if (ctx.actor.role === 'VISITOR') return `<div class="public-page">${publicHeader(ctx)}${accessDenied(clean, ctx.actor)}${publicFooter(ctx)}</div>`;
+      if (ctx.actor.role === 'VISITOR') return `<div class="public-page">${publicHeader(ctx)}${accessDenied(clean, ctx.actor)}${publicFooter(ctx)}${floatingContacts(ctx)}</div>`;
       if (allowed.length && !allowed.includes(ctx.actor.role)) return appShell(accessDenied(clean, ctx.actor), clean, ctx);
       return appShell(render(clean, ctx), clean, ctx);
     }
     const content = render(clean, ctx);
     if (['/login', '/dang-ky', '/forgot-password', '/verify-otp', '/select-profile'].includes(clean)) return content;
-    return `<div class="public-page">${publicHeader(ctx)}${content}${publicFooter(ctx)}</div>`;
+    return `<div class="public-page">${publicHeader(ctx)}${content}${publicFooter(ctx)}${floatingContacts(ctx)}</div>`;
   }
 
   root.YC.define('router', Object.freeze({ NAV, ROLE_LABELS, frame, normalize, render }));

@@ -1,4 +1,4 @@
-Yen Center — Full Journey Frontend Demo
+Lớp Tiếng Anh Cô Yến — Full Journey Frontend Demo
 Version: 3.0.0
 Release date: 2026-09-05
 Handbook baseline: LMS Language Center Visual Domain Handbook v1.1

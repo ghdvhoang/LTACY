@@ -40,6 +40,11 @@
     return `<a class="brand ${light ? 'brand-light' : ''}" href="#/"><img class="brand-logo" src="./assets/yen-logo-horizontal.png" alt="Lớp Tiếng Anh Cô Yến"></a>`;
   }
 
+  function publicHref(href) {
+    const value = String(href || '/lien-he');
+    return /^(?:https?:|tel:|mailto:)/i.test(value) ? value : `#${value.startsWith('/') ? value : `/${value}`}`;
+  }
+
   function publicHeader(ctx) {
     let accountActions = '<a class="btn btn-secondary auth-action" href="#/login">Đăng nhập</a><a class="btn btn-primary auth-action" href="#/dang-ky">Đăng ký</a>';
     if (ctx.actor?.role === 'VISITOR') accountActions = '<a class="btn btn-secondary auth-action" href="#/tai-khoan">Tài khoản của tôi</a><button class="btn btn-ghost auth-action" type="button" data-action="logout">Đăng xuất</button>';
@@ -54,14 +59,24 @@
     }).join('');
     const mobileMenus = navigation.map((group) => `<section><strong>${escapeHtml(group.label)}</strong>${group.items.map((item) => `<a href="#${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>`).join('')}</section>`).join('');
     const hotline = root.YC.publicContent.published('contactChannels', ctx.state).find((item) => item.type === 'HOTLINE' && item.value);
-    return `<header class="public-header"><div class="container">${brand()}<nav class="public-nav" aria-label="Điều hướng chính">${desktopMenus}</nav><div class="public-actions">${hotline ? `<a class="hotline-action" href="${escapeHtml(hotline.href || '/lien-he')}">${icon('phone')}<span>${escapeHtml(hotline.value)}</span></a>` : ''}${accountActions}</div><button class="mobile-menu" type="button" data-action="toggle-mobile-nav" aria-label="Mở menu" aria-expanded="false" aria-controls="mobile-public-nav">☰</button></div><div class="mobile-public-nav" id="mobile-public-nav" aria-hidden="true">${mobileMenus}<div class="mobile-account-actions">${accountActions}</div></div></header>`;
+    return `<header class="public-header"><div class="container">${brand()}<nav class="public-nav" aria-label="Điều hướng chính">${desktopMenus}</nav><div class="public-actions">${hotline ? `<a class="hotline-action" href="${escapeHtml(publicHref(hotline.href))}">${icon('phone')}<span>${escapeHtml(hotline.value)}</span></a>` : ''}${accountActions}</div><button class="mobile-menu" type="button" data-action="toggle-mobile-nav" aria-label="Mở menu" aria-expanded="false" aria-controls="mobile-public-nav">☰</button></div><div class="mobile-public-nav" id="mobile-public-nav" aria-hidden="true">${mobileMenus}<div class="mobile-account-actions">${accountActions}</div></div></header>`;
   }
 
   function publicFooter(ctx) {
     let accountLinks = '<a href="#/login">Đăng nhập</a><a href="#/dang-ky">Đăng ký</a>';
     if (ctx.actor?.role === 'VISITOR') accountLinks = '<a href="#/tai-khoan">Tài khoản của tôi</a><button class="footer-action" type="button" data-action="logout">Đăng xuất</button>';
     else if (ctx.actor) accountLinks = `<a href="#${root.YC.selectors.roleHome(ctx.actor.role)}">${['STUDENT', 'PARENT'].includes(ctx.actor.role) ? 'Khu vực học tập' : 'Khu vực làm việc'}</a>`;
-    return `<footer class="public-footer"><div class="container"><div>${brand(true)}<p>Hành trình ngoại ngữ dựa trên bằng chứng.</p><small>Bản minh họa giao diện · Dữ liệu và tích hợp đều là mô phỏng.</small></div><div><strong>Khám phá</strong><a href="#/chuong-trinh">Chương trình</a><a href="#/lich-hoc">Lịch học</a><a href="#/su-kien">Sự kiện</a></div><div><strong>Tài khoản</strong>${accountLinks}</div><div><strong>Thông tin</strong><a href="#/giai-phap-trung-tam">Mô hình vận hành</a><a href="#/lien-he">Liên hệ</a><span>© 2026 Lớp Tiếng Anh Cô Yến</span></div></div></footer>`;
+    const site = root.YC.publicContent.published('siteSettings', ctx.state)[0] || {};
+    const navigation = root.YC.publicContent.publicNavigation(ctx.state).slice(0, 2);
+    const contacts = root.YC.publicContent.published('contactChannels', ctx.state).filter((item) => item.value);
+    const navColumns = navigation.map((group) => `<div><strong>${escapeHtml(group.label)}</strong>${group.items.slice(0, 4).map((item) => `<a href="#${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>`).join('')}</div>`).join('');
+    return `<footer class="public-footer"><div class="container"><div>${brand(true)}<p>${escapeHtml(site.tagline || 'Hành trình ngoại ngữ dựa trên bằng chứng.')}</p><small>${escapeHtml(site.description || '')}</small></div>${navColumns}<div><strong>Tài khoản</strong>${accountLinks}</div><div><strong>Liên hệ</strong>${contacts.map((item) => `<a href="${escapeHtml(publicHref(item.href))}">${escapeHtml(item.label)}<small>${escapeHtml(item.value)}</small></a>`).join('')}<span>© 2026 ${escapeHtml(site.centerName || 'Lớp Tiếng Anh Cô Yến')}</span></div></div></footer>`;
+  }
+
+  function floatingContacts(ctx) {
+    const contacts = root.YC.publicContent.published('contactChannels', ctx.state).filter((item) => item.value);
+    if (!contacts.length) return '';
+    return `<aside class="floating-contact-stack" aria-label="Liên hệ nhanh">${contacts.map((item) => `<a class="floating-contact" href="${escapeHtml(publicHref(item.href))}" aria-label="${escapeHtml(`${item.label}: ${item.value}`)}"><span>${icon(item.icon || (item.type === 'EMAIL' ? 'mail' : item.type === 'ZALO' ? 'chat' : 'phone'))}</span><strong>${escapeHtml(item.label)}</strong></a>`).join('')}</aside>`;
   }
 
   function notifications(ctx) {
@@ -101,13 +116,13 @@
     if (clean.startsWith('/app/')) {
       if (!ctx.actor) return appShell('', clean, ctx);
       const allowed = allowedWorkspaceRoles(clean);
-      if (ctx.actor.role === 'VISITOR') return `<div class="public-page">${publicHeader(ctx)}${accessDenied(clean, ctx.actor)}${publicFooter(ctx)}</div>`;
+      if (ctx.actor.role === 'VISITOR') return `<div class="public-page">${publicHeader(ctx)}${accessDenied(clean, ctx.actor)}${publicFooter(ctx)}${floatingContacts(ctx)}</div>`;
       if (allowed.length && !allowed.includes(ctx.actor.role)) return appShell(accessDenied(clean, ctx.actor), clean, ctx);
       return appShell(render(clean, ctx), clean, ctx);
     }
     const content = render(clean, ctx);
     if (['/login', '/dang-ky', '/forgot-password', '/verify-otp', '/select-profile'].includes(clean)) return content;
-    return `<div class="public-page">${publicHeader(ctx)}${content}${publicFooter(ctx)}</div>`;
+    return `<div class="public-page">${publicHeader(ctx)}${content}${publicFooter(ctx)}${floatingContacts(ctx)}</div>`;
   }
 
   root.YC.define('router', Object.freeze({ NAV, ROLE_LABELS, frame, normalize, render }));

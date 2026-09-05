@@ -43,15 +43,20 @@ def verify_static() -> dict[str, object]:
     require("<style>" in standalone and "<script>" in standalone, "Standalone does not inline assets")
     require(not re.search(r'<link[^>]+href=["\']\./styles\.css', standalone), "Standalone links external CSS")
     require(not re.search(r'<script[^>]+src=["\']\./app\.js', standalone), "Standalone links external JavaScript")
+    require("./assets/" not in standalone, "Standalone still references a local asset")
+    require("data:image/png;base64," in standalone, "Standalone does not inline PNG brand assets")
+    require((SOURCE / "assets" / "yen-logo-horizontal.png").is_file(), "Cô Yến logo is missing")
+    require((SOURCE / "assets" / "yen-home-hero.png").is_file(), "Cô Yến Homepage hero is missing")
     for token in [
         "schemaVersion: 4", "REGISTER_VISITOR", "register-visitor", "/dang-ky", "/tai-khoan", "export-csv", "print-view",
         "SUBMIT_CHANGE_REQUEST", "SET_ROLE_PERMISSION", "/app/admin/approvals", "LEAD_CONTACTED",
         "CONFIRM_MAKE_UP_BOOKING", "/app/admin/course-versions/", "data-form=\"request-course\"",
         "PARENT_PROGRESS_VIEWED", "RENEWAL_ACCEPTED", "Không có quyền vào khu vực này",
         "CREATE_SITE_CONTENT_DRAFT", "PUBLISH_SITE_CONTENT", "publicTeacherProfiles",
+        "/gioi-thieu", "/lich-khai-giang", "floating-contact", "REGISTER_PUBLIC_EVENT",
     ]:
         require(token in bundle, f"Runtime token missing: {token}")
-    for token in ["visitor-account", "course-player-layout", "role-switcher", "@media print"]:
+    for token in ["visitor-account", "course-player-layout", "role-switcher", "floating-contact-stack", "@media print"]:
         require(token in css, f"CSS token missing: {token}")
     require("Version: 3.0.0" in (PROJECT_ROOT / "VERSION.txt").read_text(encoding="utf-8"), "Release version is not 3.0.0")
     require((PROJECT_ROOT / "docs" / "HANDBOOK-COVERAGE-v1.1.md").exists(), "Handbook coverage matrix missing")

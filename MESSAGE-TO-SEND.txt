@@ -1,4 +1,4 @@
-Yen Center Frontend Demo v3.0
+Lớp Tiếng Anh Cô Yến Frontend Demo v3.0
 
 Mở OPEN-DEMO.html để bắt đầu từ trang chủ. Có thể đăng ký tài khoản khách để lưu chương trình, đăng ký sự kiện và theo dõi yêu cầu tư vấn; hoặc đăng nhập bằng tài khoản Học viên/Giáo viên/Quản trị viên để kiểm tra các khu vực chuyên môn. Course có đủ danh mục công khai, khu học viên, Xưởng nội dung và quản trị khóa học.
 

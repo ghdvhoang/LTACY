@@ -1,4 +1,4 @@
-# Yen Center — Full Journey Frontend Demo v3.0
+# Lớp Tiếng Anh Cô Yến — Full Journey Frontend Demo v3.0
 
 Đây là bản **demo frontend có tương tác** cho nền tảng trung tâm ngoại ngữ, được mở rộng từ prototype cũ theo `LMS Language Center Visual Domain Handbook v1.1`. Một hồ sơ học viên được nối xuyên suốt từ khách hàng tiềm năng, đầu vào, thanh toán, xếp lớp, giảng dạy, điểm danh, học bù, bài tập, đánh giá, tiến bộ, phụ huynh xem báo cáo đến gia hạn.
 
