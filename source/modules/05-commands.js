@@ -1061,6 +1061,10 @@
         record.correctedAt = nowIso();
         record.correctedBy = context.actor.id;
         record.correctionReason = payload.reason.trim();
+        const reconciliation = root.YC.remedial.reconcileAttendance(draft, record, previous, { now: nowIso(), actorId: context.actor.id });
+        if (reconciliation.createdAssignment) {
+          appendEvent(draft, context, 'REMEDIAL_ASSIGNED', 'REMEDIAL_ASSIGNMENT', reconciliation.assignment.id, 'Đã tạo bài học bù sau khi sửa điểm danh.', { learnerId: record.learnerId });
+        }
         appendEvent(draft, context, 'ATTENDANCE_CORRECTED', 'ATTENDANCE', record.id, `${previous} → ${record.status}.`, { learnerId: record.learnerId });
         appendAudit(draft, context, 'ATTENDANCE_CORRECTED', 'ATTENDANCE', record.id, payload.reason.trim());
         return { message: 'Đã sửa điểm danh với đầy đủ lý do.' };
@@ -1140,6 +1144,7 @@
         for (const input of records) {
           const learner = required(draft.learners.find((item) => item.id === input.learnerId), 'LEARNER_NOT_FOUND', 'Không tìm thấy học viên trong danh sách điểm danh.');
           let record = draft.attendanceRecords.find((item) => item.sessionId === session.id && item.learnerId === learner.id);
+          const previousStatus = record?.status || null;
           if (!record) {
             record = { id: uid('attendance'), sessionId: session.id, learnerId: learner.id };
             draft.attendanceRecords.push(record);
@@ -1148,16 +1153,9 @@
           record.reasonCode = input.reasonCode || null;
           record.markedBy = context.actor.id;
           record.markedAt = nowIso();
-          if (input.status === 'ABSENT' && !draft.remedialAssignments.some((item) => item.sessionId === session.id && item.learnerId === learner.id && item.status !== 'CANCELLED')) {
-            const assignment = {
-              id: uid('remedial'), learnerId: learner.id, sessionId: session.id, lessonTemplateId: session.lessonTemplateId,
-              assessmentId: 'assessment-remedial', status: 'ASSIGNED', assignedAt: nowIso(),
-              dueAt: new Date(new Date(nowIso()).getTime() + draft.settings.remedialDeadlineDays * 86400000).toISOString(),
-              videoProgress: 0, highestScore: null, completionMode: null, completedAt: null,
-              accessToken: uid('access'), accessStatus: 'ACTIVE', linkVersion: 1,
-              accessExpiresAt: new Date(new Date(nowIso()).getTime() + draft.settings.remedialDeadlineDays * 86400000).toISOString(),
-            };
-            draft.remedialAssignments.push(assignment);
+          const reconciliation = root.YC.remedial.reconcileAttendance(draft, record, previousStatus, { now: nowIso(), actorId: context.actor.id });
+          if (reconciliation.createdAssignment) {
+            const assignment = reconciliation.assignment;
             createdAssignments += 1;
             appendEvent(draft, context, 'REMEDIAL_ASSIGNED', 'REMEDIAL_ASSIGNMENT', assignment.id, `${learner.name} nhận bài học bù.`, { learnerId: learner.id });
             const studentUser = draft.users.find((item) => item.role === 'STUDENT' && (item.linkedLearnerIds || []).includes(learner.id));

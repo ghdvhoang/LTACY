@@ -15,12 +15,35 @@
     next.rolePermissions = baseline.rolePermissions;
     next.userPermissionOverrides = Array.isArray(next.userPermissionOverrides) ? next.userPermissionOverrides : [];
     next.changeRequests = Array.isArray(next.changeRequests) ? next.changeRequests : [];
+    next.remedialCases = Array.isArray(next.remedialCases) ? next.remedialCases : [];
     next.settings = { ...baseline.settings, ...(next.settings || {}) };
     next.organizations = (next.organizations || baseline.organizations).map((item) => ({ version: 1, ...item }));
     next.courses = (next.courses || []).map((item) => ({ version: 1, ...item }));
     next.courseVersions = (next.courseVersions || []).map((item) => ({ recordVersion: 1, ...item }));
     next.classes = (next.classes || []).map((item) => ({ version: 1, ...item }));
     next.sessions = (next.sessions || []).map((item) => ({ version: 1, ...item }));
+    (next.remedialAssignments || []).forEach((assignment, index) => {
+      if (assignment.remedialCaseId) return;
+      const attendance = (next.attendanceRecords || []).find((item) => item.sessionId === assignment.sessionId && item.learnerId === assignment.learnerId) || null;
+      const session = (next.sessions || []).find((item) => item.id === assignment.sessionId) || null;
+      const cohort = (next.classes || []).find((item) => item.id === session?.classId) || null;
+      const courseVersion = (next.courseVersions || []).find((item) => item.id === cohort?.courseVersionId) || null;
+      let remedialCase = next.remedialCases.find((item) => attendance && item.sourceAttendanceId === attendance.id);
+      if (!remedialCase) {
+        remedialCase = {
+          id: `remedial-case-migrated-${index + 1}`, learnerId: assignment.learnerId,
+          sourceAttendanceId: attendance?.id || null, sourceSessionId: assignment.sessionId,
+          sourceClassId: cohort?.id || null, sourceCourseVersionId: courseVersion?.id || null,
+          sourceCourseId: courseVersion?.courseId || null, sourceLessonTemplateId: assignment.lessonTemplateId || session?.lessonTemplateId || null,
+          policySnapshot: clone(courseVersion?.remedialPolicy || { triggerStatuses: ['ABSENT'], requiredModes: ['ONLINE'], deadlineDays: next.settings?.remedialDeadlineDays || baseline.settings.remedialDeadlineDays, passingScore: next.settings?.defaultPassingScore || baseline.settings.defaultPassingScore, minimumVideoProgress: next.settings?.minimumVideoProgress || baseline.settings.minimumVideoProgress }),
+          requiredModes: ['ONLINE'], openedAt: assignment.assignedAt || next.seededAt, openedBy: assignment.assignedBy || 'migration-v3', resolution: null,
+          reconciliationHistory: [{ fromStatus: null, toStatus: attendance?.status || 'ABSENT', occurredAt: next.seededAt, actorId: 'migration-v3' }],
+        };
+        next.remedialCases.push(remedialCase);
+      }
+      assignment.remedialCaseId = remedialCase.id;
+      (next.makeUpBookings || []).filter((item) => item.sourceAttendanceId === remedialCase.sourceAttendanceId).forEach((item) => { item.remedialCaseId = remedialCase.id; });
+    });
     next.migrationNotice = { code: 'V3_MIGRATED', message: 'Đã nâng dữ liệu v3 lên schema v4 và giữ nguyên hành trình học tập.' };
     return next;
   }

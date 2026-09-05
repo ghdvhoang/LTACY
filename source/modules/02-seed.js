@@ -191,6 +191,7 @@
       payments: [],
       refunds: [],
       renewals: [],
+      remedialCases: [],
       remedialAssignments: [],
       videoProgressRecords: [],
       progressReports: [],
