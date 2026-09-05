@@ -38,7 +38,7 @@
     }));
 
     return {
-      schemaVersion: 3,
+      schemaVersion: 4,
       seededAt: new Date(clock()).toISOString(),
       currentAt: new Date(clock()).toISOString(),
       migrationNotice: null,
@@ -52,7 +52,7 @@
         workloadLimitMinutes: 2400,
         integrationMode: 'MOCK',
       },
-      organizations: [{ id: 'org-yen', name: 'Yen Center', status: 'ACTIVE' }],
+      organizations: [{ id: 'org-yen', name: 'Lớp Tiếng Anh Cô Yến', shortName: 'Cô Yến', status: 'ACTIVE', version: 1 }],
       branches: [
         { id: 'branch-q3', organizationId: 'org-yen', code: 'Q3', name: 'Cơ sở Quận 3', address: '120 Võ Văn Tần, Quận 3', status: 'ACTIVE' },
         { id: 'branch-td', organizationId: 'org-yen', code: 'TD', name: 'Cơ sở Thủ Đức', address: '48 Võ Văn Ngân, Thủ Đức', status: 'ACTIVE' },
@@ -73,6 +73,10 @@
         { id: 'student-login-1', role: 'STUDENT', name: 'Nguyễn Minh Anh', identifiers: ['HS6A001', '0901000001'], secret: '123456', status: 'ACTIVE', linkedLearnerIds: ['student-canonical'] },
         { id: 'parent-1', role: 'PARENT', name: 'Nguyễn Thu Hà', identifiers: ['0901000002'], secret: '123456', status: 'ACTIVE', linkedLearnerIds: ['student-canonical', 'student-03'] },
       ],
+      permissionDefinitions: root.YC.permissions.seedDefinitions(),
+      rolePermissions: root.YC.permissions.seedRolePermissions(),
+      userPermissionOverrides: [],
+      changeRequests: [],
       roleScopes: [],
       learners,
       parentRelationships: [
@@ -100,14 +104,14 @@
         { id: 'level-a2-2', programId: 'program-foundation', code: 'A2.2', name: 'Foundation A2.2', sequence: 3 },
       ],
       courses: [
-        { id: 'course-6', programId: 'program-foundation', levelId: 'level-a2-1', code: 'ENG-FND-6', name: 'Tiếng Anh nền tảng 6', status: 'PUBLISHED' },
-        { id: 'course-7', programId: 'program-foundation', levelId: 'level-a2-2', code: 'ENG-FND-7', name: 'Tiếng Anh nền tảng 7', status: 'PUBLISHED' },
-        { id: 'course-5', programId: 'program-foundation', levelId: 'level-a1', code: 'ENG-FND-5', name: 'Tiếng Anh nền tảng 5', status: 'PUBLISHED' },
+        { id: 'course-6', programId: 'program-foundation', levelId: 'level-a2-1', code: 'ENG-FND-6', name: 'Tiếng Anh nền tảng 6', status: 'PUBLISHED', version: 1 },
+        { id: 'course-7', programId: 'program-foundation', levelId: 'level-a2-2', code: 'ENG-FND-7', name: 'Tiếng Anh nền tảng 7', status: 'PUBLISHED', version: 1 },
+        { id: 'course-5', programId: 'program-foundation', levelId: 'level-a1', code: 'ENG-FND-5', name: 'Tiếng Anh nền tảng 5', status: 'PUBLISHED', version: 1 },
       ],
       courseVersions: [
-        { id: 'course-v6', courseId: 'course-6', version: 3, title: 'Tiếng Anh nền tảng 6 · A2.1', status: 'PUBLISHED', immutable: true, totalHours: 48, completionRule: { attendanceMinimum: 75, finalScoreMinimum: 70, skillMinimum: 60 }, publishedAt: at(-90) },
-        { id: 'course-v7', courseId: 'course-7', version: 2, title: 'Tiếng Anh nền tảng 7 · A2.2', status: 'PUBLISHED', immutable: true, totalHours: 48, completionRule: { attendanceMinimum: 75, finalScoreMinimum: 72, skillMinimum: 62 }, publishedAt: at(-80) },
-        { id: 'course-v5', courseId: 'course-5', version: 4, title: 'Tiếng Anh nền tảng 5 · A1', status: 'PUBLISHED', immutable: true, totalHours: 42, completionRule: { attendanceMinimum: 70, finalScoreMinimum: 65, skillMinimum: 55 }, publishedAt: at(-75) },
+        { id: 'course-v6', courseId: 'course-6', version: 3, recordVersion: 1, title: 'Tiếng Anh nền tảng 6 · A2.1', status: 'PUBLISHED', immutable: true, totalHours: 48, completionRule: { attendanceMinimum: 75, finalScoreMinimum: 70, skillMinimum: 60 }, publishedAt: at(-90) },
+        { id: 'course-v7', courseId: 'course-7', version: 2, recordVersion: 1, title: 'Tiếng Anh nền tảng 7 · A2.2', status: 'PUBLISHED', immutable: true, totalHours: 48, completionRule: { attendanceMinimum: 75, finalScoreMinimum: 72, skillMinimum: 62 }, publishedAt: at(-80) },
+        { id: 'course-v5', courseId: 'course-5', version: 4, recordVersion: 1, title: 'Tiếng Anh nền tảng 5 · A1', status: 'PUBLISHED', immutable: true, totalHours: 42, completionRule: { attendanceMinimum: 70, finalScoreMinimum: 65, skillMinimum: 55 }, publishedAt: at(-75) },
       ],
       units: [
         { id: 'unit-v6-4', courseVersionId: 'course-v6', order: 4, title: 'Trải nghiệm trong quá khứ', outcome: 'Kể lại trải nghiệm đã xảy ra' },
@@ -149,11 +153,11 @@
       ],
       sessionAssignments: [],
       classes: [
-        { id: 'class-6a', code: 'ENG6A-T3T5-1800', name: 'Tiếng Anh nền tảng 6A', branchId: 'branch-q3', courseVersionId: 'course-v6', ageBand: 'YOUNG_LEARNER', mode: 'OFFLINE', capacity: 14, room: 'P.302', scheduleLabel: 'Thứ 3 & 5 · 18:00', status: 'OPEN' },
-        { id: 'class-6b', code: 'ENG6B-T2T4-1830', name: 'Tiếng Anh nền tảng 6B', branchId: 'branch-q3', courseVersionId: 'course-v6', ageBand: 'YOUNG_LEARNER', mode: 'HYBRID', capacity: 12, room: 'P.204', scheduleLabel: 'Thứ 2 & 4 · 18:30', status: 'OPEN' },
-        { id: 'class-7b', code: 'ENG7B-T2T4-1900', name: 'Tiếng Anh nền tảng 7B', branchId: 'branch-td', courseVersionId: 'course-v7', ageBand: 'TEEN', mode: 'OFFLINE', capacity: 12, room: 'P.105', scheduleLabel: 'Thứ 2 & 4 · 19:00', status: 'ACTIVE' },
-        { id: 'class-5c', code: 'ENG5C-T7CN-0900', name: 'Tiếng Anh nền tảng 5C', branchId: 'branch-q3', courseVersionId: 'course-v5', ageBand: 'YOUNG_LEARNER', mode: 'OFFLINE', capacity: 10, room: 'P.101', scheduleLabel: 'Thứ 7 & CN · 09:00', status: 'ACTIVE' },
-        { id: 'class-full', code: 'ENG6F-T7-0900', name: 'Tiếng Anh nền tảng 6 cuối tuần', branchId: 'branch-q3', courseVersionId: 'course-v6', ageBand: 'YOUNG_LEARNER', mode: 'OFFLINE', capacity: 1, room: 'P.305', scheduleLabel: 'Thứ 7 · 09:00', status: 'FULL' },
+        { id: 'class-6a', code: 'ENG6A-T3T5-1800', name: 'Tiếng Anh nền tảng 6A', branchId: 'branch-q3', courseVersionId: 'course-v6', ageBand: 'YOUNG_LEARNER', mode: 'OFFLINE', capacity: 14, room: 'P.302', scheduleLabel: 'Thứ 3 & 5 · 18:00', status: 'OPEN', version: 1 },
+        { id: 'class-6b', code: 'ENG6B-T2T4-1830', name: 'Tiếng Anh nền tảng 6B', branchId: 'branch-q3', courseVersionId: 'course-v6', ageBand: 'YOUNG_LEARNER', mode: 'HYBRID', capacity: 12, room: 'P.204', scheduleLabel: 'Thứ 2 & 4 · 18:30', status: 'OPEN', version: 1 },
+        { id: 'class-7b', code: 'ENG7B-T2T4-1900', name: 'Tiếng Anh nền tảng 7B', branchId: 'branch-td', courseVersionId: 'course-v7', ageBand: 'TEEN', mode: 'OFFLINE', capacity: 12, room: 'P.105', scheduleLabel: 'Thứ 2 & 4 · 19:00', status: 'ACTIVE', version: 1 },
+        { id: 'class-5c', code: 'ENG5C-T7CN-0900', name: 'Tiếng Anh nền tảng 5C', branchId: 'branch-q3', courseVersionId: 'course-v5', ageBand: 'YOUNG_LEARNER', mode: 'OFFLINE', capacity: 10, room: 'P.101', scheduleLabel: 'Thứ 7 & CN · 09:00', status: 'ACTIVE', version: 1 },
+        { id: 'class-full', code: 'ENG6F-T7-0900', name: 'Tiếng Anh nền tảng 6 cuối tuần', branchId: 'branch-q3', courseVersionId: 'course-v6', ageBand: 'YOUNG_LEARNER', mode: 'OFFLINE', capacity: 1, room: 'P.305', scheduleLabel: 'Thứ 7 · 09:00', status: 'FULL', version: 1 },
       ],
       enrollments: learners.filter((item) => item.classId).map((learner, index) => ({ id: `enrollment-seed-${index + 1}`, learnerId: learner.id, classId: learner.classId, courseVersionId: learner.classId === 'class-7b' ? 'course-v7' : learner.classId === 'class-5c' ? 'course-v5' : 'course-v6', status: 'ACTIVE', startsAt: at(-25), endsAt: null })),
       timetableRules: [
@@ -161,8 +165,8 @@
         { id: 'timetable-7b', classId: 'class-7b', recurrence: ['MON_1900', 'WED_1900'], durationMinutes: 90, room: 'P.105', branchId: 'branch-td' },
       ],
       sessions: [
-        { id: 'session-canonical', classId: 'class-6a', lessonTemplateId: 'lesson-past-simple', startsAt: at(0, 18), endsAt: at(0, 19, 30), room: 'P.302', mode: 'OFFLINE', status: 'CONFIRMED', attendanceFinalized: false },
-        { id: 'session-7b', classId: 'class-7b', lessonTemplateId: 'lesson-future', startsAt: at(1, 19), endsAt: at(1, 20, 30), room: 'P.105', mode: 'OFFLINE', status: 'CONFIRMED', attendanceFinalized: false },
+        { id: 'session-canonical', classId: 'class-6a', lessonTemplateId: 'lesson-past-simple', startsAt: at(0, 18), endsAt: at(0, 19, 30), room: 'P.302', mode: 'OFFLINE', status: 'CONFIRMED', attendanceFinalized: false, version: 1 },
+        { id: 'session-7b', classId: 'class-7b', lessonTemplateId: 'lesson-future', startsAt: at(1, 19), endsAt: at(1, 20, 30), room: 'P.105', mode: 'OFFLINE', status: 'CONFIRMED', attendanceFinalized: false, version: 1 },
       ],
       attendanceRecords: [],
       lessonPlans: [{ id: 'lesson-plan-canonical', sessionId: 'session-canonical', lessonTemplateId: 'lesson-past-simple', adaptations: ['Thêm dòng thời gian trực quan cho thì quá khứ đơn'], readiness: 'DRAFT', ownerId: 'teacher-1' }],

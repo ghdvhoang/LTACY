@@ -72,6 +72,6 @@ test('admin data health renders the real schema version without undefined values
   const YC = loadYC(['seed', 'router']);
   const html = YC.router.render('/app/admin/dashboard', context(YC, 'ADMIN', '/app/admin/dashboard'));
 
-  assert.match(html, /<dt>Phiên bản dữ liệu<\/dt><dd>3<\/dd>/);
+  assert.match(html, /<dt>Phiên bản dữ liệu<\/dt><dd>4<\/dd>/);
   assert.doesNotMatch(html, /undefined/);
 });

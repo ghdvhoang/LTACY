@@ -9,7 +9,7 @@ test('seed keeps class delivery tied to branch and immutable course version', ()
   const YC = loadYC(['seed']);
   const state = YC.seed.createSeed(clock);
 
-  assert.equal(state.schemaVersion, 3);
+  assert.equal(state.schemaVersion, 4);
   assert.ok(state.branches.length >= 2);
   for (const cohort of state.classes) {
     assert.ok(state.branches.some((item) => item.id === cohort.branchId), cohort.id);
@@ -59,8 +59,37 @@ test('v2 payload is reset instead of inventing missing domain relationships', ()
 
   const store = YC.store.create({ storage, clock });
 
-  assert.equal(store.getState().schemaVersion, 3);
+  assert.equal(store.getState().schemaVersion, 4);
   assert.equal(store.getState().migrationNotice.code, 'V2_RESET_REQUIRED');
+});
+
+test('seed v4 contains configurable permission and approval collections', () => {
+  const YC = loadYC(['seed', 'permissions']);
+  const state = YC.seed.createSeed(clock);
+
+  assert.equal(state.schemaVersion, 4);
+  assert.ok(state.permissionDefinitions.some((item) => item.id === 'approval.decide'));
+  assert.ok(state.rolePermissions.some((item) => item.role === 'TEACHER' && item.permissionId === 'session.request_create'));
+  assert.equal(state.userPermissionOverrides.length, 0);
+  assert.equal(state.changeRequests.length, 0);
+});
+
+test('store migrates persisted v3 data without losing the canonical learner', () => {
+  const YC = loadYC(['seed', 'store']);
+  const v3 = YC.seed.createSeed(clock);
+  v3.schemaVersion = 3;
+  delete v3.permissionDefinitions;
+  delete v3.rolePermissions;
+  delete v3.userPermissionOverrides;
+  delete v3.changeRequests;
+  const storage = memoryStorage({ 'yen-center-lms-fe-state-v3': JSON.stringify(v3) });
+
+  const state = YC.store.create({ storage, clock }).getState();
+
+  assert.equal(state.schemaVersion, 4);
+  assert.equal(state.learners.find((item) => item.id === 'student-canonical').name, 'Nguyễn Minh Anh');
+  assert.equal(state.migrationNotice.code, 'V3_MIGRATED');
+  assert.ok(state.permissionDefinitions.some((item) => item.id === 'approval.decide'));
 });
 
 test('parent visibility excludes internal and safeguarding feedback', () => {
