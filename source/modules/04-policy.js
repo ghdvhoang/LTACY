@@ -18,7 +18,7 @@
   function isEffective(record, state) {
     const moment = currentTimestamp(state);
     if (record.effectiveFrom && new Date(record.effectiveFrom).getTime() > moment) return false;
-    if (record.effectiveTo && new Date(record.effectiveTo).getTime() < moment) return false;
+    if (record.effectiveTo && new Date(record.effectiveTo).getTime() <= moment) return false;
     return record.status !== 'INACTIVE' && record.status !== 'REVOKED';
   }
 

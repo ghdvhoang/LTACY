@@ -126,4 +126,77 @@ test('legacy permission aliases use the same dynamic assigned-class policy', () 
   assert.equal(YC.policy.can(teacher, 'CLASS_VIEW', { classId: 'class-7b' }, snapshot), false);
 });
 
+test('Admin sets and revokes an account permission override with audit evidence', () => {
+  const { bus, state } = runtime();
+  const granted = bus.dispatch('SET_USER_PERMISSION_OVERRIDE', {
+    userId: 'teacher-1',
+    permissionId: 'class.request_create',
+    effect: 'ALLOW',
+    scopeType: 'BRANCH',
+    scopeIds: ['branch-q3'],
+    reason: 'Phụ trách mở lớp tháng 9',
+  }, 'admin-1');
+
+  assert.equal(granted.ok, true);
+  assert.equal(state().userPermissionOverrides.at(-1).grantedBy, 'admin-1');
+  assert.equal(state().auditLogs[0].action, 'USER_PERMISSION_OVERRIDE_SET');
+  assert.equal(state().domainEvents[0].type, 'USER_PERMISSION_OVERRIDE_SET');
+
+  const revoked = bus.dispatch('REVOKE_USER_PERMISSION_OVERRIDE', {
+    overrideId: granted.overrideId,
+    reason: 'Kết thúc thời gian phụ trách',
+  }, 'admin-1');
+  assert.equal(revoked.ok, true);
+  assert.equal(state().userPermissionOverrides.find((item) => item.id === granted.overrideId).status, 'REVOKED');
+  assert.equal(state().auditLogs[0].action, 'USER_PERMISSION_OVERRIDE_REVOKED');
+});
+
+test('permission mutations require authority and a reason', () => {
+  const { bus, state } = runtime();
+  const teacherAttempt = bus.dispatch('SET_ROLE_PERMISSION', {
+    role: 'TEACHER', permissionId: 'site.publish', effect: 'ALLOW', scopeType: 'ORGANIZATION', reason: 'Tự cấp quyền',
+  }, 'teacher-1');
+  assert.equal(teacherAttempt.ok, false);
+  assert.equal(teacherAttempt.code, 'FORBIDDEN');
+
+  const missingReason = bus.dispatch('SET_USER_PERMISSION_OVERRIDE', {
+    userId: 'teacher-1', permissionId: 'site.edit', effect: 'ALLOW', scopeType: 'ORGANIZATION', reason: '',
+  }, 'admin-1');
+  assert.equal(missingReason.ok, false);
+  assert.equal(missingReason.code, 'REASON_REQUIRED');
+  assert.equal(state().userPermissionOverrides.length, 0);
+});
+
+test('role permission changes are versioned instead of rewriting prior evidence', () => {
+  const { bus, state } = runtime();
+  const previous = state().rolePermissions.find((item) => item.role === 'TEACHER' && item.permissionId === 'course.request_create');
+  const result = bus.dispatch('SET_ROLE_PERMISSION', {
+    role: 'TEACHER',
+    permissionId: 'course.request_create',
+    effect: 'DENY',
+    scopeType: 'BRANCH',
+    scopeIds: ['branch-q3'],
+    reason: 'Tạm dừng đề xuất khóa học tại cơ sở',
+  }, 'admin-1');
+
+  assert.equal(result.ok, true);
+  assert.equal(state().rolePermissions.find((item) => item.id === previous.id).effectiveTo, FIXED_NOW);
+  assert.equal(state().rolePermissions.at(-1).effect, 'DENY');
+  assert.equal(state().rolePermissions.at(-1).changedBy, 'admin-1');
+  assert.equal(state().auditLogs[0].action, 'ROLE_PERMISSION_SET');
+});
+
+test('last active Admin cannot lose access management or approval decision authority', () => {
+  const permissions = ['access.manage_role', 'approval.decide'];
+  for (const permissionId of permissions) {
+    const { bus, state } = runtime();
+    const result = bus.dispatch('SET_ROLE_PERMISSION', {
+      role: 'ADMIN', permissionId, effect: 'DENY', scopeType: 'ORGANIZATION', reason: 'Kiểm tra hàng rào an toàn',
+    }, 'admin-1');
+    assert.equal(result.ok, false);
+    assert.equal(result.code, 'LAST_ADMIN_GUARD');
+    assert.equal(state().rolePermissions.some((item) => item.role === 'ADMIN' && item.permissionId === permissionId && item.effect === 'DENY'), false);
+  }
+});
+
 module.exports = { FIXED_NOW, activeAssignment, render, runtime, runtimeWithTeacherAssignment, sessionProposal };

@@ -63,6 +63,41 @@
       draft.notifications.unshift({ id: uid('notification'), userId: recipient.id, title, body, link, read: false, createdAt: nowIso() });
     }
 
+    function requirePermission(draft, context, permissionId) {
+      required(context.actor, 'AUTH_REQUIRED', 'Cần đăng nhập để thực hiện thao tác này.');
+      const organizationId = draft.organizations[0]?.id;
+      if (!root.YC.policy.can(context.actor, permissionId, { organizationId }, draft)) {
+        throw new CommandError('FORBIDDEN', 'Tài khoản hiện tại không có quyền thực hiện thao tác này.');
+      }
+    }
+
+    function requireReason(payload) {
+      const reason = String(payload.reason || '').trim();
+      if (!reason) throw new CommandError('REASON_REQUIRED', 'Cần ghi rõ lý do thay đổi quyền.');
+      return reason;
+    }
+
+    function validatePermissionInput(draft, payload) {
+      const permissionId = String(payload.permissionId || '').trim();
+      required(draft.permissionDefinitions.find((item) => item.id === permissionId && item.status === 'ACTIVE'), 'PERMISSION_NOT_FOUND', 'Không tìm thấy quyền đang hoạt động.');
+      const effect = String(payload.effect || '').toUpperCase();
+      if (!['ALLOW', 'DENY'].includes(effect)) throw new CommandError('INVALID_PERMISSION_EFFECT', 'Hiệu lực quyền phải là Cho phép hoặc Từ chối.');
+      const scopeType = String(payload.scopeType || 'ORGANIZATION').toUpperCase();
+      if (!['ORGANIZATION', 'BRANCH', 'CLASS', 'SESSION', 'ASSIGNED_CLASS', 'OWN_LEARNER', 'LINKED_LEARNER'].includes(scopeType)) {
+        throw new CommandError('INVALID_PERMISSION_SCOPE', 'Phạm vi quyền không hợp lệ.');
+      }
+      return { permissionId, effect, scopeType, scopeIds: Array.isArray(payload.scopeIds) ? payload.scopeIds.filter(Boolean) : [] };
+    }
+
+    function ensureAdminContinuity(draft) {
+      const organizationId = draft.organizations[0]?.id;
+      const safe = draft.users.filter((item) => item.role === 'ADMIN' && item.status === 'ACTIVE').some((admin) => (
+        root.YC.policy.can(admin, 'access.manage_role', { organizationId }, draft)
+        && root.YC.policy.can(admin, 'approval.decide', { organizationId }, draft)
+      ));
+      if (!safe) throw new CommandError('LAST_ADMIN_GUARD', 'Phải còn ít nhất một Quản trị viên có quyền quản lý truy cập và phê duyệt.');
+    }
+
     function findLead(draft, leadId) {
       return required(draft.leads.find((item) => item.id === leadId), 'LEAD_NOT_FOUND', 'Không tìm thấy khách hàng.');
     }
@@ -72,6 +107,77 @@
     }
 
     const handlers = {
+      SET_ROLE_PERMISSION(draft, payload, context) {
+        requirePermission(draft, context, 'access.manage_role');
+        const reason = requireReason(payload);
+        const role = String(payload.role || '').toUpperCase();
+        required(draft.users.find((item) => item.role === role) || root.YC.permissions.roleDefaults.find((item) => item.role === role), 'ROLE_NOT_FOUND', 'Không tìm thấy vai trò.');
+        const input = validatePermissionInput(draft, payload);
+        const changedAt = nowIso();
+        draft.rolePermissions.filter((item) => item.role === role
+          && item.permissionId === input.permissionId
+          && item.status !== 'REVOKED'
+          && (!item.effectiveTo || new Date(item.effectiveTo).getTime() > new Date(changedAt).getTime()))
+          .forEach((item) => {
+            item.effectiveTo = changedAt;
+            item.status = 'REPLACED';
+          });
+        const record = {
+          id: uid('role-permission'), role, permissionId: input.permissionId, effect: input.effect,
+          scopeType: input.scopeType, scopeIds: input.scopeIds,
+          effectiveFrom: payload.effectiveFrom || changedAt, effectiveTo: payload.effectiveTo || null,
+          status: 'ACTIVE', changedBy: context.actor.id, changedAt, reason,
+        };
+        draft.rolePermissions.push(record);
+        ensureAdminContinuity(draft);
+        appendEvent(draft, context, 'ROLE_PERMISSION_SET', 'ROLE_PERMISSION', record.id, `${role} · ${input.permissionId} · ${input.effect}.`);
+        appendAudit(draft, context, 'ROLE_PERMISSION_SET', 'ROLE_PERMISSION', record.id, reason);
+        return { message: 'Đã cập nhật quyền của vai trò.', rolePermissionId: record.id };
+      },
+
+      SET_USER_PERMISSION_OVERRIDE(draft, payload, context) {
+        requirePermission(draft, context, 'access.manage_user_override');
+        const reason = requireReason(payload);
+        const user = required(draft.users.find((item) => item.id === payload.userId), 'USER_NOT_FOUND', 'Không tìm thấy tài khoản.');
+        const input = validatePermissionInput(draft, payload);
+        const grantedAt = nowIso();
+        draft.userPermissionOverrides.filter((item) => item.userId === user.id
+          && item.permissionId === input.permissionId
+          && item.status !== 'REVOKED'
+          && (!item.effectiveTo || new Date(item.effectiveTo).getTime() > new Date(grantedAt).getTime()))
+          .forEach((item) => {
+            item.effectiveTo = grantedAt;
+            item.status = 'REPLACED';
+          });
+        const record = {
+          id: uid('user-permission'), userId: user.id, permissionId: input.permissionId, effect: input.effect,
+          scopeType: input.scopeType, scopeIds: input.scopeIds,
+          effectiveFrom: payload.effectiveFrom || grantedAt, effectiveTo: payload.effectiveTo || null,
+          status: 'ACTIVE', grantedBy: context.actor.id, grantedAt, reason,
+        };
+        draft.userPermissionOverrides.push(record);
+        ensureAdminContinuity(draft);
+        appendEvent(draft, context, 'USER_PERMISSION_OVERRIDE_SET', 'USER_PERMISSION_OVERRIDE', record.id, `${user.name} · ${input.permissionId} · ${input.effect}.`);
+        appendAudit(draft, context, 'USER_PERMISSION_OVERRIDE_SET', 'USER_PERMISSION_OVERRIDE', record.id, reason);
+        return { message: 'Đã lưu ngoại lệ quyền của tài khoản.', overrideId: record.id };
+      },
+
+      REVOKE_USER_PERMISSION_OVERRIDE(draft, payload, context) {
+        requirePermission(draft, context, 'access.manage_user_override');
+        const reason = requireReason(payload);
+        const record = required(draft.userPermissionOverrides.find((item) => item.id === payload.overrideId), 'OVERRIDE_NOT_FOUND', 'Không tìm thấy ngoại lệ quyền.');
+        if (record.status === 'REVOKED') throw new CommandError('OVERRIDE_ALREADY_REVOKED', 'Ngoại lệ quyền đã được thu hồi trước đó.');
+        record.status = 'REVOKED';
+        record.effectiveTo = nowIso();
+        record.revokedBy = context.actor.id;
+        record.revokedAt = nowIso();
+        record.revokeReason = reason;
+        ensureAdminContinuity(draft);
+        appendEvent(draft, context, 'USER_PERMISSION_OVERRIDE_REVOKED', 'USER_PERMISSION_OVERRIDE', record.id, reason);
+        appendAudit(draft, context, 'USER_PERMISSION_OVERRIDE_REVOKED', 'USER_PERMISSION_OVERRIDE', record.id, reason);
+        return { message: 'Đã thu hồi ngoại lệ quyền.', overrideId: record.id };
+      },
+
       CREATE_PUBLIC_LEAD(draft, payload, context) {
         requireRole(context.actor, ['PUBLIC', 'VISITOR']);
         const type = String(payload.type || 'B2C').toUpperCase();
