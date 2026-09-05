@@ -1,13 +1,5 @@
-Chào anh/chị,
+Lớp Tiếng Anh Cô Yến Frontend Demo v3.0
 
-Em gửi bản Yen Center LMS Demo v2.0 để review concept sản phẩm và luồng nghiệp vụ học bù tự động.
+Mở OPEN-DEMO.html để bắt đầu từ trang chủ. Có thể đăng ký tài khoản khách để lưu chương trình, đăng ký sự kiện và theo dõi yêu cầu tư vấn; hoặc đăng nhập bằng tài khoản Học viên/Giáo viên/Quản trị viên để kiểm tra các khu vực chuyên môn. Course có đủ danh mục công khai, khu học viên, Xưởng nội dung và quản trị khóa học.
 
-Bản demo sử dụng phong cách international minimal UI và giữ luồng dữ liệu xuyên role:
-Giáo viên điểm danh Vắng → hệ thống giao bài học bù → học sinh xem video và làm quiz → kết quả cập nhật cho Giáo viên/Admin.
-
-Cách mở:
-1. Giải nén file ZIP.
-2. Mở OPEN-DEMO.html.
-3. Xem START-HERE.md để lấy tài khoản và kịch bản demo.
-
-Lưu ý: đây là frontend working prototype phục vụ review và validation. Auth, database và tích hợp ngoài đang được mô phỏng, chưa phải hệ thống production.
+Lưu ý: đây là demo frontend. Xác thực/phân quyền, thanh toán, nhắn tin, media và lưu trữ production chưa được triển khai; vui lòng đọc docs/HANDBOOK-COVERAGE-v1.1.md và docs/KNOWN-LIMITATIONS.md trước khi ước lượng.

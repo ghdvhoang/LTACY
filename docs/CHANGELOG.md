@@ -1,4 +1,28 @@
-# Changelog — v2.0 Minimal
+# Changelog
+
+## Chưa phát hành — Bản demo tiếng Việt và tương thích luồng cũ
+
+- Giữ nguyên toàn bộ route cũ và bổ sung kiểm thử đối chiếu route tự động.
+- Khôi phục đăng nhập bằng thông tin tài khoản, quên mật khẩu/OTP và đúng bốn tài khoản truy cập nhanh.
+- Hoàn thiện Course từ danh mục công khai đến khu học viên, Content Studio và quản trị khóa học.
+- Bổ sung điểm danh thủ công, học bù, trình phát video, bài kiểm tra 10 câu, kết quả và vòng đời liên kết.
+- Chuyển giao diện sang tiếng Việt, rút luồng demo chính còn ba bước và giữ hành trình 12 chặng trong phần nâng cao.
+- Bổ sung biểu mẫu quản trị cấu hình, tìm kiếm trong trang và sao chép liên kết khi chạy bằng `file://`.
+- Bỏ trang hướng dẫn và các nút chạy luồng tự động khỏi sản phẩm.
+- Thêm đăng ký tài khoản khách, khu **Tài khoản của tôi**, lưu chương trình, đăng ký sự kiện và theo dõi yêu cầu tư vấn.
+- Làm rõ **Đăng nhập** và **Đăng ký** trên trang chủ ở cả desktop lẫn mobile.
+
+## v3.0.0 — Full Journey Frontend Demo (2026-09-05)
+
+- Rebuilt the frontend around a normalized Language Center domain state.
+- Added a 12-milestone canonical journey from lead to next-level renewal.
+- Added Admissions, Finance, Student Service, Academic, Teacher, Learner, Parent, Manager and Admin workspaces.
+- Added command validation, atomic transactions, domain events, audit records and notifications.
+- Added placement/allocation rules, teacher eligibility/workload, planned-vs-taught delivery, remedial learning, homework revision, moderation, promotion and renewal.
+- Added deterministic demo checkpoints, audit CSV export and browser print.
+- Added handbook v1.1 coverage matrix and explicit frontend/production boundary.
+
+## v2.0 — International Minimal
 
 ## Changed
 

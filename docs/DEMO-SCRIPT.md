@@ -1,75 +1,58 @@
-# Demo Script — 10 đến 15 phút
+# Kịch bản kiểm tra demo frontend
 
 ## Chuẩn bị
 
-1. Mở `OPEN-DEMO.html` hoặc chạy local server.
-2. Vào **Hướng dẫn demo**.
-3. Chọn **Reset về điểm bắt đầu**.
-4. Không dùng dữ liệu cá nhân thật khi demo.
+Mở `#/` để bắt đầu từ trang chủ. Không nhập dữ liệu thật; toàn bộ trạng thái chỉ được lưu cục bộ trong trình duyệt.
 
-## 1. Mở bài — 1 phút
+## Luồng khách — 4 bước
 
-Thông điệp:
+1. Khi chưa đăng nhập, mở **Chương trình**, **Lịch khai giảng** và gửi một yêu cầu tư vấn.
+2. Chọn **Đăng ký**, tạo tài khoản khách và kiểm tra hệ thống tự mở **Tài khoản của tôi**.
+3. Lưu một chương trình, đăng ký một sự kiện và gửi thêm một yêu cầu tư vấn.
+4. Quay lại **Tài khoản của tôi** để kiểm tra chương trình đã lưu, sự kiện, yêu cầu tư vấn và thông báo.
 
-> Yen Center kết nối vận hành lớp, nội dung học và học bù trong một luồng dữ liệu. Điểm khác biệt chính là khi học sinh vắng, hệ thống tự giao đúng bài và theo dõi tới khi hoàn thành.
+Kết quả mong đợi: khách chưa đăng nhập chỉ có trải nghiệm công khai; khách đã đăng nhập có khu cá nhân nhưng không nhìn thấy Course, điểm danh hay tiến độ của Học viên.
 
-Trên Homepage, chỉ nhanh hai journey:
+## Luồng chính — 3 bước
 
-- Phụ huynh/học sinh: tìm chương trình, gửi tư vấn.
-- Trung tâm/trường học: xem giải pháp, đặt lịch demo.
+### 1. Giáo viên điểm danh
 
-## 2. Teacher flow — 3 phút
+1. Bản demo tự đưa Giáo viên tới buổi học mẫu đã hoàn tất giảng dạy.
+2. Đánh dấu Nguyễn Minh Anh **Vắng**.
+3. Bấm **Lưu điểm danh**.
 
-1. Đăng nhập nhanh tài khoản Giáo viên.
-2. Mở **Lịch & điểm danh**.
-3. Chọn buổi `English Foundation 6A` đang mở.
-4. Chọn **Tất cả có mặt**.
-5. Đổi riêng Nguyễn Minh Anh thành **Vắng**.
-6. Lưu điểm danh.
-7. Nêu rõ hệ thống tự tạo đúng một nhiệm vụ học bù cho buổi và bài học đó.
-8. Mở **Theo dõi học bù**, chỉ trạng thái, deadline và quản lý link.
+Kết quả mong đợi: chỉ một bài học bù được tạo. Lưu lại không tạo bản ghi trùng.
 
-Điểm cần nói:
+### 2. Học viên hoàn thành bài học bù
 
-- Trigger idempotent, không tạo trùng assignment.
-- Teacher chỉ thấy lớp được phân công.
-- Link có trạng thái/version và có thể thu hồi/gia hạn.
+1. Đăng xuất hoặc chuyển sang tài khoản Học viên `HS6A001 / 123456`.
+2. Mở **Học bù**, chọn bài vừa được Giáo viên tạo.
+3. Chạy video đến 100%, mở bài kiểm tra, dùng **Điền đáp án demo** nếu muốn rồi nộp bài.
+4. Mở **Kết quả** để xem điểm và lịch sử lượt làm.
 
-## 3. Student flow — 3 đến 4 phút
+Kết quả mong đợi: đúng bài của Nguyễn Minh Anh xuất hiện dù thao tác điểm danh được thực hiện từ tài khoản Giáo viên; hoàn thành cần cả tiến độ video và điểm bài kiểm tra.
 
-1. Đăng xuất.
-2. Đăng nhập `HS6A001 / 123456`.
-3. Mở **Bài học bù**.
-4. Chọn nhiệm vụ vừa được giao.
-5. Hoàn tất video demo để lưu progress.
-6. Mở quiz.
-7. Chọn **Điền đáp án demo 8/10**.
-8. Nộp bài.
-9. Chỉ kết quả `80/100` và trạng thái **Đã bù xong**.
+### 3. Quản trị viên kiểm tra
 
-Điểm cần nói:
+1. Chuyển sang tài khoản Quản trị viên `admin@yencenter.demo / Demo@123`.
+2. Mở **Học bù**, **Báo cáo** và **Nhật ký**.
+3. Có thể xuất CSV, in báo cáo hoặc thay đổi cấu hình demo.
 
-- Dữ liệu không phải card tĩnh; trạng thái vừa được thay đổi trên cùng state.
-- Điểm đạt mặc định 80% và có thể cấu hình.
-- Bản prototype mới hiện thực đầy đủ single-choice; các question type khác là phạm vi thiết kế.
+Kết quả mong đợi: trạng thái, kết quả, sự kiện và nhật ký của cùng hồ sơ Nguyễn Minh Anh được nối xuyên suốt.
 
-## 4. Admin/Reporting — 3 phút
+## Kiểm tra Course
 
-1. Chuyển sang Admin từ Hướng dẫn demo hoặc đăng nhập lại.
-2. Mở **Quản lý học bù** để thấy assignment vừa hoàn tất.
-3. Mở **Báo cáo** để xem dữ liệu theo buổi học.
-4. Mở **Audit Log** để thấy attendance trigger và completion event.
-5. Mở **Yêu cầu liên hệ** để mô tả B2C/B2B/support inbox.
-6. Mở **Tích hợp** và nói rõ các provider đang ở mock mode.
+1. Không đăng nhập: mở **Chương trình** để xem danh mục và chi tiết khóa học.
+2. Học viên: mở **Khóa học** và một hoạt động để xem cây học phần, nội dung và tiến độ.
+3. Giáo viên: mở **Nội dung** để xem khóa học, bài học, video, ngân hàng câu hỏi và tạo bản nháp nội dung.
+4. Quản trị viên: mở **Khóa học** để kiểm kê phiên bản, bài học, hoạt động và bài kiểm tra.
 
-## 5. Kết thúc — 1 phút
+Các màn hình trên cùng đọc một dữ liệu chương trình. Phiên bản đã công bố là bất biến; thao tác tạo nội dung sinh bản nháp riêng.
 
-Thông điệp:
+## Phạm vi nghiệp vụ đầy đủ
 
-> Bản này chứng minh product flow và trải nghiệm. Bước tiếp theo là chốt backend, security, integration provider và backlog production; không lấy prototype frontend làm cam kết rằng mọi tích hợp đã live.
+Chuỗi đầy đủ gồm: tư vấn → đầu vào → thanh toán → xếp lớp → phân công giáo viên → giảng dạy → điểm danh/học bù → bài tập → đánh giá/kiểm duyệt → báo cáo/lên lớp → phụ huynh xác nhận → gia hạn.
 
-## Backup route khi demo có lỗi trạng thái
+## Giới hạn
 
-- Vào `/demo-guide`.
-- Chọn **Reset về điểm bắt đầu**.
-- Chạy lại canonical flow.
+Đây là demo frontend dùng `localStorage`. Xác thực, phân quyền, thanh toán, tin nhắn, media và tích hợp bên ngoài đều là mô phỏng, chưa phải triển khai production.

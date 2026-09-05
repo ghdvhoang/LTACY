@@ -1,14 +1,10 @@
 {
-  "public_routes": 14,
-  "authenticated_routes": 31,
-  "data_invariants": true,
-  "rbac": true,
-  "forms": true,
-  "guardian_profile_chooser": true,
-  "link_lifecycle": true,
-  "core_e2e": true,
-  "download": true,
-  "standalone": true,
-  "role_visual_tokens": true,
-  "errors": []
+  "status": "PASS",
+  "version": "3.0.0",
+  "runtime_modules": 21,
+  "bundle_bytes": 545730,
+  "standalone_bytes": 4886543,
+  "standalone_inline": true,
+  "bundle_parity": true,
+  "handbook_coverage": true
 }

@@ -1,0 +1,53 @@
+(function defineUtilities(root) {
+  'use strict';
+
+  let sequence = 0;
+
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  function uid(prefix = 'id') {
+    sequence += 1;
+    return `${prefix}-${Date.now().toString(36)}-${sequence.toString(36)}`;
+  }
+
+  function clone(value) {
+    if (typeof structuredClone === 'function') return structuredClone(value);
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function dateAt(clock, dayOffset = 0, hour = 9, minute = 0) {
+    const date = new Date(clock());
+    date.setHours(hour, minute, 0, 0);
+    date.setDate(date.getDate() + dayOffset);
+    return date.toISOString();
+  }
+
+  function formatDate(value, includeTime = false) {
+    const date = new Date(value);
+    if (!value || Number.isNaN(date.getTime())) return '—';
+    const options = includeTime
+      ? { dateStyle: 'short', timeStyle: 'short' }
+      : { day: '2-digit', month: '2-digit', year: 'numeric' };
+    return new Intl.DateTimeFormat('vi-VN', options).format(date);
+  }
+
+  function percent(part, total) {
+    return total ? Math.round((part / total) * 100) : 0;
+  }
+
+  root.YC.define('utils', Object.freeze({
+    clone,
+    dateAt,
+    escapeHtml,
+    formatDate,
+    percent,
+    uid,
+  }));
+})(globalThis);

@@ -1,6 +1,5 @@
-Yen Center LMS — Client-ready Frontend Demo
-Version: 2.0 International Minimal
-Package build: 2026-09-01
-
-Functional baseline: giữ nguyên luồng, route và mock data.
-Visual baseline: international minimal UI với RBAC role accents.
+Lớp Tiếng Anh Cô Yến — Full Journey Frontend Demo
+Version: 3.0.0
+Release date: 2026-09-05
+Handbook baseline: LMS Language Center Visual Domain Handbook v1.1
+Runtime: dependency-free browser demo; localStorage; external integrations mocked

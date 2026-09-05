@@ -1,5 +1,4 @@
-Yen Center LMS FE Prototype
-Version: 2.0.0-minimal
-Release: International Minimal UI refresh
-Business flows and mock data: unchanged from v1.1
-RBAC accents: Student / Teacher / TA / Admin
+Lớp Tiếng Anh Cô Yến Full Journey Frontend Demo
+Version: 3.0.0
+State schema: 4
+Generated bundle: app.js = app.v3.js

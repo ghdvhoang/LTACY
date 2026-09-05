@@ -6,6 +6,6 @@ if [[ -z "$PYTHON_BIN" ]]; then
   echo "Không tìm thấy Python. Hãy mở trực tiếp yen-center-lms-demo.html"
   exit 1
 fi
-echo "Yen Center LMS FE Demo v2.0"
+echo "Lớp Tiếng Anh Cô Yến · Frontend Demo v3.0"
 echo "Mở trình duyệt tại: http://localhost:4173"
 "$PYTHON_BIN" -m http.server 4173

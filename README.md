@@ -1,45 +1,55 @@
-# Yen Center LMS — Client-ready Demo v2.0
+# Lớp Tiếng Anh Cô Yến — Full Journey Frontend Demo v3.0
 
-Package này là bản **frontend working product prototype** để review concept, demo nghiệp vụ và bàn giao cho stakeholder.
+Đây là bản **demo frontend có tương tác** cho nền tảng trung tâm ngoại ngữ, được mở rộng từ prototype cũ theo `LMS Language Center Visual Domain Handbook v1.1`. Một hồ sơ học viên được nối xuyên suốt từ khách hàng tiềm năng, đầu vào, thanh toán, xếp lớp, giảng dạy, điểm danh, học bù, bài tập, đánh giá, tiến bộ, phụ huynh xem báo cáo đến gia hạn.
 
 ## Mở nhanh
 
-1. Giải nén package.
-2. Mở `OPEN-DEMO.html` bằng Chrome hoặc Edge.
-3. Đọc `START-HERE.md` để lấy tài khoản và chạy luồng demo.
+Mở `OPEN-DEMO.html` bằng Chrome hoặc Edge. File đã inline toàn bộ CSS/JavaScript và không cần cài dependency.
 
-Để hành vi clipboard/download ổn định hơn, chạy local server:
+Để chạy ổn định hơn qua HTTP:
 
 ```bash
 cd source
 python3 -m http.server 4173
 ```
 
-Sau đó mở `http://localhost:4173`.
+Sau đó mở `http://localhost:4173/#/`.
 
-## Nội dung package
+## Proof points chính
 
-- `OPEN-DEMO.html`: bản standalone, không cần cài dependency.
-- `source/`: source tách file HTML/CSS/JavaScript và script chạy nhanh.
-- `docs/`: product spec, PO review, design system, demo script, verification và giới hạn.
-- `previews/`: ảnh các màn hình chính trên desktop/mobile.
-- `MESSAGE-TO-SEND.txt`: tin nhắn mẫu gửi cùng package.
+- Trang chủ công khai có Đăng nhập và Đăng ký rõ ràng trên desktop lẫn mobile.
+- Khách có thể tạo tài khoản cục bộ, lưu chương trình, đăng ký sự kiện, gửi yêu cầu tư vấn và theo dõi tất cả trong **Tài khoản của tôi**.
+- Trang đăng nhập chỉ hiển thị 4 tài khoản nhanh: Giáo viên, Trợ giảng, Học viên và Quản trị viên; tất cả cùng dùng hồ sơ Nguyễn Minh Anh.
+- Course hoàn chỉnh xuyên bốn bề mặt: danh mục công khai, khu học của Học viên, Content Studio của Giáo viên và quản trị khóa học của Admin.
+- Trạng thái chuẩn hóa dùng chung cho các vai trò và hai chi nhánh; thao tác ở tài khoản Giáo viên xuất hiện ngay khi đăng nhập tài khoản Học viên.
+- Command validation cho role, state transition, capacity, teacher eligibility, workload và promotion evidence.
+- Planned lesson khác taught evidence; attendance vắng tạo remedial có deadline.
+- Homework đi qua submit → feedback → revision → resubmit → accepted.
+- Final assessment đi qua manual grade → moderation → release.
+- Parent chỉ thấy report/feedback đã publish và đúng visibility policy.
+- Event, audit, notification, CSV audit và Print/Save as PDF đều dùng được trong trình duyệt.
+- Trang công khai, cổng học tập và các khu vực làm việc dùng giao diện responsive lấy cảm hứng từ cách Coursera ưu tiên việc quan trọng tiếp theo, không sao chép thương hiệu hay tài sản thiết kế.
 
-## Visual direction
+## Cấu trúc kỹ thuật
 
-- International minimal UI, neutral-first.
-- Không gradient trang trí, glassmorphism hoặc 3D illustration.
-- Accent theo RBAC: Student cobalt, Teacher teal, TA amber, Admin indigo.
-- Màu trạng thái nghiệp vụ độc lập với màu role.
+- `source/modules/00-*.js` đến `15-*.js`: module nguồn, chạy không bundler (không dùng số 12 sau khi bỏ trang hướng dẫn cũ).
+- `source/app.js` và `source/app.v3.js`: bundle được sinh tự động.
+- `OPEN-DEMO.html`: release standalone.
+- `scripts/build_standalone.py`: build/check artifact có tính lặp lại.
+- `tests/domain/`: domain, policy, journey, router và controller tests.
+- `tests/static/`: build/release documentation tests.
+- `docs/HANDBOOK-COVERAGE-v1.1.md`: ma trận đối chiếu handbook.
 
-## Phạm vi kỹ thuật hiện tại
+## Build và kiểm tra
 
-Đây chưa phải production system:
+```bash
+python3 scripts/build_standalone.py --release
+python3 scripts/build_standalone.py --release --check
+node --test tests/domain/*.test.cjs
+python3 -m unittest discover -s tests/static -p 'test_*.py'
+python3 source/validation/verify_prototype.py --static-only
+```
 
-- Dữ liệu lưu bằng `localStorage`.
-- Auth/RBAC được mô phỏng trong trình duyệt.
-- Bunny Stream, Google Sheets, Email/SMS/Zalo chạy mock/sandbox.
-- Quiz E2E tập trung vào single-choice.
-- CSV export hoạt động; PDF dùng Print/Save as PDF của trình duyệt.
+## Boundary
 
-Đọc `docs/KNOWN-LIMITATIONS.md` trước khi cam kết phạm vi với khách hàng.
+Đây không phải production system. State, auth và RBAC đều nằm phía client; payment, messaging, media và identity provider đều là mock. Xem `docs/FRONTEND-DEMO-BOUNDARY.md` và `docs/KNOWN-LIMITATIONS.md` trước khi dùng để estimate hoặc cam kết với khách hàng.

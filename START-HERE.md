@@ -1,49 +1,43 @@
-# START HERE — Yen Center LMS v2.0
+# START HERE — Lớp Tiếng Anh Cô Yến Frontend v3.0
 
 ## Mở demo
 
-Mở `OPEN-DEMO.html`. Chrome hoặc Edge được khuyến nghị.
+1. Mở `OPEN-DEMO.html`, hoặc chạy `source/start-demo.sh` rồi vào `http://localhost:4173/#/`.
+2. Từ trang chủ, chọn **Đăng ký** để tạo tài khoản khách hoặc **Đăng nhập** để vào tài khoản học tập/nhân sự.
+3. Không nhập dữ liệu cá nhân thật: toàn bộ dữ liệu chỉ được lưu cục bộ trong trình duyệt.
 
-Khi cần chạy qua HTTP server:
+## Khách chưa đăng nhập và khách đã đăng nhập
 
-- Windows: mở `source/start-demo.bat`.
-- macOS/Linux: chạy `source/start-demo.sh`.
+- Khách chưa đăng nhập có thể xem chương trình, lịch khai giảng, sự kiện và gửi yêu cầu tư vấn.
+- Khách đã đăng nhập có thêm **Tài khoản của tôi** để lưu chương trình quan tâm, đăng ký sự kiện, theo dõi yêu cầu tư vấn và thông báo.
+- Tài khoản khách không có khóa học, điểm danh hay tiến độ học tập. Các mục này chỉ dành cho tài khoản Học viên.
 
 ## Tài khoản demo
 
-| Role | Login | Password/PIN | Accent |
-|---|---|---|---|
-| Admin | `admin@yencenter.demo` | `Demo@123` | Indigo |
-| Giáo viên | `teacher@yencenter.demo` | `Demo@123` | Deep Teal |
-| Trợ giảng | `ta@yencenter.demo` | `Demo@123` | Amber |
-| Học sinh | `HS6A001` | `123456` | Cobalt Blue |
-| Phụ huynh nhiều hồ sơ | `0901000002` | `123456` | Student flow |
+Trang đăng nhập ưu tiên bốn tài khoản nhanh sau:
 
-Màn hình login có quick-login cho các tài khoản chính.
+| Vai trò | Đăng nhập | Mật khẩu/PIN |
+|---|---|---|
+| Giáo viên | `teacher@yencenter.demo` | `Demo@123` |
+| Trợ giảng | `ta@yencenter.demo` | `Demo@123` |
+| Học viên Nguyễn Minh Anh | `HS6A001` | `123456` |
+| Quản trị viên | `admin@yencenter.demo` | `Demo@123` |
 
-## Luồng demo khuyến nghị
+Các vai trò chuyên môn trong hành trình nâng cao vẫn tồn tại để giữ đủ luồng cũ: `admissions@yencenter.demo`, `academic@yencenter.demo`, `service@yencenter.demo`, `finance@yencenter.demo`, `0901000002` (Phụ huynh), `manager@yencenter.demo`. Chúng không được đưa thành nhiều thẻ trên trang đăng nhập.
 
-1. Vào **Hướng dẫn demo** và reset về điểm bắt đầu.
-2. Đăng nhập Giáo viên.
-3. Vào **Lịch & điểm danh**, mở buổi lớp 6A.
-4. Đánh dấu Nguyễn Minh Anh là **Vắng**, rồi lưu.
-5. Đăng xuất và đăng nhập Học sinh `HS6A001`.
-6. Mở bài học bù mới, hoàn tất video.
-7. Chọn **Điền đáp án demo 8/10**, rồi nộp quiz.
-8. Kiểm tra trạng thái **Đã bù xong**, điểm `80/100`.
-9. Đăng nhập Admin để xem dashboard, report và audit log.
+Màn hình đăng nhập và bộ chuyển tài khoản đều ưu tiên đúng bốn tài khoản chính; có thể bấm thẻ tài khoản nhanh mà không cần nhập mật khẩu.
 
-## Cách đọc màu
+## Luồng review nhanh — 10 phút
 
-- Student: cobalt blue.
-- Teacher: deep teal.
-- TA: amber.
-- Admin: indigo.
-
-Role color chỉ nhận diện workspace. Success/Warning/Danger vẫn giữ semantic color nhất quán.
+1. Ở trang chủ, kiểm tra hai nút **Đăng nhập** và **Đăng ký** trên desktop lẫn mobile.
+2. Đăng ký một tài khoản khách; lưu một chương trình, đăng ký một sự kiện và gửi yêu cầu tư vấn.
+3. Mở **Tài khoản của tôi** để kiểm tra các mục vừa tạo và thông báo liên quan.
+4. Đăng xuất, đăng nhập Học viên để kiểm tra Course, bài học, bài kiểm tra, kết quả và tiến độ.
+5. Đăng nhập Giáo viên để kiểm tra lớp, buổi học, điểm danh, học bù và Xưởng nội dung.
+6. Đăng nhập Quản trị viên để kiểm tra người dùng, khóa học, báo cáo, nhật ký và xuất CSV/in trang.
 
 ## Cách giới thiệu đúng
 
-> Frontend working product prototype cho nền tảng quản lý lớp và học bù tự động.
+> Bản minh họa frontend chứng minh một hành trình học viên xuyên miền nghiệp vụ, vai trò, bằng chứng và nhật ký theo handbook v1.1.
 
-Không giới thiệu đây là production-ready hoặc các tích hợp ngoài đã live.
+Không giới thiệu đây là production-ready, không nhập dữ liệu cá nhân thật và không nói các provider mock đã live.
