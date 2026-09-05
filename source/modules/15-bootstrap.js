@@ -167,6 +167,10 @@
       if (form.dataset.form === 'public-lead') { action = 'submit-public-lead'; data = { type: form.dataset.type, name: values.get('name'), studentName: values.get('studentName'), organization: values.get('organization'), phone: values.get('phone'), email: values.get('email'), message: values.get('message') }; }
       if (form.dataset.form === 'add-student') { action = 'add-learner'; data = { code: values.get('code'), name: values.get('name'), phone: values.get('phone'), classId: values.get('classId') }; }
       if (form.dataset.form === 'settings') { action = 'update-settings'; data = { minimumVideoProgress: values.get('minimumVideoProgress'), defaultPassingScore: values.get('defaultPassingScore'), remedialDeadlineDays: values.get('remedialDeadlineDays') }; }
+      if (form.dataset.form === 'role-permissions') { action = 'set-role-permission'; data = { role: values.get('role'), permissionId: values.get('permissionId'), effect: values.get('effect'), scopeType: values.get('scopeType'), scopeIds: String(values.get('scopeIds') || '').split(',').map((item) => item.trim()).filter(Boolean), reason: values.get('reason') }; }
+      if (form.dataset.form === 'user-permissions') { action = 'set-user-permission'; data = { userId: values.get('userId'), permissionId: values.get('permissionId'), effect: values.get('effect'), scopeType: values.get('scopeType'), scopeIds: String(values.get('scopeIds') || '').split(',').map((item) => item.trim()).filter(Boolean), reason: values.get('reason') }; }
+      if (form.dataset.form === 'review-change-request') { action = 'review-change-request'; data = { requestId: values.get('requestId'), decision: values.get('decision'), note: values.get('note') }; }
+      if (form.dataset.form === 'withdraw-change-request') { action = 'withdraw-change-request'; data = { requestId: values.get('requestId'), reason: values.get('reason') }; }
       if (!action) return;
       const result = controller.execute(action, data);
       if (result?.ok === false) toast(result.message, 'error');

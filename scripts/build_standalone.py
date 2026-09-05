@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import re
 import sys
 from pathlib import Path
@@ -81,6 +82,47 @@ def write(outputs: dict[Path, str]) -> int:
     return 0
 
 
+def manifest_entries(root: Path) -> list[str]:
+    manifest = root / "PACKAGE-MANIFEST.txt"
+    if not manifest.exists():
+        return []
+    return [
+        line.strip()
+        for line in manifest.read_text(encoding="utf-8").splitlines()
+        if re.fullmatch(r"[\w./-]+", line.strip()) and line.strip() != "CHECKSUMS-SHA256.txt"
+    ]
+
+
+def render_checksums(root: Path) -> str:
+    lines = []
+    for relative in manifest_entries(root):
+        target = root / relative
+        if not target.is_file():
+            raise ValueError(f"Manifest file does not exist: {relative}")
+        lines.append(f"{hashlib.sha256(target.read_bytes()).hexdigest()}  {relative}")
+    return "\n".join(lines) + ("\n" if lines else "")
+
+
+def write_checksums(root: Path) -> None:
+    if not manifest_entries(root):
+        return
+    target = root / "CHECKSUMS-SHA256.txt"
+    target.write_text(render_checksums(root), encoding="utf-8")
+    print(f"Wrote {target}")
+
+
+def check_checksums(root: Path) -> int:
+    if not manifest_entries(root):
+        return 0
+    target = root / "CHECKSUMS-SHA256.txt"
+    expected = render_checksums(root)
+    if not target.exists() or target.read_text(encoding="utf-8") != expected:
+        print(f"Generated artifact is stale: {target}")
+        return 1
+    print("Release checksums are current.")
+    return 0
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
@@ -91,8 +133,15 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
-    outputs = expected_outputs(args.root.resolve(), args.release)
-    return check(outputs) if args.check else write(outputs)
+    root = args.root.resolve()
+    outputs = expected_outputs(root, args.release)
+    if args.check:
+        result = check(outputs)
+        return result or (check_checksums(root) if args.release else 0)
+    result = write(outputs)
+    if args.release and result == 0:
+        write_checksums(root)
+    return result
 
 
 if __name__ == "__main__":

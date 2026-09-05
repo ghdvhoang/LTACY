@@ -1996,6 +1996,59 @@ blockquote { padding: 14px 0; border-bottom: 1px solid var(--line-100); } blockq
 dialog.form-card { width:min(520px,calc(100% - 30px)); border:0; }
 dialog.form-card::backdrop { background:rgba(4,14,27,.6); }
 
+/* Quản trị quyền và hàng chờ phê duyệt */
+.governance-page .panel { overflow: hidden; }
+.governance-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; padding:17px; }
+.governance-form label, .review-form label { display:grid; gap:6px; color:var(--ink-700); font-size:12px; font-weight:650; }
+.governance-form .span-two { grid-column:1 / -1; }
+.governance-form .btn { justify-self:start; }
+.scope-hints { display:flex; flex-wrap:wrap; gap:8px; padding:0 17px 17px; color:var(--ink-500); font-size:11px; }
+.scope-hints span { padding:6px 9px; border:1px solid var(--line-200); border-radius:999px; }
+.permission-matrix { display:grid; }
+.permission-row { display:grid; grid-template-columns:minmax(240px,1fr) 150px minmax(280px,1.2fr); align-items:start; gap:18px; padding:15px 17px; border-top:1px solid var(--line-100); }
+.permission-row:first-child { border-top:0; }
+.permission-row strong, .permission-row code, .permission-row small { display:block; }
+.permission-row code { width:max-content; margin-top:5px; color:var(--brand-700); font-size:11px; }
+.permission-row small { margin-top:5px; color:var(--ink-500); }
+.permission-row details > summary { cursor:pointer; color:var(--brand-700); font-weight:700; }
+.permission-row .governance-form { grid-template-columns:1fr 1fr; padding:12px 0 0; }
+.approval-card { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 17px; border-top:1px solid var(--line-100); }
+.approval-card:first-child { border-top:0; }
+.approval-main { flex:1; min-width:0; }
+.approval-card h3 { margin:9px 0 12px; font-size:17px; }
+.approval-card h3 a { color:var(--ink-950); text-decoration:none; }
+.approval-card .person { margin-top:8px; }
+.request-type { color:var(--brand-700); font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.request-meta { display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
+.request-meta span { padding:5px 8px; border-radius:6px; background:var(--page); color:var(--ink-500); font-size:10px; }
+.withdraw-form { display:grid; grid-template-columns:minmax(170px,1fr) auto; gap:8px; }
+.governance-empty { padding:0 17px 17px; }
+.request-summary { display:grid; grid-template-columns:1fr 1fr; gap:28px; padding:20px; }
+.request-reason { padding:18px; border-radius:10px; background:var(--page); }
+.request-reason small, .request-reason strong { display:block; }
+.request-reason strong { margin:6px 0 10px; color:var(--ink-950); font-size:17px; }
+.request-reason p { margin:0; color:var(--ink-500); }
+.diff-table { padding:0 17px 17px; overflow:auto; }
+.diff-head, .diff-row { display:grid; grid-template-columns:minmax(140px,.65fr) minmax(220px,1fr) minmax(220px,1fr); gap:12px; min-width:650px; }
+.diff-head { padding:9px 10px; color:var(--ink-500); font-size:10px; font-weight:800; text-transform:uppercase; }
+.diff-row { align-items:start; padding:12px 10px; border-top:1px solid var(--line-100); }
+.diff-row pre { min-height:38px; margin:0; padding:9px; white-space:pre-wrap; border-radius:6px; background:var(--page); color:var(--ink-700); font:11px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; }
+.review-form { display:grid; grid-template-columns:minmax(180px,.5fr) minmax(280px,1fr) auto; align-items:end; gap:14px; padding:0 17px 17px; }
+.danger-link { color:var(--danger-600,#b42318); }
+
+@media (max-width:900px) {
+  .permission-row { grid-template-columns:1fr; }
+  .request-summary { grid-template-columns:1fr; }
+  .review-form { grid-template-columns:1fr; align-items:stretch; }
+}
+
+@media (max-width:620px) {
+  .governance-form { grid-template-columns:1fr; }
+  .governance-form .span-two { grid-column:auto; }
+  .approval-card { align-items:stretch; flex-direction:column; }
+  .withdraw-form { grid-template-columns:1fr; width:100%; }
+}
+
 .attendance-editor { overflow:visible; }
 .attendance-list { display:grid; }
 .attendance-row { display:grid; grid-template-columns:minmax(220px,1fr) auto; align-items:center; gap:18px; padding:16px 18px; border-top:1px solid var(--line-100); }

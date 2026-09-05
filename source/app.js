@@ -81,6 +81,119 @@
   }));
 })(globalThis);
 
+/* 02-permissions.js */
+(function definePermissions(root) {
+  'use strict';
+
+  const define = (id, domain, label, riskLevel = 'MEDIUM') => Object.freeze({ id, domain, action: id.split('.').at(-1).toUpperCase(), label, riskLevel, status: 'ACTIVE' });
+  const definitions = Object.freeze([
+    define('access.view', 'ACCESS', 'Xem cấu hình truy cập', 'LOW'),
+    define('access.manage_role', 'ACCESS', 'Quản lý quyền theo vai trò', 'HIGH'),
+    define('access.manage_user_override', 'ACCESS', 'Quản lý ngoại lệ tài khoản', 'HIGH'),
+    define('approval.view', 'APPROVAL', 'Xem yêu cầu phê duyệt', 'LOW'),
+    define('approval.review', 'APPROVAL', 'Thẩm định yêu cầu phê duyệt'),
+    define('approval.decide', 'APPROVAL', 'Quyết định phê duyệt', 'HIGH'),
+    define('course.view', 'COURSE', 'Xem khóa học', 'LOW'),
+    define('course.request_create', 'COURSE', 'Đề xuất tạo khóa học'),
+    define('course.request_update', 'COURSE', 'Đề xuất sửa khóa học'),
+    define('course.request_archive', 'COURSE', 'Đề xuất lưu trữ khóa học', 'HIGH'),
+    define('course.review', 'COURSE', 'Thẩm định khóa học'),
+    define('course.publish', 'COURSE', 'Xuất bản phiên bản khóa học', 'HIGH'),
+    define('content.view', 'CONTENT', 'Xem nội dung học', 'LOW'),
+    define('content.request_create', 'CONTENT', 'Đề xuất tạo nội dung'),
+    define('content.request_update', 'CONTENT', 'Đề xuất sửa nội dung'),
+    define('content.publish', 'CONTENT', 'Xuất bản nội dung', 'HIGH'),
+    define('class.view', 'CLASS', 'Xem lớp học', 'LOW'),
+    define('class.request_create', 'CLASS', 'Đề xuất tạo lớp'),
+    define('class.request_update', 'CLASS', 'Đề xuất sửa lớp'),
+    define('class.request_archive', 'CLASS', 'Đề xuất lưu trữ lớp', 'HIGH'),
+    define('class.manage_roster', 'CLASS', 'Quản lý danh sách lớp'),
+    define('class.assign_teacher', 'CLASS', 'Phân công giáo viên', 'HIGH'),
+    define('session.view', 'SESSION', 'Xem buổi học', 'LOW'),
+    define('session.request_create', 'SESSION', 'Đề xuất tạo buổi học'),
+    define('session.request_reschedule', 'SESSION', 'Đề xuất đổi lịch buổi học'),
+    define('session.request_cancel', 'SESSION', 'Đề xuất hủy buổi học', 'HIGH'),
+    define('session.prepare', 'SESSION', 'Chuẩn bị buổi học'),
+    define('session.start', 'SESSION', 'Bắt đầu buổi học'),
+    define('session.complete', 'SESSION', 'Hoàn tất buổi học'),
+    define('attendance.view', 'ATTENDANCE', 'Xem điểm danh', 'LOW'),
+    define('attendance.edit', 'ATTENDANCE', 'Ghi nhận điểm danh'),
+    define('attendance.finalize', 'ATTENDANCE', 'Chốt điểm danh', 'HIGH'),
+    define('attendance.correct_in_window', 'ATTENDANCE', 'Sửa điểm danh trong thời hạn'),
+    define('attendance.correct_after_window', 'ATTENDANCE', 'Sửa điểm danh quá hạn', 'HIGH'),
+    define('remedial.view', 'REMEDIAL', 'Xem hồ sơ học bù', 'LOW'),
+    define('remedial.propose', 'REMEDIAL', 'Đề xuất học bù'),
+    define('remedial.book_live', 'REMEDIAL', 'Đặt buổi học bù tại lớp'),
+    define('remedial.manage_link', 'REMEDIAL', 'Quản lý liên kết học bù'),
+    define('remedial.extend', 'REMEDIAL', 'Gia hạn học bù'),
+    define('remedial.override', 'REMEDIAL', 'Duyệt ngoại lệ học bù', 'HIGH'),
+    define('remedial.complete', 'REMEDIAL', 'Xác nhận hoàn thành học bù'),
+    define('site.view_draft', 'SITE', 'Xem nháp website', 'LOW'),
+    define('site.edit', 'SITE', 'Sửa nội dung website'),
+    define('site.submit', 'SITE', 'Gửi duyệt nội dung website'),
+    define('site.publish', 'SITE', 'Xuất bản nội dung website', 'HIGH'),
+    define('site.archive', 'SITE', 'Lưu trữ nội dung website', 'HIGH'),
+    define('site.configure_contact', 'SITE', 'Cấu hình kênh liên hệ', 'HIGH'),
+    define('report.view', 'REPORT', 'Xem báo cáo', 'LOW'),
+    define('report.export', 'REPORT', 'Xuất báo cáo'),
+    define('audit.view', 'AUDIT', 'Xem nhật ký kiểm toán', 'HIGH'),
+    define('lead.view', 'ADMISSIONS', 'Xem khách hàng tiềm năng', 'LOW'),
+    define('lead.edit', 'ADMISSIONS', 'Cập nhật khách hàng tiềm năng'),
+    define('placement.view', 'ADMISSIONS', 'Xem kiểm tra đầu vào', 'LOW'),
+    define('offer.edit', 'ADMISSIONS', 'Quản lý đề nghị học phí'),
+    define('renewal.edit', 'ADMISSIONS', 'Quản lý tái ghi danh'),
+    define('allocation.edit', 'SERVICE', 'Xếp và chuyển lớp'),
+    define('service.case_edit', 'SERVICE', 'Quản lý hồ sơ hỗ trợ'),
+    define('substitution.edit', 'SERVICE', 'Quản lý giáo viên dạy thay'),
+    define('invoice.edit', 'FINANCE', 'Quản lý hóa đơn'),
+    define('payment.edit', 'FINANCE', 'Quản lý thanh toán'),
+    define('refund.edit', 'FINANCE', 'Quản lý hoàn tiền', 'HIGH'),
+    define('tuition.view', 'FINANCE', 'Xem học phí', 'LOW'),
+    define('learner.view', 'LEARNING', 'Xem hồ sơ học viên', 'LOW'),
+    define('homework.edit', 'LEARNING', 'Quản lý bài tập'),
+    define('grade.edit', 'LEARNING', 'Chấm và phản hồi'),
+    define('grade.review', 'LEARNING', 'Kiểm duyệt điểm', 'HIGH'),
+    define('progress.review', 'LEARNING', 'Duyệt tiến bộ', 'HIGH'),
+    define('quality.view', 'LEARNING', 'Xem tín hiệu chất lượng', 'LOW'),
+    define('learning.own_view', 'LEARNING', 'Xem việc học của mình', 'LOW'),
+    define('learning.own_edit', 'LEARNING', 'Thực hiện việc học của mình'),
+    define('learning.linked_view', 'LEARNING', 'Xem học viên được liên kết', 'LOW'),
+  ]);
+
+  const grant = (role, permissionId, scopeType = 'ORGANIZATION') => Object.freeze({ role, permissionId, effect: 'ALLOW', scopeType, effectiveFrom: null, effectiveTo: null });
+  const all = definitions.map((item) => grant('ADMIN', item.id));
+  const roleDefaults = Object.freeze([
+    ...all,
+    ...['class.view', 'report.view', 'quality.view'].map((id) => grant('CENTER_MANAGER', id, 'BRANCH')),
+    ...['lead.view', 'lead.edit', 'placement.view', 'offer.edit', 'renewal.edit'].map((id) => grant('ADMISSIONS', id, 'BRANCH')),
+    ...['class.view', 'course.view', 'course.review', 'content.view', 'content.request_create', 'content.request_update', 'class.assign_teacher', 'grade.review', 'progress.review', 'quality.view', 'approval.view', 'approval.review'].map((id) => grant('ACADEMIC_MANAGER', id)),
+    ...['class.view', 'class.manage_roster', 'allocation.edit', 'service.case_edit', 'attendance.correct_after_window', 'substitution.edit', 'remedial.view', 'remedial.book_live'].map((id) => grant('STUDENT_SERVICE', id, 'BRANCH')),
+    ...['invoice.edit', 'payment.edit', 'refund.edit', 'tuition.view', 'report.view', 'report.export'].map((id) => grant('FINANCE', id)),
+    ...['course.view', 'course.request_create', 'course.request_update', 'course.request_archive', 'content.view', 'content.request_create', 'content.request_update'].map((id) => grant('TEACHER', id, 'BRANCH')),
+    ...['class.view', 'session.view', 'session.request_create', 'session.request_reschedule', 'session.request_cancel', 'session.prepare', 'session.start', 'session.complete', 'attendance.view', 'attendance.edit', 'attendance.finalize', 'remedial.view', 'remedial.propose', 'remedial.manage_link', 'remedial.extend', 'learner.view', 'homework.edit', 'grade.edit', 'report.view'].map((id) => grant('TEACHER', id, 'ASSIGNED_CLASS')),
+    ...['class.view', 'session.view', 'attendance.view', 'attendance.edit', 'attendance.finalize', 'remedial.view', 'learner.view'].map((id) => grant('TA', id, 'ASSIGNED_CLASS')),
+    grant('STUDENT', 'learning.own_view', 'OWN_LEARNER'),
+    grant('STUDENT', 'learning.own_edit', 'OWN_LEARNER'),
+    grant('PARENT', 'learning.linked_view', 'LINKED_LEARNER'),
+    grant('PARENT', 'tuition.view', 'LINKED_LEARNER'),
+  ]);
+
+  const legacyAliases = Object.freeze({
+    DASHBOARD_VIEW: 'report.view', CLASS_VIEW: 'class.view', REPORT_VIEW: 'report.view', QUALITY_VIEW: 'quality.view',
+    LEAD_VIEW: 'lead.view', LEAD_EDIT: 'lead.edit', PLACEMENT_VIEW: 'placement.view', OFFER_EDIT: 'offer.edit', RENEWAL_EDIT: 'renewal.edit',
+    CURRICULUM_EDIT: 'content.request_update', TEACHER_ASSIGN: 'class.assign_teacher', GRADE_REVIEW: 'grade.review', PROGRESS_APPROVE: 'progress.review',
+    ALLOCATION_EDIT: 'allocation.edit', SERVICE_CASE_EDIT: 'service.case_edit', ATTENDANCE_CORRECT: 'attendance.correct_after_window', SUBSTITUTION_EDIT: 'substitution.edit',
+    INVOICE_EDIT: 'invoice.edit', PAYMENT_EDIT: 'payment.edit', REFUND_EDIT: 'refund.edit', TUITION_VIEW: 'tuition.view',
+    SESSION_DELIVER: 'session.complete', ATTENDANCE_EDIT: 'attendance.edit', HOMEWORK_EDIT: 'homework.edit', GRADE_EDIT: 'grade.edit', LEARNER_VIEW: 'learner.view',
+    OWN_LEARNING_VIEW: 'learning.own_view', OWN_LEARNING_EDIT: 'learning.own_edit', LINKED_LEARNER_VIEW: 'learning.linked_view',
+  });
+
+  function seedDefinitions() { return definitions.map((item) => ({ ...item })); }
+  function seedRolePermissions() { return roleDefaults.map((item, index) => ({ id: `role-permission-${index + 1}`, ...item })); }
+
+  root.YC.define('permissions', Object.freeze({ definitions, legacyAliases, roleDefaults, seedDefinitions, seedRolePermissions }));
+})(globalThis);
+
 /* 02-seed.js */
 (function defineSeed(root) {
   'use strict';
@@ -122,7 +235,7 @@
     }));
 
     return {
-      schemaVersion: 3,
+      schemaVersion: 4,
       seededAt: new Date(clock()).toISOString(),
       currentAt: new Date(clock()).toISOString(),
       migrationNotice: null,
@@ -136,7 +249,7 @@
         workloadLimitMinutes: 2400,
         integrationMode: 'MOCK',
       },
-      organizations: [{ id: 'org-yen', name: 'Yen Center', status: 'ACTIVE' }],
+      organizations: [{ id: 'org-yen', name: 'Lớp Tiếng Anh Cô Yến', shortName: 'Cô Yến', status: 'ACTIVE', version: 1 }],
       branches: [
         { id: 'branch-q3', organizationId: 'org-yen', code: 'Q3', name: 'Cơ sở Quận 3', address: '120 Võ Văn Tần, Quận 3', status: 'ACTIVE' },
         { id: 'branch-td', organizationId: 'org-yen', code: 'TD', name: 'Cơ sở Thủ Đức', address: '48 Võ Văn Ngân, Thủ Đức', status: 'ACTIVE' },
@@ -157,6 +270,10 @@
         { id: 'student-login-1', role: 'STUDENT', name: 'Nguyễn Minh Anh', identifiers: ['HS6A001', '0901000001'], secret: '123456', status: 'ACTIVE', linkedLearnerIds: ['student-canonical'] },
         { id: 'parent-1', role: 'PARENT', name: 'Nguyễn Thu Hà', identifiers: ['0901000002'], secret: '123456', status: 'ACTIVE', linkedLearnerIds: ['student-canonical', 'student-03'] },
       ],
+      permissionDefinitions: root.YC.permissions.seedDefinitions(),
+      rolePermissions: root.YC.permissions.seedRolePermissions(),
+      userPermissionOverrides: [],
+      changeRequests: [],
       roleScopes: [],
       learners,
       parentRelationships: [
@@ -184,14 +301,14 @@
         { id: 'level-a2-2', programId: 'program-foundation', code: 'A2.2', name: 'Foundation A2.2', sequence: 3 },
       ],
       courses: [
-        { id: 'course-6', programId: 'program-foundation', levelId: 'level-a2-1', code: 'ENG-FND-6', name: 'Tiếng Anh nền tảng 6', status: 'PUBLISHED' },
-        { id: 'course-7', programId: 'program-foundation', levelId: 'level-a2-2', code: 'ENG-FND-7', name: 'Tiếng Anh nền tảng 7', status: 'PUBLISHED' },
-        { id: 'course-5', programId: 'program-foundation', levelId: 'level-a1', code: 'ENG-FND-5', name: 'Tiếng Anh nền tảng 5', status: 'PUBLISHED' },
+        { id: 'course-6', programId: 'program-foundation', levelId: 'level-a2-1', code: 'ENG-FND-6', name: 'Tiếng Anh nền tảng 6', status: 'PUBLISHED', version: 1 },
+        { id: 'course-7', programId: 'program-foundation', levelId: 'level-a2-2', code: 'ENG-FND-7', name: 'Tiếng Anh nền tảng 7', status: 'PUBLISHED', version: 1 },
+        { id: 'course-5', programId: 'program-foundation', levelId: 'level-a1', code: 'ENG-FND-5', name: 'Tiếng Anh nền tảng 5', status: 'PUBLISHED', version: 1 },
       ],
       courseVersions: [
-        { id: 'course-v6', courseId: 'course-6', version: 3, title: 'Tiếng Anh nền tảng 6 · A2.1', status: 'PUBLISHED', immutable: true, totalHours: 48, completionRule: { attendanceMinimum: 75, finalScoreMinimum: 70, skillMinimum: 60 }, publishedAt: at(-90) },
-        { id: 'course-v7', courseId: 'course-7', version: 2, title: 'Tiếng Anh nền tảng 7 · A2.2', status: 'PUBLISHED', immutable: true, totalHours: 48, completionRule: { attendanceMinimum: 75, finalScoreMinimum: 72, skillMinimum: 62 }, publishedAt: at(-80) },
-        { id: 'course-v5', courseId: 'course-5', version: 4, title: 'Tiếng Anh nền tảng 5 · A1', status: 'PUBLISHED', immutable: true, totalHours: 42, completionRule: { attendanceMinimum: 70, finalScoreMinimum: 65, skillMinimum: 55 }, publishedAt: at(-75) },
+        { id: 'course-v6', courseId: 'course-6', version: 3, recordVersion: 1, title: 'Tiếng Anh nền tảng 6 · A2.1', status: 'PUBLISHED', immutable: true, totalHours: 48, completionRule: { attendanceMinimum: 75, finalScoreMinimum: 70, skillMinimum: 60 }, publishedAt: at(-90) },
+        { id: 'course-v7', courseId: 'course-7', version: 2, recordVersion: 1, title: 'Tiếng Anh nền tảng 7 · A2.2', status: 'PUBLISHED', immutable: true, totalHours: 48, completionRule: { attendanceMinimum: 75, finalScoreMinimum: 72, skillMinimum: 62 }, publishedAt: at(-80) },
+        { id: 'course-v5', courseId: 'course-5', version: 4, recordVersion: 1, title: 'Tiếng Anh nền tảng 5 · A1', status: 'PUBLISHED', immutable: true, totalHours: 42, completionRule: { attendanceMinimum: 70, finalScoreMinimum: 65, skillMinimum: 55 }, publishedAt: at(-75) },
       ],
       units: [
         { id: 'unit-v6-4', courseVersionId: 'course-v6', order: 4, title: 'Trải nghiệm trong quá khứ', outcome: 'Kể lại trải nghiệm đã xảy ra' },
@@ -233,11 +350,11 @@
       ],
       sessionAssignments: [],
       classes: [
-        { id: 'class-6a', code: 'ENG6A-T3T5-1800', name: 'Tiếng Anh nền tảng 6A', branchId: 'branch-q3', courseVersionId: 'course-v6', ageBand: 'YOUNG_LEARNER', mode: 'OFFLINE', capacity: 14, room: 'P.302', scheduleLabel: 'Thứ 3 & 5 · 18:00', status: 'OPEN' },
-        { id: 'class-6b', code: 'ENG6B-T2T4-1830', name: 'Tiếng Anh nền tảng 6B', branchId: 'branch-q3', courseVersionId: 'course-v6', ageBand: 'YOUNG_LEARNER', mode: 'HYBRID', capacity: 12, room: 'P.204', scheduleLabel: 'Thứ 2 & 4 · 18:30', status: 'OPEN' },
-        { id: 'class-7b', code: 'ENG7B-T2T4-1900', name: 'Tiếng Anh nền tảng 7B', branchId: 'branch-td', courseVersionId: 'course-v7', ageBand: 'TEEN', mode: 'OFFLINE', capacity: 12, room: 'P.105', scheduleLabel: 'Thứ 2 & 4 · 19:00', status: 'ACTIVE' },
-        { id: 'class-5c', code: 'ENG5C-T7CN-0900', name: 'Tiếng Anh nền tảng 5C', branchId: 'branch-q3', courseVersionId: 'course-v5', ageBand: 'YOUNG_LEARNER', mode: 'OFFLINE', capacity: 10, room: 'P.101', scheduleLabel: 'Thứ 7 & CN · 09:00', status: 'ACTIVE' },
-        { id: 'class-full', code: 'ENG6F-T7-0900', name: 'Tiếng Anh nền tảng 6 cuối tuần', branchId: 'branch-q3', courseVersionId: 'course-v6', ageBand: 'YOUNG_LEARNER', mode: 'OFFLINE', capacity: 1, room: 'P.305', scheduleLabel: 'Thứ 7 · 09:00', status: 'FULL' },
+        { id: 'class-6a', code: 'ENG6A-T3T5-1800', name: 'Tiếng Anh nền tảng 6A', branchId: 'branch-q3', courseVersionId: 'course-v6', ageBand: 'YOUNG_LEARNER', mode: 'OFFLINE', capacity: 14, room: 'P.302', scheduleLabel: 'Thứ 3 & 5 · 18:00', status: 'OPEN', version: 1 },
+        { id: 'class-6b', code: 'ENG6B-T2T4-1830', name: 'Tiếng Anh nền tảng 6B', branchId: 'branch-q3', courseVersionId: 'course-v6', ageBand: 'YOUNG_LEARNER', mode: 'HYBRID', capacity: 12, room: 'P.204', scheduleLabel: 'Thứ 2 & 4 · 18:30', status: 'OPEN', version: 1 },
+        { id: 'class-7b', code: 'ENG7B-T2T4-1900', name: 'Tiếng Anh nền tảng 7B', branchId: 'branch-td', courseVersionId: 'course-v7', ageBand: 'TEEN', mode: 'OFFLINE', capacity: 12, room: 'P.105', scheduleLabel: 'Thứ 2 & 4 · 19:00', status: 'ACTIVE', version: 1 },
+        { id: 'class-5c', code: 'ENG5C-T7CN-0900', name: 'Tiếng Anh nền tảng 5C', branchId: 'branch-q3', courseVersionId: 'course-v5', ageBand: 'YOUNG_LEARNER', mode: 'OFFLINE', capacity: 10, room: 'P.101', scheduleLabel: 'Thứ 7 & CN · 09:00', status: 'ACTIVE', version: 1 },
+        { id: 'class-full', code: 'ENG6F-T7-0900', name: 'Tiếng Anh nền tảng 6 cuối tuần', branchId: 'branch-q3', courseVersionId: 'course-v6', ageBand: 'YOUNG_LEARNER', mode: 'OFFLINE', capacity: 1, room: 'P.305', scheduleLabel: 'Thứ 7 · 09:00', status: 'FULL', version: 1 },
       ],
       enrollments: learners.filter((item) => item.classId).map((learner, index) => ({ id: `enrollment-seed-${index + 1}`, learnerId: learner.id, classId: learner.classId, courseVersionId: learner.classId === 'class-7b' ? 'course-v7' : learner.classId === 'class-5c' ? 'course-v5' : 'course-v6', status: 'ACTIVE', startsAt: at(-25), endsAt: null })),
       timetableRules: [
@@ -245,8 +362,8 @@
         { id: 'timetable-7b', classId: 'class-7b', recurrence: ['MON_1900', 'WED_1900'], durationMinutes: 90, room: 'P.105', branchId: 'branch-td' },
       ],
       sessions: [
-        { id: 'session-canonical', classId: 'class-6a', lessonTemplateId: 'lesson-past-simple', startsAt: at(0, 18), endsAt: at(0, 19, 30), room: 'P.302', mode: 'OFFLINE', status: 'CONFIRMED', attendanceFinalized: false },
-        { id: 'session-7b', classId: 'class-7b', lessonTemplateId: 'lesson-future', startsAt: at(1, 19), endsAt: at(1, 20, 30), room: 'P.105', mode: 'OFFLINE', status: 'CONFIRMED', attendanceFinalized: false },
+        { id: 'session-canonical', classId: 'class-6a', lessonTemplateId: 'lesson-past-simple', startsAt: at(0, 18), endsAt: at(0, 19, 30), room: 'P.302', mode: 'OFFLINE', status: 'CONFIRMED', attendanceFinalized: false, version: 1 },
+        { id: 'session-7b', classId: 'class-7b', lessonTemplateId: 'lesson-future', startsAt: at(1, 19), endsAt: at(1, 20, 30), room: 'P.105', mode: 'OFFLINE', status: 'CONFIRMED', attendanceFinalized: false, version: 1 },
       ],
       attendanceRecords: [],
       lessonPlans: [{ id: 'lesson-plan-canonical', sessionId: 'session-canonical', lessonTemplateId: 'lesson-past-simple', adaptations: ['Thêm dòng thời gian trực quan cho thì quá khứ đơn'], readiness: 'DRAFT', ownerId: 'teacher-1' }],
@@ -311,9 +428,28 @@
   'use strict';
 
   const { clone } = root.YC.utils;
-  const STORAGE_KEY = 'yen-center-lms-fe-state-v3';
+  const STORAGE_KEY = 'yen-center-lms-fe-state-v4';
+  const V3_STORAGE_KEY = 'yen-center-lms-fe-state-v3';
   const LEGACY_STORAGE_KEY = 'yen-center-lms-fe-state-v2';
-  const SESSION_KEY = 'yen-center-lms-fe-session-v3';
+  const SESSION_KEY = 'yen-center-lms-fe-session-v4';
+
+  function migrateV3(previous, clock = () => new Date()) {
+    const baseline = root.YC.seed.createSeed(clock);
+    const next = clone(previous);
+    next.schemaVersion = 4;
+    next.permissionDefinitions = baseline.permissionDefinitions;
+    next.rolePermissions = baseline.rolePermissions;
+    next.userPermissionOverrides = Array.isArray(next.userPermissionOverrides) ? next.userPermissionOverrides : [];
+    next.changeRequests = Array.isArray(next.changeRequests) ? next.changeRequests : [];
+    next.settings = { ...baseline.settings, ...(next.settings || {}) };
+    next.organizations = (next.organizations || baseline.organizations).map((item) => ({ version: 1, ...item }));
+    next.courses = (next.courses || []).map((item) => ({ version: 1, ...item }));
+    next.courseVersions = (next.courseVersions || []).map((item) => ({ recordVersion: 1, ...item }));
+    next.classes = (next.classes || []).map((item) => ({ version: 1, ...item }));
+    next.sessions = (next.sessions || []).map((item) => ({ version: 1, ...item }));
+    next.migrationNotice = { code: 'V3_MIGRATED', message: 'Đã nâng dữ liệu v3 lên schema v4 và giữ nguyên hành trình học tập.' };
+    return next;
+  }
 
   function browserStorage() {
     try {
@@ -339,10 +475,15 @@
     function load() {
       if (storage) {
         try {
-          const raw = storage.getItem(STORAGE_KEY);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed.schemaVersion === 3) return parsed;
+          const rawV4 = storage.getItem(STORAGE_KEY);
+          if (rawV4) {
+            const parsed = JSON.parse(rawV4);
+            if (parsed.schemaVersion === 4) return parsed;
+          }
+          const rawV3 = storage.getItem(V3_STORAGE_KEY);
+          if (rawV3) {
+            const parsed = JSON.parse(rawV3);
+            if (parsed.schemaVersion === 3) return migrateV3(parsed, clock);
           }
           if (storage.getItem(LEGACY_STORAGE_KEY)) {
             return fresh({ code: 'V2_RESET_REQUIRED', message: 'Dữ liệu v2 đã được thay bằng seed v3 để bảo toàn quan hệ nghiệp vụ.' });
@@ -360,7 +501,7 @@
     return Object.freeze({
       getState() { return current; },
       replace(next) {
-        if (!next || next.schemaVersion !== 3) throw new Error('StateV3 required');
+        if (!next || next.schemaVersion !== 4) throw new Error('StateV4 required');
         current = clone(next);
         persist();
         return current;
@@ -383,49 +524,116 @@
     });
   }
 
-  root.YC.define('store', Object.freeze({ create, LEGACY_STORAGE_KEY, SESSION_KEY, STORAGE_KEY }));
+  root.YC.define('store', Object.freeze({ create, LEGACY_STORAGE_KEY, SESSION_KEY, STORAGE_KEY, V3_STORAGE_KEY, migrateV3 }));
 })(globalThis);
 
 /* 04-policy.js */
 (function definePolicy(root) {
   'use strict';
 
-  const roleCapabilities = Object.freeze({
-    ADMIN: ['*'],
-    CENTER_MANAGER: ['DASHBOARD_VIEW', 'CLASS_VIEW', 'REPORT_VIEW', 'QUALITY_VIEW'],
-    ADMISSIONS: ['LEAD_VIEW', 'LEAD_EDIT', 'PLACEMENT_VIEW', 'OFFER_EDIT', 'RENEWAL_EDIT'],
-    ACADEMIC_MANAGER: ['CLASS_VIEW', 'CURRICULUM_EDIT', 'TEACHER_ASSIGN', 'GRADE_REVIEW', 'PROGRESS_APPROVE', 'QUALITY_VIEW'],
-    STUDENT_SERVICE: ['CLASS_VIEW', 'ALLOCATION_EDIT', 'SERVICE_CASE_EDIT', 'ATTENDANCE_CORRECT', 'SUBSTITUTION_EDIT'],
-    FINANCE: ['INVOICE_EDIT', 'PAYMENT_EDIT', 'REFUND_EDIT', 'TUITION_VIEW'],
-    TEACHER: ['CLASS_VIEW', 'SESSION_DELIVER', 'ATTENDANCE_EDIT', 'HOMEWORK_EDIT', 'GRADE_EDIT', 'LEARNER_VIEW'],
-    TA: ['CLASS_VIEW', 'ATTENDANCE_EDIT', 'LEARNER_VIEW'],
-    STUDENT: ['OWN_LEARNING_VIEW', 'OWN_LEARNING_EDIT'],
-    PARENT: ['LINKED_LEARNER_VIEW', 'TUITION_VIEW'],
-  });
+  const legacyAliases = root.YC.permissions.legacyAliases;
+  const roleCapabilities = Object.freeze(Object.fromEntries(
+    Object.entries(root.YC.permissions.roleDefaults.reduce((result, grant) => {
+      if (!result[grant.role]) result[grant.role] = [];
+      result[grant.role].push(grant.permissionId);
+      return result;
+    }, {})).map(([role, permissions]) => [role, Object.freeze(permissions)])
+  ));
+
+  function currentTimestamp(state) {
+    const value = state.currentAt || state.seededAt || new Date().toISOString();
+    return new Date(value).getTime();
+  }
+
+  function isEffective(record, state) {
+    const moment = currentTimestamp(state);
+    if (record.effectiveFrom && new Date(record.effectiveFrom).getTime() > moment) return false;
+    if (record.effectiveTo && new Date(record.effectiveTo).getTime() <= moment) return false;
+    return record.status !== 'INACTIVE' && record.status !== 'REVOKED';
+  }
+
+  function classIdFor(resource, state) {
+    if (resource.classId) return resource.classId;
+    if (resource.sessionId) return state.sessions.find((item) => item.id === resource.sessionId)?.classId || null;
+    if (resource.learnerId) return state.learners.find((item) => item.id === resource.learnerId)?.classId || null;
+    return null;
+  }
+
+  function branchIdFor(resource, state) {
+    if (resource.branchId) return resource.branchId;
+    const classId = classIdFor(resource, state);
+    return classId ? state.classes.find((item) => item.id === classId)?.branchId || null : null;
+  }
 
   function assignmentAllows(actor, resource, state) {
-    const profile = state.teacherProfiles.find((item) => item.userId === actor.id);
-    if (!profile || !resource.classId) return false;
-    const moment = new Date(state.currentAt || state.seededAt).getTime();
+    const profile = state.teacherProfiles.find((item) => item.userId === actor.id && item.status === 'ACTIVE');
+    const classId = classIdFor(resource, state);
+    if (!profile || !classId) return false;
+    const moment = currentTimestamp(state);
     return state.teacherAssignments.some((item) => item.teacherProfileId === profile.id
-      && item.classId === resource.classId
+      && item.classId === classId
       && ['ACCEPTED', 'ACTIVE'].includes(item.status)
       && new Date(item.startsAt).getTime() <= moment
       && new Date(item.endsAt).getTime() >= moment);
   }
 
-  function can(actor, capability, resource = {}, state) {
-    if (!actor || actor.status !== 'ACTIVE') return false;
-    const allowed = roleCapabilities[actor.role] || [];
-    if (!allowed.includes('*') && !allowed.includes(capability)) return false;
-    if (actor.role === 'ADMIN') return true;
-    if (resource.branchId && actor.branchIds && !actor.branchIds.includes(resource.branchId)) return false;
-    if (['TEACHER', 'TA'].includes(actor.role) && ['CLASS_VIEW', 'LEARNER_VIEW', 'SESSION_DELIVER', 'ATTENDANCE_EDIT', 'HOMEWORK_EDIT', 'GRADE_EDIT'].includes(capability)) {
-      return assignmentAllows(actor, resource, state);
+  function listed(scopeIds, id) {
+    return Array.isArray(scopeIds) && scopeIds.length > 0 && Boolean(id) && scopeIds.includes(id);
+  }
+
+  function scopeAllows(actor, grant, resource, state) {
+    const scope = grant.scopeType || 'ORGANIZATION';
+    const scopeIds = grant.scopeIds || [];
+    if (scope === 'ORGANIZATION') {
+      return !resource.organizationId || state.organizations.some((item) => item.id === resource.organizationId);
     }
-    if (actor.role === 'STUDENT' && resource.learnerId) return (actor.linkedLearnerIds || []).includes(resource.learnerId);
-    if (actor.role === 'PARENT' && resource.learnerId) return (actor.linkedLearnerIds || []).includes(resource.learnerId);
-    return true;
+    if (scope === 'BRANCH') {
+      const branchId = branchIdFor(resource, state);
+      if (!branchId || !(actor.branchIds || []).includes(branchId)) return false;
+      return scopeIds.length === 0 || scopeIds.includes(branchId);
+    }
+    if (scope === 'ASSIGNED_CLASS') return assignmentAllows(actor, resource, state);
+    if (scope === 'CLASS') return listed(scopeIds, classIdFor(resource, state));
+    if (scope === 'SESSION') return listed(scopeIds, resource.sessionId || null);
+    if (scope === 'OWN_LEARNER' || scope === 'LINKED_LEARNER') {
+      return Boolean(resource.learnerId) && (actor.linkedLearnerIds || []).includes(resource.learnerId);
+    }
+    return false;
+  }
+
+  function result(allowed, permissionId, source, scope = null, recordId = null) {
+    return Object.freeze({ allowed, source, permissionId, scope, recordId });
+  }
+
+  function explain(actor, requestedId, resource = {}, state) {
+    const permissionId = legacyAliases[requestedId] || requestedId;
+    if (!actor || actor.status !== 'ACTIVE') return result(false, permissionId, 'INACTIVE_USER');
+    if (!state || !Array.isArray(state.rolePermissions) || !Array.isArray(state.userPermissionOverrides)) {
+      return result(false, permissionId, 'POLICY_STATE_MISSING');
+    }
+
+    const overrides = state.userPermissionOverrides.filter((item) => item.userId === actor.id
+      && item.permissionId === permissionId
+      && isEffective(item, state)
+      && scopeAllows(actor, item, resource, state));
+    const userDeny = overrides.find((item) => item.effect === 'DENY');
+    if (userDeny) return result(false, permissionId, 'USER_DENY', userDeny.scopeType, userDeny.id);
+    const userAllow = overrides.find((item) => item.effect === 'ALLOW');
+    if (userAllow) return result(true, permissionId, 'USER_ALLOW', userAllow.scopeType, userAllow.id);
+
+    const roleGrants = state.rolePermissions.filter((item) => item.role === actor.role
+      && item.permissionId === permissionId
+      && isEffective(item, state)
+      && scopeAllows(actor, item, resource, state));
+    const roleDeny = roleGrants.find((item) => item.effect === 'DENY');
+    if (roleDeny) return result(false, permissionId, 'ROLE_DENY', roleDeny.scopeType, roleDeny.id);
+    const roleAllow = roleGrants.find((item) => item.effect === 'ALLOW');
+    if (roleAllow) return result(true, permissionId, 'ROLE', roleAllow.scopeType, roleAllow.id);
+    return result(false, permissionId, 'DEFAULT_DENY');
+  }
+
+  function can(actor, permissionId, resource = {}, state) {
+    return explain(actor, permissionId, resource, state).allowed;
   }
 
   function visibleFeedback(actor, records, state) {
@@ -441,12 +649,212 @@
     }
     if (actor.role === 'TEACHER') {
       return records.filter((item) => item.visibility !== 'RESTRICTED'
-        && can(actor, 'LEARNER_VIEW', { learnerId: item.learnerId, classId: state.learners.find((learner) => learner.id === item.learnerId)?.classId }, state));
+        && can(actor, 'learner.view', { learnerId: item.learnerId }, state));
     }
     return [];
   }
 
-  root.YC.define('policy', Object.freeze({ can, roleCapabilities, visibleFeedback }));
+  root.YC.define('policy', Object.freeze({ assignmentAllows, can, explain, roleCapabilities, visibleFeedback }));
+})(globalThis);
+
+/* 05-approval.js */
+(function defineApproval(root) {
+  'use strict';
+
+  const { clone, uid } = root.YC.utils;
+
+  const REQUEST_TRANSITIONS = Object.freeze({
+    DRAFT: Object.freeze(['SUBMITTED', 'WITHDRAWN']),
+    SUBMITTED: Object.freeze(['IN_REVIEW', 'APPROVED', 'CHANGES_REQUESTED', 'REJECTED', 'CONFLICTED', 'WITHDRAWN']),
+    IN_REVIEW: Object.freeze(['APPROVED', 'CHANGES_REQUESTED', 'REJECTED', 'CONFLICTED']),
+    CHANGES_REQUESTED: Object.freeze(['SUBMITTED', 'WITHDRAWN']),
+    APPROVED: Object.freeze([]),
+    REJECTED: Object.freeze([]),
+    CONFLICTED: Object.freeze([]),
+    WITHDRAWN: Object.freeze([]),
+  });
+
+  const RESOURCES = Object.freeze({
+    COURSE: Object.freeze({ collection: 'courses', versionKey: 'version' }),
+    COURSE_VERSION: Object.freeze({ collection: 'courseVersions', versionKey: 'recordVersion' }),
+    CLASS: Object.freeze({ collection: 'classes', versionKey: 'version' }),
+    SESSION: Object.freeze({ collection: 'sessions', versionKey: 'version' }),
+  });
+
+  const PERMISSIONS = Object.freeze({
+    'COURSE.CREATE': 'course.request_create',
+    'COURSE.UPDATE': 'course.request_update',
+    'COURSE.ARCHIVE': 'course.request_archive',
+    'COURSE_VERSION.CREATE': 'course.request_update',
+    'COURSE_VERSION.UPDATE': 'course.request_update',
+    'COURSE_VERSION.PUBLISH': 'course.publish',
+    'CLASS.CREATE': 'class.request_create',
+    'CLASS.UPDATE': 'class.request_update',
+    'CLASS.ARCHIVE': 'class.request_archive',
+    'SESSION.CREATE': 'session.request_create',
+    'SESSION.UPDATE': 'session.request_reschedule',
+    'SESSION.RESCHEDULE': 'session.request_reschedule',
+    'SESSION.CANCEL': 'session.request_cancel',
+  });
+
+  function approvalError(code, message) {
+    const error = new Error(message);
+    error.code = code;
+    return error;
+  }
+
+  function definition(resourceType) {
+    const result = RESOURCES[resourceType];
+    if (!result) throw approvalError('UNSUPPORTED_RESOURCE', 'Loại dữ liệu chưa được hỗ trợ trong luồng phê duyệt.');
+    return result;
+  }
+
+  function permissionFor(resourceType, operation) {
+    const permissionId = PERMISSIONS[`${resourceType}.${operation}`];
+    if (!permissionId) throw approvalError('UNSUPPORTED_OPERATION', 'Thao tác chưa được hỗ trợ trong luồng phê duyệt.');
+    return permissionId;
+  }
+
+  function diff(before, after) {
+    const left = before || {};
+    const right = after || {};
+    return [...new Set([...Object.keys(left), ...Object.keys(right)])].sort().filter((field) => (
+      JSON.stringify(left[field]) !== JSON.stringify(right[field])
+    )).map((field) => ({ field, before: clone(left[field] ?? null), after: clone(right[field] ?? null) }));
+  }
+
+  function validateSession(snapshot, state, operation) {
+    if (operation === 'CREATE') {
+      if (!state.classes.some((item) => item.id === snapshot.classId)) throw approvalError('CLASS_NOT_FOUND', 'Không tìm thấy lớp của buổi học.');
+      if (!state.lessonTemplates.some((item) => item.id === snapshot.lessonTemplateId)) throw approvalError('LESSON_NOT_FOUND', 'Không tìm thấy bài học mẫu.');
+    }
+    if (['CREATE', 'RESCHEDULE', 'UPDATE'].includes(operation)) {
+      const startsAt = new Date(snapshot.startsAt).getTime();
+      const endsAt = new Date(snapshot.endsAt).getTime();
+      if (!Number.isFinite(startsAt) || !Number.isFinite(endsAt) || endsAt <= startsAt) {
+        throw approvalError('INVALID_SESSION_TIME', 'Thời gian kết thúc phải sau thời gian bắt đầu.');
+      }
+    }
+  }
+
+  function buildRequest(input, context) {
+    const resourceType = String(input.resourceType || '').toUpperCase();
+    const operation = String(input.operation || '').toUpperCase();
+    const config = definition(resourceType);
+    permissionFor(resourceType, operation);
+    const collection = context.state[config.collection];
+    const resourceId = input.resourceId || null;
+    const before = resourceId ? collection.find((item) => item.id === resourceId) || null : null;
+    if (operation !== 'CREATE' && !before) throw approvalError('RESOURCE_NOT_FOUND', 'Không tìm thấy dữ liệu gốc cần thay đổi.');
+    const proposedSnapshot = clone(input.proposedSnapshot || {});
+    if (!Object.keys(proposedSnapshot).length && !['ARCHIVE', 'CANCEL'].includes(operation)) {
+      throw approvalError('PROPOSAL_REQUIRED', 'Cần có nội dung thay đổi được đề xuất.');
+    }
+    if (resourceType === 'SESSION') validateSession({ ...(before || {}), ...proposedSnapshot }, context.state, operation);
+    const provisionalResourceId = operation === 'CREATE'
+      ? proposedSnapshot.provisionalId || proposedSnapshot.id || uid(resourceType.toLowerCase())
+      : null;
+    return {
+      id: uid('change-request'),
+      resourceType,
+      operation,
+      resourceId,
+      provisionalResourceId,
+      baseVersion: Number(input.baseVersion ?? 0),
+      beforeSnapshot: clone(before),
+      proposedSnapshot,
+      diff: diff(before, proposedSnapshot),
+      reason: String(input.reason || '').trim(),
+      submittedBy: context.actorId,
+      submittedAt: context.now,
+      status: 'SUBMITTED',
+      revision: Number(input.revision || 1),
+      reviewerId: null,
+      reviewNote: null,
+      reviewedAt: null,
+      appliedAt: null,
+      eventIds: [],
+    };
+  }
+
+  function assertReviewable(request) {
+    if (!request) throw approvalError('REQUEST_NOT_FOUND', 'Không tìm thấy yêu cầu phê duyệt.');
+    if (!['SUBMITTED', 'IN_REVIEW'].includes(request.status)) {
+      throw approvalError('REQUEST_NOT_REVIEWABLE', 'Yêu cầu không còn ở trạng thái có thể duyệt.');
+    }
+    return request;
+  }
+
+  function transition(request, nextStatus) {
+    if (!(REQUEST_TRANSITIONS[request.status] || []).includes(nextStatus)) {
+      throw approvalError('INVALID_REQUEST_TRANSITION', `Không thể chuyển yêu cầu từ ${request.status} sang ${nextStatus}.`);
+    }
+    request.status = nextStatus;
+    return request;
+  }
+
+  function stale(request, state) {
+    const config = definition(request.resourceType);
+    const collection = state[config.collection];
+    if (request.operation === 'CREATE') {
+      return request.baseVersion !== 0 || collection.some((item) => item.id === request.provisionalResourceId);
+    }
+    const canonical = collection.find((item) => item.id === request.resourceId);
+    return !canonical || Number(canonical[config.versionKey] || 0) !== Number(request.baseVersion);
+  }
+
+  function applyChange(request, state) {
+    const config = definition(request.resourceType);
+    const collection = state[config.collection];
+    if (request.operation === 'CREATE') {
+      const proposed = clone(request.proposedSnapshot);
+      delete proposed.provisionalId;
+      const record = {
+        ...proposed,
+        id: request.provisionalResourceId,
+        [config.versionKey]: Number(proposed[config.versionKey] || 1),
+        changeRequestId: request.id,
+      };
+      if (request.resourceType === 'SESSION') validateSession(record, state, request.operation);
+      collection.push(record);
+      return record;
+    }
+
+    const canonical = collection.find((item) => item.id === request.resourceId);
+    if (!canonical) throw approvalError('RESOURCE_NOT_FOUND', 'Không tìm thấy dữ liệu gốc cần áp dụng.');
+    if (request.operation === 'ARCHIVE') canonical.status = 'ARCHIVED';
+    else if (request.operation === 'CANCEL') canonical.status = 'CANCELLED';
+    else Object.assign(canonical, clone(request.proposedSnapshot));
+    canonical.id = request.resourceId;
+    canonical[config.versionKey] = Number(canonical[config.versionKey] || 0) + 1;
+    canonical.changeRequestId = request.id;
+    return canonical;
+  }
+
+  function resourceScope(input, state) {
+    const proposed = input.proposedSnapshot || {};
+    const resourceType = String(input.resourceType || '').toUpperCase();
+    const config = RESOURCES[resourceType];
+    const canonical = config && input.resourceId ? state[config.collection].find((item) => item.id === input.resourceId) : null;
+    return {
+      classId: proposed.classId || canonical?.classId || null,
+      sessionId: resourceType === 'SESSION' ? input.resourceId || null : null,
+      branchId: proposed.branchId || canonical?.branchId || null,
+      organizationId: state.organizations[0]?.id,
+    };
+  }
+
+  root.YC.define('approval', Object.freeze({
+    REQUEST_TRANSITIONS,
+    applyChange,
+    assertReviewable,
+    buildRequest,
+    diff,
+    permissionFor,
+    resourceScope,
+    stale,
+    transition,
+  }));
 })(globalThis);
 
 /* 05-commands.js */
@@ -515,6 +923,54 @@
       draft.notifications.unshift({ id: uid('notification'), userId: recipient.id, title, body, link, read: false, createdAt: nowIso() });
     }
 
+    function requirePermission(draft, context, permissionId) {
+      required(context.actor, 'AUTH_REQUIRED', 'Cần đăng nhập để thực hiện thao tác này.');
+      const organizationId = draft.organizations[0]?.id;
+      if (!root.YC.policy.can(context.actor, permissionId, { organizationId }, draft)) {
+        throw new CommandError('FORBIDDEN', 'Tài khoản hiện tại không có quyền thực hiện thao tác này.');
+      }
+    }
+
+    function requireReason(payload) {
+      const reason = String(payload.reason || '').trim();
+      if (!reason) throw new CommandError('REASON_REQUIRED', 'Cần ghi rõ lý do thay đổi quyền.');
+      return reason;
+    }
+
+    function validatePermissionInput(draft, payload) {
+      const permissionId = String(payload.permissionId || '').trim();
+      required(draft.permissionDefinitions.find((item) => item.id === permissionId && item.status === 'ACTIVE'), 'PERMISSION_NOT_FOUND', 'Không tìm thấy quyền đang hoạt động.');
+      const effect = String(payload.effect || '').toUpperCase();
+      if (!['ALLOW', 'DENY'].includes(effect)) throw new CommandError('INVALID_PERMISSION_EFFECT', 'Hiệu lực quyền phải là Cho phép hoặc Từ chối.');
+      const scopeType = String(payload.scopeType || 'ORGANIZATION').toUpperCase();
+      if (!['ORGANIZATION', 'BRANCH', 'CLASS', 'SESSION', 'ASSIGNED_CLASS', 'OWN_LEARNER', 'LINKED_LEARNER'].includes(scopeType)) {
+        throw new CommandError('INVALID_PERMISSION_SCOPE', 'Phạm vi quyền không hợp lệ.');
+      }
+      return { permissionId, effect, scopeType, scopeIds: Array.isArray(payload.scopeIds) ? payload.scopeIds.filter(Boolean) : [] };
+    }
+
+    function ensureAdminContinuity(draft) {
+      const organizationId = draft.organizations[0]?.id;
+      const safe = draft.users.filter((item) => item.role === 'ADMIN' && item.status === 'ACTIVE').some((admin) => (
+        root.YC.policy.can(admin, 'access.manage_role', { organizationId }, draft)
+        && root.YC.policy.can(admin, 'approval.decide', { organizationId }, draft)
+      ));
+      if (!safe) throw new CommandError('LAST_ADMIN_GUARD', 'Phải còn ít nhất một Quản trị viên có quyền quản lý truy cập và phê duyệt.');
+    }
+
+    function approvalCall(callback) {
+      try {
+        return callback();
+      } catch (error) {
+        throw new CommandError(error.code || 'APPROVAL_ERROR', error.message || 'Không thể xử lý yêu cầu phê duyệt.');
+      }
+    }
+
+    function notifyUser(draft, userId, title, body, link) {
+      if (!draft.users.some((item) => item.id === userId && item.status === 'ACTIVE')) return;
+      draft.notifications.unshift({ id: uid('notification'), userId, title, body, link, read: false, createdAt: nowIso() });
+    }
+
     function findLead(draft, leadId) {
       return required(draft.leads.find((item) => item.id === leadId), 'LEAD_NOT_FOUND', 'Không tìm thấy khách hàng.');
     }
@@ -524,6 +980,166 @@
     }
 
     const handlers = {
+      SET_ROLE_PERMISSION(draft, payload, context) {
+        requirePermission(draft, context, 'access.manage_role');
+        const reason = requireReason(payload);
+        const role = String(payload.role || '').toUpperCase();
+        required(draft.users.find((item) => item.role === role) || root.YC.permissions.roleDefaults.find((item) => item.role === role), 'ROLE_NOT_FOUND', 'Không tìm thấy vai trò.');
+        const input = validatePermissionInput(draft, payload);
+        const changedAt = nowIso();
+        draft.rolePermissions.filter((item) => item.role === role
+          && item.permissionId === input.permissionId
+          && item.status !== 'REVOKED'
+          && (!item.effectiveTo || new Date(item.effectiveTo).getTime() > new Date(changedAt).getTime()))
+          .forEach((item) => {
+            item.effectiveTo = changedAt;
+            item.status = 'REPLACED';
+          });
+        const record = {
+          id: uid('role-permission'), role, permissionId: input.permissionId, effect: input.effect,
+          scopeType: input.scopeType, scopeIds: input.scopeIds,
+          effectiveFrom: payload.effectiveFrom || changedAt, effectiveTo: payload.effectiveTo || null,
+          status: 'ACTIVE', changedBy: context.actor.id, changedAt, reason,
+        };
+        draft.rolePermissions.push(record);
+        ensureAdminContinuity(draft);
+        appendEvent(draft, context, 'ROLE_PERMISSION_SET', 'ROLE_PERMISSION', record.id, `${role} · ${input.permissionId} · ${input.effect}.`);
+        appendAudit(draft, context, 'ROLE_PERMISSION_SET', 'ROLE_PERMISSION', record.id, reason);
+        return { message: 'Đã cập nhật quyền của vai trò.', rolePermissionId: record.id };
+      },
+
+      SET_USER_PERMISSION_OVERRIDE(draft, payload, context) {
+        requirePermission(draft, context, 'access.manage_user_override');
+        const reason = requireReason(payload);
+        const user = required(draft.users.find((item) => item.id === payload.userId), 'USER_NOT_FOUND', 'Không tìm thấy tài khoản.');
+        const input = validatePermissionInput(draft, payload);
+        const grantedAt = nowIso();
+        draft.userPermissionOverrides.filter((item) => item.userId === user.id
+          && item.permissionId === input.permissionId
+          && item.status !== 'REVOKED'
+          && (!item.effectiveTo || new Date(item.effectiveTo).getTime() > new Date(grantedAt).getTime()))
+          .forEach((item) => {
+            item.effectiveTo = grantedAt;
+            item.status = 'REPLACED';
+          });
+        const record = {
+          id: uid('user-permission'), userId: user.id, permissionId: input.permissionId, effect: input.effect,
+          scopeType: input.scopeType, scopeIds: input.scopeIds,
+          effectiveFrom: payload.effectiveFrom || grantedAt, effectiveTo: payload.effectiveTo || null,
+          status: 'ACTIVE', grantedBy: context.actor.id, grantedAt, reason,
+        };
+        draft.userPermissionOverrides.push(record);
+        ensureAdminContinuity(draft);
+        appendEvent(draft, context, 'USER_PERMISSION_OVERRIDE_SET', 'USER_PERMISSION_OVERRIDE', record.id, `${user.name} · ${input.permissionId} · ${input.effect}.`);
+        appendAudit(draft, context, 'USER_PERMISSION_OVERRIDE_SET', 'USER_PERMISSION_OVERRIDE', record.id, reason);
+        return { message: 'Đã lưu ngoại lệ quyền của tài khoản.', overrideId: record.id };
+      },
+
+      REVOKE_USER_PERMISSION_OVERRIDE(draft, payload, context) {
+        requirePermission(draft, context, 'access.manage_user_override');
+        const reason = requireReason(payload);
+        const record = required(draft.userPermissionOverrides.find((item) => item.id === payload.overrideId), 'OVERRIDE_NOT_FOUND', 'Không tìm thấy ngoại lệ quyền.');
+        if (record.status === 'REVOKED') throw new CommandError('OVERRIDE_ALREADY_REVOKED', 'Ngoại lệ quyền đã được thu hồi trước đó.');
+        record.status = 'REVOKED';
+        record.effectiveTo = nowIso();
+        record.revokedBy = context.actor.id;
+        record.revokedAt = nowIso();
+        record.revokeReason = reason;
+        ensureAdminContinuity(draft);
+        appendEvent(draft, context, 'USER_PERMISSION_OVERRIDE_REVOKED', 'USER_PERMISSION_OVERRIDE', record.id, reason);
+        appendAudit(draft, context, 'USER_PERMISSION_OVERRIDE_REVOKED', 'USER_PERMISSION_OVERRIDE', record.id, reason);
+        return { message: 'Đã thu hồi ngoại lệ quyền.', overrideId: record.id };
+      },
+
+      SUBMIT_CHANGE_REQUEST(draft, payload, context) {
+        required(context.actor, 'AUTH_REQUIRED', 'Cần đăng nhập để gửi yêu cầu.');
+        const reason = String(payload.reason || '').trim();
+        if (!reason) throw new CommandError('REASON_REQUIRED', 'Cần ghi rõ lý do đề xuất thay đổi.');
+        const resourceType = String(payload.resourceType || '').toUpperCase();
+        const operation = String(payload.operation || '').toUpperCase();
+        const permissionId = approvalCall(() => root.YC.approval.permissionFor(resourceType, operation));
+        const scope = root.YC.approval.resourceScope(payload, draft);
+        if (!root.YC.policy.can(context.actor, permissionId, scope, draft)) {
+          throw new CommandError('FORBIDDEN', 'Tài khoản hiện tại không có quyền gửi đề xuất này.');
+        }
+        const request = approvalCall(() => root.YC.approval.buildRequest({ ...payload, reason }, {
+          actorId: context.actor.id,
+          now: nowIso(),
+          state: draft,
+        }));
+        draft.changeRequests.push(request);
+        const event = appendEvent(draft, context, 'CHANGE_REQUEST_SUBMITTED', 'CHANGE_REQUEST', request.id, `${request.resourceType} · ${request.operation} · ${reason}.`);
+        request.eventIds.push(event.id);
+        appendAudit(draft, context, 'CHANGE_REQUEST_SUBMITTED', 'CHANGE_REQUEST', request.id, reason);
+        notifyRole(draft, 'ADMIN', 'Có yêu cầu chờ phê duyệt', `${context.actor.name}: ${request.resourceType} · ${request.operation}.`, `/app/admin/approvals/${request.id}`);
+        return {
+          message: 'Đã gửi yêu cầu và đang chờ Quản trị viên duyệt.',
+          requestId: request.id,
+          provisionalResourceId: request.provisionalResourceId,
+          status: request.status,
+        };
+      },
+
+      REVIEW_CHANGE_REQUEST(draft, payload, context) {
+        requirePermission(draft, context, 'approval.decide');
+        const request = required(draft.changeRequests.find((item) => item.id === payload.requestId), 'REQUEST_NOT_FOUND', 'Không tìm thấy yêu cầu phê duyệt.');
+        const inputDecision = String(payload.decision || '').toUpperCase();
+        const decisionMap = { APPROVE: 'APPROVED', REJECT: 'REJECTED', REQUEST_CHANGES: 'CHANGES_REQUESTED', CHANGES_REQUESTED: 'CHANGES_REQUESTED' };
+        const nextStatus = decisionMap[inputDecision];
+        if (!nextStatus) throw new CommandError('INVALID_REVIEW_DECISION', 'Quyết định duyệt không hợp lệ.');
+        if (request.status === nextStatus && ['APPROVED', 'REJECTED', 'CHANGES_REQUESTED'].includes(nextStatus)) {
+          return { message: 'Quyết định này đã được ghi nhận trước đó.', requestId: request.id, status: request.status, idempotent: true, applied: request.status === 'APPROVED' };
+        }
+        if (request.submittedBy === context.actor.id) throw new CommandError('SELF_REVIEW_FORBIDDEN', 'Người gửi không được tự duyệt yêu cầu của mình.');
+        const note = String(payload.note || '').trim();
+        if (['REJECTED', 'CHANGES_REQUESTED'].includes(nextStatus) && !note) {
+          throw new CommandError('REVIEW_NOTE_REQUIRED', 'Từ chối hoặc yêu cầu chỉnh sửa phải có ghi chú.');
+        }
+        approvalCall(() => root.YC.approval.assertReviewable(request, draft));
+        request.reviewerId = context.actor.id;
+        request.reviewNote = note || null;
+        request.reviewedAt = nowIso();
+
+        if (nextStatus === 'APPROVED' && root.YC.approval.stale(request, draft)) {
+          root.YC.approval.transition(request, 'CONFLICTED');
+          const event = appendEvent(draft, context, 'CHANGE_REQUEST_CONFLICTED', 'CHANGE_REQUEST', request.id, 'Dữ liệu gốc đã thay đổi; yêu cầu cần được cập nhật lại.');
+          request.eventIds.push(event.id);
+          appendAudit(draft, context, 'CHANGE_REQUEST_CONFLICTED', 'CHANGE_REQUEST', request.id, note || 'Phát hiện sai khác phiên bản dữ liệu gốc.');
+          notifyUser(draft, request.submittedBy, 'Yêu cầu cần cập nhật lại', `${request.resourceType} · dữ liệu gốc đã thay đổi.`, `/app/teacher/requests/${request.id}`);
+          return { message: 'Yêu cầu bị xung đột phiên bản và chưa được áp dụng.', requestId: request.id, status: request.status, applied: false };
+        }
+
+        if (nextStatus === 'APPROVED') {
+          const canonical = approvalCall(() => root.YC.approval.applyChange(request, draft));
+          root.YC.approval.transition(request, 'APPROVED');
+          request.appliedAt = nowIso();
+          request.resourceId = canonical.id;
+        } else {
+          root.YC.approval.transition(request, nextStatus);
+        }
+        const type = `CHANGE_REQUEST_${request.status}`;
+        const event = appendEvent(draft, context, type, 'CHANGE_REQUEST', request.id, `${request.resourceType} · ${request.status}${note ? ` · ${note}` : ''}.`);
+        request.eventIds.push(event.id);
+        appendAudit(draft, context, type, 'CHANGE_REQUEST', request.id, note || 'Đã duyệt và áp dụng dữ liệu trong cùng transaction.');
+        notifyUser(draft, request.submittedBy, `Yêu cầu: ${request.status}`, `${request.resourceType} · ${request.operation}.`, `/app/teacher/requests/${request.id}`);
+        return { message: nextStatus === 'APPROVED' ? 'Đã duyệt và áp dụng thay đổi.' : 'Đã ghi nhận quyết định.', requestId: request.id, resourceId: request.resourceId, status: request.status, applied: nextStatus === 'APPROVED' };
+      },
+
+      WITHDRAW_CHANGE_REQUEST(draft, payload, context) {
+        const request = required(draft.changeRequests.find((item) => item.id === payload.requestId), 'REQUEST_NOT_FOUND', 'Không tìm thấy yêu cầu phê duyệt.');
+        if (request.submittedBy !== context.actor.id) throw new CommandError('FORBIDDEN', 'Chỉ người gửi mới được rút yêu cầu.');
+        const reason = String(payload.reason || '').trim();
+        if (!reason) throw new CommandError('REASON_REQUIRED', 'Cần ghi rõ lý do rút yêu cầu.');
+        approvalCall(() => root.YC.approval.transition(request, 'WITHDRAWN'));
+        request.withdrawnAt = nowIso();
+        request.withdrawnBy = context.actor.id;
+        request.withdrawReason = reason;
+        const event = appendEvent(draft, context, 'CHANGE_REQUEST_WITHDRAWN', 'CHANGE_REQUEST', request.id, reason);
+        request.eventIds.push(event.id);
+        appendAudit(draft, context, 'CHANGE_REQUEST_WITHDRAWN', 'CHANGE_REQUEST', request.id, reason);
+        return { message: 'Đã rút yêu cầu và giữ lại lịch sử.', requestId: request.id, status: request.status };
+      },
+
       CREATE_PUBLIC_LEAD(draft, payload, context) {
         requireRole(context.actor, ['PUBLIC', 'VISITOR']);
         const type = String(payload.type || 'B2C').toUpperCase();
@@ -2422,6 +3038,175 @@
   root.YC.define('operationsViews', Object.freeze({ render }));
 })(globalThis);
 
+/* 11-governance-views.js */
+(function defineGovernanceViews(root) {
+  'use strict';
+
+  const { badge, empty, icon, metric, pageHeader, person, section, table } = root.YC.ui;
+  const { escapeHtml, formatDate } = root.YC.utils;
+
+  const DOMAIN_LABELS = Object.freeze({
+    ACCESS: 'Truy cập', APPROVAL: 'Phê duyệt', COURSE: 'Khóa học', CONTENT: 'Nội dung học', CLASS: 'Lớp học',
+    SESSION: 'Buổi học', ATTENDANCE: 'Điểm danh', REMEDIAL: 'Học bù', SITE: 'Website', REPORT: 'Báo cáo', AUDIT: 'Kiểm toán',
+    ADMISSIONS: 'Tuyển sinh', SERVICE: 'Dịch vụ học viên', FINANCE: 'Tài chính', LEARNING: 'Học tập',
+  });
+  const RESOURCE_LABELS = Object.freeze({ COURSE: 'Khóa học', COURSE_VERSION: 'Phiên bản khóa học', CLASS: 'Lớp học', SESSION: 'Buổi học', SITE_CONTENT: 'Nội dung website', REMEDIAL_EXCEPTION: 'Ngoại lệ học bù' });
+  const OPERATION_LABELS = Object.freeze({ CREATE: 'Tạo mới', UPDATE: 'Cập nhật', ARCHIVE: 'Lưu trữ', CANCEL: 'Hủy', RESCHEDULE: 'Đổi lịch', PUBLISH: 'Xuất bản' });
+
+  function roleLabel(role) {
+    return root.YC.router.ROLE_LABELS[role] || role.replaceAll('_', ' ');
+  }
+
+  function currentRoleGrant(state, role, permissionId) {
+    const moment = new Date(state.currentAt || state.seededAt).getTime();
+    return state.rolePermissions.filter((item) => item.role === role
+      && item.permissionId === permissionId
+      && item.status !== 'REPLACED'
+      && item.status !== 'REVOKED'
+      && (!item.effectiveFrom || new Date(item.effectiveFrom).getTime() <= moment)
+      && (!item.effectiveTo || new Date(item.effectiveTo).getTime() > moment)).at(-1) || null;
+  }
+
+  function scopeOptions(selected = 'ORGANIZATION') {
+    const choices = [
+      ['ORGANIZATION', 'Toàn trung tâm'], ['BRANCH', 'Theo chi nhánh'], ['CLASS', 'Theo lớp'], ['SESSION', 'Theo buổi học'],
+      ['ASSIGNED_CLASS', 'Lớp được phân công'], ['OWN_LEARNER', 'Hồ sơ học viên của mình'], ['LINKED_LEARNER', 'Học viên được liên kết'],
+    ];
+    return choices.map(([value, label]) => `<option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>`).join('');
+  }
+
+  function permissionOptions(state, selected = '') {
+    return state.permissionDefinitions.map((item) => `<option value="${escapeHtml(item.id)}" ${selected === item.id ? 'selected' : ''}>${escapeHtml(item.label)} · ${escapeHtml(item.id)}</option>`).join('');
+  }
+
+  function roleOptions(state, selected = '') {
+    const roles = [...new Set(state.users.map((item) => item.role).filter((role) => !['PUBLIC', 'VISITOR'].includes(role)))];
+    return roles.map((role) => `<option value="${escapeHtml(role)}" ${selected === role ? 'selected' : ''}>${escapeHtml(roleLabel(role))}</option>`).join('');
+  }
+
+  function branchHint(state) {
+    return state.branches.map((branch) => `<span>Chi nhánh ${escapeHtml(branch.name.replace(/^Cơ sở\s+/, ''))}: <code>${escapeHtml(branch.id)}</code></span>`).join('');
+  }
+
+  function permissionForm(state, values = {}) {
+    return `<form class="governance-form" data-form="role-permissions">
+      <label>Vai trò<select class="input" name="role" required>${roleOptions(state, values.role)}</select></label>
+      <label>Quyền<select class="input" name="permissionId" required>${permissionOptions(state, values.permissionId)}</select></label>
+      <label>Quyết định<select class="input" name="effect"><option value="ALLOW" ${values.effect !== 'DENY' ? 'selected' : ''}>Cho phép</option><option value="DENY" ${values.effect === 'DENY' ? 'selected' : ''}>Từ chối</option></select></label>
+      <label>Phạm vi<select class="input" name="scopeType">${scopeOptions(values.scopeType)}</select></label>
+      <label class="span-two">Mã phạm vi <input class="input" name="scopeIds" value="${escapeHtml((values.scopeIds || []).join(', '))}" placeholder="branch-q3, class-6a"></label>
+      <label class="span-two">Lý do <textarea class="input" name="reason" rows="2" required placeholder="Nêu rõ nhu cầu và thời hạn áp dụng"></textarea></label>
+      <button class="btn btn-primary" type="submit">Lưu quyền vai trò</button>
+    </form>`;
+  }
+
+  function roles(ctx) {
+    const roleNames = [...new Set(ctx.state.users.map((item) => item.role).filter((role) => !['PUBLIC', 'VISITOR'].includes(role)))];
+    const rows = roleNames.map((role) => {
+      const active = ctx.state.permissionDefinitions.filter((permission) => currentRoleGrant(ctx.state, role, permission.id)?.effect === 'ALLOW').length;
+      return { role, active, users: ctx.state.users.filter((item) => item.role === role && item.status === 'ACTIVE').length };
+    });
+    return `<div class="workspace-page governance-page">${pageHeader('Quản trị · Phân quyền', 'Ma trận quyền', 'Cấu hình quyền theo vai trò, ngoại lệ theo tài khoản, phạm vi và thời hạn hiệu lực.')}
+      <div class="metric-grid three">${metric('Vai trò', rows.length, 'Không tính khách công khai', 'people')}${metric('Quyền hệ thống', ctx.state.permissionDefinitions.length, 'Nhóm theo nghiệp vụ', 'shield')}${metric('Ngoại lệ tài khoản', ctx.state.userPermissionOverrides.filter((item) => item.status === 'ACTIVE').length, 'Có lịch sử hiệu lực', 'trend')}</div>
+      <div class="content-grid main-aside">${section('Quyền theo vai trò', table([
+        { label: 'Vai trò', render: (row) => `<strong>${escapeHtml(roleLabel(row.role))}</strong><small>${escapeHtml(row.role)}</small>` },
+        { label: 'Tài khoản', key: 'users' },
+        { label: 'Quyền cho phép', render: (row) => `${row.active}/${ctx.state.permissionDefinitions.length}` },
+        { label: 'Chi tiết', render: (row) => `<a class="text-link" href="#/app/admin/roles/${escapeHtml(row.role)}/permissions">Mở ma trận ${icon('arrow')}</a>` },
+      ], rows))}${section('Cập nhật nhanh', `${permissionForm(ctx.state)}<div class="scope-hints">${branchHint(ctx.state)}</div>`, { subtitle: 'Bản ghi cũ được đóng hiệu lực; không xóa lịch sử.' })}</div></div>`;
+  }
+
+  function rolePermissions(ctx, role) {
+    const grouped = Object.groupBy
+      ? Object.groupBy(ctx.state.permissionDefinitions, (item) => item.domain)
+      : ctx.state.permissionDefinitions.reduce((result, item) => { (result[item.domain] ||= []).push(item); return result; }, {});
+    return `<div class="workspace-page governance-page">${pageHeader('Quản trị · Phân quyền', `Quyền của ${roleLabel(role)}`, 'Mỗi quyền có quyết định, phạm vi và bằng chứng thay đổi độc lập.', `<a class="btn btn-secondary" href="#/app/admin/roles">Về ma trận quyền</a>`)}
+      ${Object.entries(grouped).map(([domain, permissions]) => section(DOMAIN_LABELS[domain] || domain, `<div class="permission-matrix">${permissions.map((permission) => {
+        const grant = currentRoleGrant(ctx.state, role, permission.id);
+        return `<article class="permission-row"><div><strong>${escapeHtml(permission.label)}</strong><code>${escapeHtml(permission.id)}</code><small>Rủi ro ${escapeHtml(permission.riskLevel)}</small></div><div>${grant ? badge(grant.effect === 'ALLOW' ? 'ACTIVE' : 'REJECTED', grant.effect === 'ALLOW' ? 'Cho phép' : 'Từ chối') : badge('DRAFT', 'Chưa cấp')}<small>${escapeHtml(grant?.scopeType || 'Mặc định từ chối')}</small></div><details><summary>Chỉnh quyền</summary>${permissionForm(ctx.state, { role, permissionId: permission.id, effect: grant?.effect, scopeType: grant?.scopeType, scopeIds: grant?.scopeIds })}</details></article>`;
+      }).join('')}</div>`)).join('')}</div>`;
+  }
+
+  function userAccess(ctx, userId) {
+    const user = ctx.state.users.find((item) => item.id === userId);
+    if (!user) return '';
+    const overrides = ctx.state.userPermissionOverrides.filter((item) => item.userId === user.id).slice().reverse();
+    return `<div class="workspace-page governance-page">${pageHeader('Quản trị · Tài khoản', `Ngoại lệ quyền của ${user.name}`, 'Ngoại lệ Từ chối luôn ưu tiên hơn Cho phép; quyền hết hạn được giữ lại để truy vết.', `<a class="btn btn-secondary" href="#/app/admin/users">Về tài khoản</a>`)}
+      <div class="content-grid main-aside">${section('Lịch sử ngoại lệ', table([
+        { label: 'Quyền', render: (row) => `<strong>${escapeHtml(row.permissionId)}</strong><small>${escapeHtml(row.reason || '')}</small>` },
+        { label: 'Hiệu lực', render: (row) => badge(row.effect === 'ALLOW' ? 'ACTIVE' : 'REJECTED', row.effect === 'ALLOW' ? 'Cho phép' : 'Từ chối') },
+        { label: 'Phạm vi', render: (row) => `${escapeHtml(row.scopeType)}<small>${escapeHtml((row.scopeIds || []).join(', ') || 'Toàn bộ')}</small>` },
+        { label: 'Trạng thái', render: (row) => `${badge(row.status || 'ACTIVE')} ${row.status === 'ACTIVE' ? `<button class="text-link danger-link" data-action="revoke-user-permission" data-payload="${escapeHtml(encodeURIComponent(JSON.stringify({ overrideId: row.id, reason: 'Thu hồi từ màn quản trị tài khoản' })))}">Thu hồi</button>` : ''}` },
+      ], overrides, { emptyTitle: 'Chưa có ngoại lệ', emptyBody: 'Tài khoản đang dùng toàn bộ quyền từ vai trò.' }))}
+      ${section('Thêm ngoại lệ', `<form class="governance-form" data-form="user-permissions"><input type="hidden" name="userId" value="${escapeHtml(user.id)}"><label class="span-two">Quyền<select class="input" name="permissionId" required>${permissionOptions(ctx.state)}</select></label><label>Quyết định<select class="input" name="effect"><option value="ALLOW">Cho phép</option><option value="DENY">Từ chối</option></select></label><label>Phạm vi<select class="input" name="scopeType">${scopeOptions()}</select></label><label class="span-two">Mã phạm vi<input class="input" name="scopeIds" placeholder="branch-q3, class-6a"></label><label class="span-two">Lý do<textarea class="input" name="reason" rows="3" required></textarea></label><button class="btn btn-primary" type="submit">Lưu ngoại lệ</button></form><div class="scope-hints">${branchHint(ctx.state)}</div>`)}</div></div>`;
+  }
+
+  function requestTitle(request) {
+    return `${RESOURCE_LABELS[request.resourceType] || request.resourceType} · ${OPERATION_LABELS[request.operation] || request.operation}`;
+  }
+
+  function requestCard(ctx, request, ownerView = false) {
+    const requester = ctx.state.users.find((item) => item.id === request.submittedBy);
+    const href = ownerView ? `/app/teacher/requests/${request.id}` : `/app/admin/approvals/${request.id}`;
+    return `<article class="approval-card"><div class="approval-main"><div class="between"><span class="request-type">${escapeHtml(requestTitle(request))}</span>${badge(request.status)}</div><h3><a href="#${href}">${escapeHtml(request.reason)}</a></h3>${person(requester, `Gửi ${formatDate(request.submittedAt, true)}`)}<div class="request-meta"><span>Phiên bản gốc <b>${request.baseVersion}</b></span><span>Revision <b>${request.revision}</b></span><span>Thay đổi <b>${request.diff.length}</b> trường</span></div></div>${ownerView && ['SUBMITTED', 'CHANGES_REQUESTED'].includes(request.status) ? `<form data-form="withdraw-change-request" class="withdraw-form"><input type="hidden" name="requestId" value="${escapeHtml(request.id)}"><input class="input" name="reason" required placeholder="Lý do rút yêu cầu"><button class="btn btn-secondary btn-sm" type="submit">Rút yêu cầu</button></form>` : `<a class="btn btn-secondary btn-sm" href="#${href}">So sánh thay đổi</a>`}</article>`;
+  }
+
+  function approvals(ctx) {
+    const pending = ctx.state.changeRequests.filter((item) => ['SUBMITTED', 'IN_REVIEW'].includes(item.status));
+    const history = ctx.state.changeRequests.filter((item) => !['SUBMITTED', 'IN_REVIEW'].includes(item.status));
+    return `<div class="workspace-page governance-page">${pageHeader('Quản trị · Phê duyệt', 'Hàng chờ phê duyệt', 'Duyệt thay đổi master data bằng so sánh trước/sau, cảnh báo phiên bản và audit.')}
+      <div class="metric-grid three">${metric('Đang chờ', pending.length, 'Cần quyết định Admin', 'shield')}${metric('Đã xử lý', history.length, 'Giữ toàn bộ lịch sử', 'check')}${metric('Xung đột', history.filter((item) => item.status === 'CONFLICTED').length, 'Cần gửi revision mới', 'trend')}</div>
+      ${section('So sánh thay đổi đang chờ', pending.length ? pending.map((item) => requestCard(ctx, item)).join('') : empty('Không có yêu cầu đang chờ', 'Đề xuất của Giáo viên sẽ xuất hiện tại đây để Admin so sánh thay đổi.'))}
+      ${section('Lịch sử quyết định', history.length ? history.map((item) => requestCard(ctx, item)).join('') : '<p class="muted governance-empty">Chưa có quyết định.</p>')}</div>`;
+  }
+
+  function displayValue(value) {
+    if (value === null || value === undefined || value === '') return '—';
+    if (typeof value === 'object') return JSON.stringify(value, null, 2);
+    return String(value);
+  }
+
+  function requestDetail(ctx, request, ownerView = false) {
+    const requester = ctx.state.users.find((item) => item.id === request.submittedBy);
+    const reviewer = ctx.state.users.find((item) => item.id === request.reviewerId);
+    const canReview = !ownerView && ['SUBMITTED', 'IN_REVIEW'].includes(request.status);
+    return `<div class="workspace-page governance-page">${pageHeader(ownerView ? 'Giáo viên · Yêu cầu của tôi' : 'Quản trị · Phê duyệt', requestTitle(request), request.reason, `<a class="btn btn-secondary" href="#${ownerView ? '/app/teacher/requests' : '/app/admin/approvals'}">Về danh sách</a>`)}
+      <div class="request-summary panel"><div>${person(requester, 'Người gửi')}<dl class="detail-list"><div><dt>Trạng thái</dt><dd>${badge(request.status)}</dd></div><div><dt>Phiên bản gốc</dt><dd>${request.baseVersion}</dd></div><div><dt>Revision</dt><dd>${request.revision}</dd></div><div><dt>Người duyệt</dt><dd>${escapeHtml(reviewer?.name || 'Chưa có')}</dd></div></dl></div><div class="request-reason"><small>Lý do đề xuất</small><strong>${escapeHtml(request.reason)}</strong><p>${escapeHtml(request.reviewNote || 'Chưa có ghi chú duyệt.')}</p></div></div>
+      ${section('So sánh thay đổi', `<div class="diff-table"><div class="diff-head"><span>Trường dữ liệu</span><span>Trước thay đổi</span><span>Sau thay đổi</span></div>${request.diff.map((item) => `<div class="diff-row"><code>${escapeHtml(item.field)}</code><pre>${escapeHtml(displayValue(item.before))}</pre><pre>${escapeHtml(displayValue(item.after))}</pre></div>`).join('') || '<p class="muted">Không có trường dữ liệu thay đổi.</p>'}</div>`, { subtitle: request.status === 'CONFLICTED' ? 'Cảnh báo: dữ liệu gốc đã đổi; cần gửi revision mới.' : 'Canonical data chỉ đổi sau khi duyệt thành công.' })}
+      ${canReview ? section('Quyết định của Quản trị viên', `<form class="review-form" data-form="review-change-request"><input type="hidden" name="requestId" value="${escapeHtml(request.id)}"><label>Quyết định<select class="input" name="decision"><option value="APPROVE">Duyệt và áp dụng</option><option value="REQUEST_CHANGES">Yêu cầu chỉnh sửa</option><option value="REJECT">Từ chối</option></select></label><label>Ghi chú<textarea class="input" name="note" rows="3" placeholder="Bắt buộc khi từ chối hoặc yêu cầu chỉnh sửa"></textarea></label><button class="btn btn-primary" type="submit">Xác nhận quyết định</button></form>`) : ''}
+      ${ownerView && ['SUBMITTED', 'CHANGES_REQUESTED'].includes(request.status) ? section('Rút yêu cầu', `<form data-form="withdraw-change-request" class="review-form"><input type="hidden" name="requestId" value="${escapeHtml(request.id)}"><label>Lý do<input class="input" name="reason" required></label><button class="btn btn-secondary" type="submit">Rút yêu cầu</button></form>`) : ''}</div>`;
+  }
+
+  function teacherRequests(ctx) {
+    const requests = ctx.state.changeRequests.filter((item) => item.submittedBy === ctx.actor.id).slice().reverse();
+    return `<div class="workspace-page governance-page">${pageHeader('Giáo viên · Thay đổi', 'Yêu cầu của tôi', 'Theo dõi đề xuất khóa học, lớp và buổi học trên cùng dữ liệu mà Admin đang duyệt.')}
+      ${section('Tất cả yêu cầu', requests.length ? requests.map((item) => requestCard(ctx, item, true)).join('') : empty('Chưa có yêu cầu', 'Khi gửi đề xuất từ khóa học, lớp hoặc buổi học, trạng thái sẽ xuất hiện tại đây.'))}</div>`;
+  }
+
+  function render(path, ctx) {
+    if (path === '/app/admin/roles') return roles(ctx);
+    const roleMatch = /^\/app\/admin\/roles\/([^/]+)\/permissions$/.exec(path);
+    if (roleMatch) return rolePermissions(ctx, decodeURIComponent(roleMatch[1]));
+    const userMatch = /^\/app\/admin\/users\/([^/]+)\/access$/.exec(path);
+    if (userMatch) return userAccess(ctx, decodeURIComponent(userMatch[1]));
+    if (path === '/app/admin/approvals') return approvals(ctx);
+    const approvalMatch = /^\/app\/admin\/approvals\/([^/]+)$/.exec(path);
+    if (approvalMatch) {
+      const request = ctx.state.changeRequests.find((item) => item.id === decodeURIComponent(approvalMatch[1]));
+      return request ? requestDetail(ctx, request) : '';
+    }
+    if (path === '/app/teacher/requests') return teacherRequests(ctx);
+    const teacherMatch = /^\/app\/teacher\/requests\/([^/]+)$/.exec(path);
+    if (teacherMatch) {
+      const request = ctx.state.changeRequests.find((item) => item.id === decodeURIComponent(teacherMatch[1]) && item.submittedBy === ctx.actor.id);
+      return request ? requestDetail(ctx, request, true) : '';
+    }
+    return '';
+  }
+
+  root.YC.define('governanceViews', Object.freeze({ render }));
+})(globalThis);
+
 /* 11-management-views.js */
 (function defineManagementViews(root) {
   'use strict';
@@ -2647,12 +3432,12 @@
     FINANCE: [['Tổng quan', '/app/finance/dashboard', 'grid'], ['Hóa đơn', '/app/finance/invoices', 'wallet'], ['Thanh toán', '/app/finance/payments', 'check']],
     ACADEMIC_MANAGER: [['Tổng quan', '/app/academic/dashboard', 'grid'], ['Chương trình học', '/app/academic/curriculum', 'book'], ['Giáo viên', '/app/academic/teachers', 'people'], ['Phân công', '/app/academic/assignments', 'calendar'], ['Kiểm duyệt', '/app/academic/moderation', 'shield'], ['Duyệt tiến bộ', '/app/academic/progress-reviews', 'trend']],
     STUDENT_SERVICE: [['Tổng quan', '/app/service/dashboard', 'grid'], ['Xếp lớp', '/app/service/allocation', 'people'], ['Hồ sơ hỗ trợ', '/app/service/cases', 'shield'], ['Học bù', '/app/service/make-up', 'calendar'], ['Chuyển lớp', '/app/service/transfers', 'trend'], ['Dạy thay', '/app/service/substitutions', 'people']],
-    TEACHER: [['Tổng quan', '/app/teacher/dashboard', 'grid'], ['Lớp học', '/app/teacher/classes', 'people'], ['Buổi học', '/app/teacher/sessions', 'calendar'], ['Nội dung', '/app/teacher/content', 'book'], ['Học bù', '/app/teacher/remedial', 'spark'], ['Chấm bài', '/app/teacher/grading', 'check'], ['Báo cáo', '/app/teacher/reports', 'trend']],
+    TEACHER: [['Tổng quan', '/app/teacher/dashboard', 'grid'], ['Lớp học', '/app/teacher/classes', 'people'], ['Buổi học', '/app/teacher/sessions', 'calendar'], ['Nội dung', '/app/teacher/content', 'book'], ['Yêu cầu của tôi', '/app/teacher/requests', 'shield'], ['Học bù', '/app/teacher/remedial', 'spark'], ['Chấm bài', '/app/teacher/grading', 'check'], ['Báo cáo', '/app/teacher/reports', 'trend']],
     TA: [['Tổng quan', '/app/teacher/dashboard', 'grid'], ['Lớp học', '/app/teacher/classes', 'people'], ['Buổi học', '/app/teacher/sessions', 'calendar'], ['Nội dung', '/app/teacher/content', 'book'], ['Học bù', '/app/teacher/remedial', 'spark']],
     STUDENT: [['Học tập', '/app/student/dashboard', 'grid'], ['Khóa học', '/app/student/course', 'book'], ['Học bù', '/app/student/remedial', 'spark'], ['Kiểm tra', '/app/student/assessments', 'check'], ['Kết quả', '/app/student/results', 'check'], ['Tiến bộ', '/app/student/progress', 'trend']],
     PARENT: [['Tổng quan', '/app/parent/dashboard', 'grid'], ['Chuyên cần', '/app/parent/attendance', 'calendar'], ['Tiến bộ', '/app/parent/progress', 'trend'], ['Dịch vụ', '/app/parent/services', 'people'], ['Học phí', '/app/parent/tuition', 'wallet']],
     CENTER_MANAGER: [['Tổng quan', '/app/manager/dashboard', 'grid'], ['Sức chứa', '/app/manager/capacity', 'people'], ['Chất lượng', '/app/manager/quality', 'shield'], ['Duy trì học viên', '/app/manager/retention', 'trend']],
-    ADMIN: [['Tổng quan', '/app/admin/dashboard', 'grid'], ['Tài khoản', '/app/admin/users', 'people'], ['Học viên', '/app/admin/students', 'people'], ['Lớp học', '/app/admin/classes', 'calendar'], ['Khóa học', '/app/admin/courses', 'book'], ['Học bù', '/app/admin/remedial', 'spark'], ['Liên hệ', '/app/admin/contacts', 'people'], ['Báo cáo', '/app/admin/reports', 'trend'], ['Nhật ký', '/app/admin/audit-logs', 'shield'], ['Tích hợp', '/app/admin/integrations', 'grid'], ['Cấu hình', '/app/admin/settings', 'book']],
+    ADMIN: [['Tổng quan', '/app/admin/dashboard', 'grid'], ['Tài khoản', '/app/admin/users', 'people'], ['Phân quyền', '/app/admin/roles', 'shield'], ['Phê duyệt', '/app/admin/approvals', 'check'], ['Học viên', '/app/admin/students', 'people'], ['Lớp học', '/app/admin/classes', 'calendar'], ['Khóa học', '/app/admin/courses', 'book'], ['Học bù', '/app/admin/remedial', 'spark'], ['Liên hệ', '/app/admin/contacts', 'people'], ['Báo cáo', '/app/admin/reports', 'trend'], ['Nhật ký', '/app/admin/audit-logs', 'shield'], ['Tích hợp', '/app/admin/integrations', 'grid'], ['Cấu hình', '/app/admin/settings', 'book']],
   });
 
   const ROLE_LABELS = Object.freeze({
@@ -2666,7 +3451,7 @@
 
   function render(path, ctx) {
     const clean = normalize(path);
-    const renderers = [root.YC.publicViews, root.YC.learningViews, root.YC.operationsViews, root.YC.managementViews];
+    const renderers = [root.YC.publicViews, root.YC.learningViews, root.YC.operationsViews, root.YC.governanceViews, root.YC.managementViews];
     for (const renderer of renderers) {
       const html = renderer.render(clean, { ...ctx, path: clean });
       if (html) return html;
@@ -3026,6 +3811,42 @@
         onChange();
         return result;
       }
+      if (action === 'set-role-permission') {
+        const result = bus.dispatch('SET_ROLE_PERMISSION', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'set-user-permission') {
+        const result = bus.dispatch('SET_USER_PERMISSION_OVERRIDE', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'revoke-user-permission') {
+        const result = bus.dispatch('REVOKE_USER_PERMISSION_OVERRIDE', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'submit-change-request') {
+        const result = bus.dispatch('SUBMIT_CHANGE_REQUEST', data, storage?.getItem(ACTOR_KEY));
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'review-change-request') {
+        const result = bus.dispatch('REVIEW_CHANGE_REQUEST', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'withdraw-change-request') {
+        const result = bus.dispatch('WITHDRAW_CHANGE_REQUEST', data, storage?.getItem(ACTOR_KEY));
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
       if (action === 'export-csv') {
         const output = exportDataset(state(), data.type);
         if (!output) return { ok: false, code: 'EXPORT_NOT_FOUND', message: 'Chưa có dữ liệu xuất phù hợp.' };
@@ -3223,6 +4044,10 @@
       if (form.dataset.form === 'public-lead') { action = 'submit-public-lead'; data = { type: form.dataset.type, name: values.get('name'), studentName: values.get('studentName'), organization: values.get('organization'), phone: values.get('phone'), email: values.get('email'), message: values.get('message') }; }
       if (form.dataset.form === 'add-student') { action = 'add-learner'; data = { code: values.get('code'), name: values.get('name'), phone: values.get('phone'), classId: values.get('classId') }; }
       if (form.dataset.form === 'settings') { action = 'update-settings'; data = { minimumVideoProgress: values.get('minimumVideoProgress'), defaultPassingScore: values.get('defaultPassingScore'), remedialDeadlineDays: values.get('remedialDeadlineDays') }; }
+      if (form.dataset.form === 'role-permissions') { action = 'set-role-permission'; data = { role: values.get('role'), permissionId: values.get('permissionId'), effect: values.get('effect'), scopeType: values.get('scopeType'), scopeIds: String(values.get('scopeIds') || '').split(',').map((item) => item.trim()).filter(Boolean), reason: values.get('reason') }; }
+      if (form.dataset.form === 'user-permissions') { action = 'set-user-permission'; data = { userId: values.get('userId'), permissionId: values.get('permissionId'), effect: values.get('effect'), scopeType: values.get('scopeType'), scopeIds: String(values.get('scopeIds') || '').split(',').map((item) => item.trim()).filter(Boolean), reason: values.get('reason') }; }
+      if (form.dataset.form === 'review-change-request') { action = 'review-change-request'; data = { requestId: values.get('requestId'), decision: values.get('decision'), note: values.get('note') }; }
+      if (form.dataset.form === 'withdraw-change-request') { action = 'withdraw-change-request'; data = { requestId: values.get('requestId'), reason: values.get('reason') }; }
       if (!action) return;
       const result = controller.execute(action, data);
       if (result?.ok === false) toast(result.message, 'error');

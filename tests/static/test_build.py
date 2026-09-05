@@ -2,6 +2,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import hashlib
 from pathlib import Path
 
 
@@ -68,6 +69,30 @@ class StandaloneBuildTests(unittest.TestCase):
             self.assertIn("window.order.push('second')", standalone)
             self.assertNotIn('styles.css', standalone)
             self.assertNotIn('app.js', standalone)
+
+    def test_release_refreshes_checksums_for_every_manifest_file(self):
+        with tempfile.TemporaryDirectory() as temp:
+            fixture = Path(temp)
+            self.make_fixture(fixture)
+            (fixture / "PACKAGE-MANIFEST.txt").write_text(
+                "Demo package\n\nOPEN-DEMO.html\nsource/app.js\nCHECKSUMS-SHA256.txt\n",
+                encoding="utf-8",
+            )
+            (fixture / "CHECKSUMS-SHA256.txt").write_text("stale\n", encoding="utf-8")
+
+            result = self.run_builder(fixture, "--release")
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            checksums = (fixture / "CHECKSUMS-SHA256.txt").read_text(encoding="utf-8")
+            self.assertIn(
+                f"{hashlib.sha256((fixture / 'OPEN-DEMO.html').read_bytes()).hexdigest()}  OPEN-DEMO.html",
+                checksums,
+            )
+            self.assertIn(
+                f"{hashlib.sha256((fixture / 'source' / 'app.js').read_bytes()).hexdigest()}  source/app.js",
+                checksums,
+            )
+            self.assertNotIn("CHECKSUMS-SHA256.txt", checksums)
 
 
 if __name__ == "__main__":

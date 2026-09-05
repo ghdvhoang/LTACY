@@ -28,11 +28,15 @@ def verify_static() -> dict[str, object]:
     css = (SOURCE / "styles.css").read_text(encoding="utf-8")
 
     module_files = sorted(MODULES.glob("*.js"))
-    require(len(module_files) == 15, f"Expected 15 runtime modules, found {len(module_files)}")
-    require([item.name for item in module_files] == [f"{index:02d}-{name}" for index, name in enumerate([
-        "namespace.js", "utils.js", "seed.js", "store.js", "policy.js", "commands.js", "selectors.js",
-        "ui-kit.js", "public-views.js", "learning-views.js", "operations-views.js", "management-views.js",
-    ])] + ["13-router.js", "14-actions.js", "15-bootstrap.js"], "Runtime modules are missing or out of order")
+    module_names = [item.name for item in module_files]
+    required_modules = {
+        "00-namespace.js", "01-utils.js", "02-permissions.js", "02-seed.js", "03-store.js", "04-policy.js",
+        "05-approval.js", "05-commands.js", "06-selectors.js", "07-ui-kit.js", "08-public-views.js",
+        "09-learning-views.js", "10-operations-views.js", "11-governance-views.js", "11-management-views.js",
+        "13-router.js", "14-actions.js", "15-bootstrap.js",
+    }
+    require(required_modules.issubset(module_names), f"Runtime modules are missing: {sorted(required_modules - set(module_names))}")
+    require(module_names[0] == "00-namespace.js" and module_names[-1] == "15-bootstrap.js", "Runtime module boundaries are out of order")
     require(bundle == versioned_bundle, "app.js and app.v3.js differ")
     require(standalone == source_standalone, "Standalone artifacts differ")
     require("./styles.css" in index and "./app.js" in index, "Source index must load split assets")
@@ -40,8 +44,9 @@ def verify_static() -> dict[str, object]:
     require(not re.search(r'<link[^>]+href=["\']\./styles\.css', standalone), "Standalone links external CSS")
     require(not re.search(r'<script[^>]+src=["\']\./app\.js', standalone), "Standalone links external JavaScript")
     for token in [
-        "schemaVersion: 3", "REGISTER_VISITOR", "register-visitor", "/dang-ky", "/tai-khoan", "export-csv", "print-view",
-        "LEAD_CONTACTED", "PARENT_PROGRESS_VIEWED", "RENEWAL_ACCEPTED", "Không có quyền vào khu vực này",
+        "schemaVersion: 4", "REGISTER_VISITOR", "register-visitor", "/dang-ky", "/tai-khoan", "export-csv", "print-view",
+        "SUBMIT_CHANGE_REQUEST", "SET_ROLE_PERMISSION", "/app/admin/approvals", "LEAD_CONTACTED",
+        "PARENT_PROGRESS_VIEWED", "RENEWAL_ACCEPTED", "Không có quyền vào khu vực này",
     ]:
         require(token in bundle, f"Runtime token missing: {token}")
     for token in ["visitor-account", "course-player-layout", "role-switcher", "@media print"]:

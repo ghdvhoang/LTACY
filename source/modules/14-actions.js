@@ -279,6 +279,42 @@
         onChange();
         return result;
       }
+      if (action === 'set-role-permission') {
+        const result = bus.dispatch('SET_ROLE_PERMISSION', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'set-user-permission') {
+        const result = bus.dispatch('SET_USER_PERMISSION_OVERRIDE', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'revoke-user-permission') {
+        const result = bus.dispatch('REVOKE_USER_PERMISSION_OVERRIDE', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'submit-change-request') {
+        const result = bus.dispatch('SUBMIT_CHANGE_REQUEST', data, storage?.getItem(ACTOR_KEY));
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'review-change-request') {
+        const result = bus.dispatch('REVIEW_CHANGE_REQUEST', data, storage?.getItem(ACTOR_KEY) || 'admin-1');
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
+      if (action === 'withdraw-change-request') {
+        const result = bus.dispatch('WITHDRAW_CHANGE_REQUEST', data, storage?.getItem(ACTOR_KEY));
+        onToast(result.message, result.ok ? 'success' : 'error');
+        onChange();
+        return result;
+      }
       if (action === 'export-csv') {
         const output = exportDataset(state(), data.type);
         if (!output) return { ok: false, code: 'EXPORT_NOT_FOUND', message: 'Chưa có dữ liệu xuất phù hợp.' };

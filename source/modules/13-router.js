@@ -9,12 +9,12 @@
     FINANCE: [['Tổng quan', '/app/finance/dashboard', 'grid'], ['Hóa đơn', '/app/finance/invoices', 'wallet'], ['Thanh toán', '/app/finance/payments', 'check']],
     ACADEMIC_MANAGER: [['Tổng quan', '/app/academic/dashboard', 'grid'], ['Chương trình học', '/app/academic/curriculum', 'book'], ['Giáo viên', '/app/academic/teachers', 'people'], ['Phân công', '/app/academic/assignments', 'calendar'], ['Kiểm duyệt', '/app/academic/moderation', 'shield'], ['Duyệt tiến bộ', '/app/academic/progress-reviews', 'trend']],
     STUDENT_SERVICE: [['Tổng quan', '/app/service/dashboard', 'grid'], ['Xếp lớp', '/app/service/allocation', 'people'], ['Hồ sơ hỗ trợ', '/app/service/cases', 'shield'], ['Học bù', '/app/service/make-up', 'calendar'], ['Chuyển lớp', '/app/service/transfers', 'trend'], ['Dạy thay', '/app/service/substitutions', 'people']],
-    TEACHER: [['Tổng quan', '/app/teacher/dashboard', 'grid'], ['Lớp học', '/app/teacher/classes', 'people'], ['Buổi học', '/app/teacher/sessions', 'calendar'], ['Nội dung', '/app/teacher/content', 'book'], ['Học bù', '/app/teacher/remedial', 'spark'], ['Chấm bài', '/app/teacher/grading', 'check'], ['Báo cáo', '/app/teacher/reports', 'trend']],
+    TEACHER: [['Tổng quan', '/app/teacher/dashboard', 'grid'], ['Lớp học', '/app/teacher/classes', 'people'], ['Buổi học', '/app/teacher/sessions', 'calendar'], ['Nội dung', '/app/teacher/content', 'book'], ['Yêu cầu của tôi', '/app/teacher/requests', 'shield'], ['Học bù', '/app/teacher/remedial', 'spark'], ['Chấm bài', '/app/teacher/grading', 'check'], ['Báo cáo', '/app/teacher/reports', 'trend']],
     TA: [['Tổng quan', '/app/teacher/dashboard', 'grid'], ['Lớp học', '/app/teacher/classes', 'people'], ['Buổi học', '/app/teacher/sessions', 'calendar'], ['Nội dung', '/app/teacher/content', 'book'], ['Học bù', '/app/teacher/remedial', 'spark']],
     STUDENT: [['Học tập', '/app/student/dashboard', 'grid'], ['Khóa học', '/app/student/course', 'book'], ['Học bù', '/app/student/remedial', 'spark'], ['Kiểm tra', '/app/student/assessments', 'check'], ['Kết quả', '/app/student/results', 'check'], ['Tiến bộ', '/app/student/progress', 'trend']],
     PARENT: [['Tổng quan', '/app/parent/dashboard', 'grid'], ['Chuyên cần', '/app/parent/attendance', 'calendar'], ['Tiến bộ', '/app/parent/progress', 'trend'], ['Dịch vụ', '/app/parent/services', 'people'], ['Học phí', '/app/parent/tuition', 'wallet']],
     CENTER_MANAGER: [['Tổng quan', '/app/manager/dashboard', 'grid'], ['Sức chứa', '/app/manager/capacity', 'people'], ['Chất lượng', '/app/manager/quality', 'shield'], ['Duy trì học viên', '/app/manager/retention', 'trend']],
-    ADMIN: [['Tổng quan', '/app/admin/dashboard', 'grid'], ['Tài khoản', '/app/admin/users', 'people'], ['Học viên', '/app/admin/students', 'people'], ['Lớp học', '/app/admin/classes', 'calendar'], ['Khóa học', '/app/admin/courses', 'book'], ['Học bù', '/app/admin/remedial', 'spark'], ['Liên hệ', '/app/admin/contacts', 'people'], ['Báo cáo', '/app/admin/reports', 'trend'], ['Nhật ký', '/app/admin/audit-logs', 'shield'], ['Tích hợp', '/app/admin/integrations', 'grid'], ['Cấu hình', '/app/admin/settings', 'book']],
+    ADMIN: [['Tổng quan', '/app/admin/dashboard', 'grid'], ['Tài khoản', '/app/admin/users', 'people'], ['Phân quyền', '/app/admin/roles', 'shield'], ['Phê duyệt', '/app/admin/approvals', 'check'], ['Học viên', '/app/admin/students', 'people'], ['Lớp học', '/app/admin/classes', 'calendar'], ['Khóa học', '/app/admin/courses', 'book'], ['Học bù', '/app/admin/remedial', 'spark'], ['Liên hệ', '/app/admin/contacts', 'people'], ['Báo cáo', '/app/admin/reports', 'trend'], ['Nhật ký', '/app/admin/audit-logs', 'shield'], ['Tích hợp', '/app/admin/integrations', 'grid'], ['Cấu hình', '/app/admin/settings', 'book']],
   });
 
   const ROLE_LABELS = Object.freeze({
@@ -28,7 +28,7 @@
 
   function render(path, ctx) {
     const clean = normalize(path);
-    const renderers = [root.YC.publicViews, root.YC.learningViews, root.YC.operationsViews, root.YC.managementViews];
+    const renderers = [root.YC.publicViews, root.YC.learningViews, root.YC.operationsViews, root.YC.governanceViews, root.YC.managementViews];
     for (const renderer of renderers) {
       const html = renderer.render(clean, { ...ctx, path: clean });
       if (html) return html;
